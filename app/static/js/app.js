@@ -1,6 +1,7 @@
 // AI Python Backend & MNC Interview Trainer - Interactive Jupyter Engine
 let currentQuestion = null;
 let currentExperienceLevel = "mid";
+let currentDomainFilter = "";
 let activeSessionId = null;
 let currentMindmapSlug = "python-internals";
 
@@ -23,7 +24,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // Set initial experience level
     setupEventListeners();
     await initInterviewSession();
     await loadQuestions();
@@ -43,9 +43,17 @@ function setupEventListeners() {
             target.classList.add("ring-2", "ring-blue-500", "bg-gray-800");
             currentExperienceLevel = target.dataset.level;
             
-            // Re-initialize session for new track
             await initInterviewSession();
             await loadQuestions();
+        });
+    });
+
+    // Search bar
+    document.getElementById("questionSearchInput")?.addEventListener("input", (e) => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll("#questionList > div").forEach(item => {
+            const text = item.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? "flex" : "none";
         });
     });
 
@@ -66,6 +74,15 @@ function setupEventListeners() {
     });
 }
 
+function filterByDomain(domain) {
+    currentDomainFilter = domain;
+    document.querySelectorAll("#domainChips button").forEach(b => {
+        b.className = "px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0";
+    });
+    event.currentTarget.className = "px-2 py-0.5 rounded bg-blue-600 text-white shrink-0 font-medium";
+    loadQuestions();
+}
+
 async function initInterviewSession() {
     try {
         const res = await fetch("/api/v1/interview/sessions", {
@@ -79,7 +96,6 @@ async function initInterviewSession() {
         });
         const data = await res.json();
         activeSessionId = data.id;
-        console.log("Initialized Interview Session ID:", activeSessionId);
     } catch (err) {
         console.error("Failed to create interview session:", err);
     }
@@ -92,11 +108,15 @@ async function loadQuestions() {
     listEl.innerHTML = `<div class="p-4 text-gray-400 text-sm animate-pulse">Loading ${currentExperienceLevel} questions...</div>`;
 
     try {
-        const res = await fetch(`/api/v1/questions?experience_level=${currentExperienceLevel}`);
+        let url = `/api/v1/questions?experience_level=${currentExperienceLevel}`;
+        if (currentDomainFilter) {
+            url += `&category=${currentDomainFilter}`;
+        }
+        const res = await fetch(url);
         const questions = await res.json();
 
         if (!questions.length) {
-            listEl.innerHTML = `<div class="p-4 text-gray-400 text-sm">No questions found for this level.</div>`;
+            listEl.innerHTML = `<div class="p-4 text-gray-400 text-sm">No questions found for this filter. Try selecting 'All'.</div>`;
             return;
         }
 
@@ -108,12 +128,12 @@ async function loadQuestions() {
                 </div>
                 <h4 class="text-sm font-medium text-gray-200 line-clamp-1">${q.title}</h4>
                 <div class="flex flex-wrap gap-1 mt-0.5">
-                    ${(q.company_tags || []).slice(0, 3).map(tag => `<span class="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">${tag}</span>`).join('')}
+                    <span class="text-[10px] bg-blue-950/60 text-blue-300 px-1.5 py-0.5 rounded border border-blue-900">${formatCategory(q.category)}</span>
+                    ${(q.company_tags || []).slice(0, 2).map(tag => `<span class="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">${tag}</span>`).join('')}
                 </div>
             </div>
         `).join('');
 
-        // Automatically load first question
         if (questions.length > 0) {
             await selectQuestion(questions[0].id);
         }
@@ -133,7 +153,6 @@ async function selectQuestion(qId) {
 }
 
 function renderQuestionDetail(q) {
-    // Header & Meta
     document.getElementById("qTitle").innerText = q.title;
     document.getElementById("qScenario").innerHTML = formatMarkdown(q.scenario_text);
     
@@ -141,7 +160,7 @@ function renderQuestionDetail(q) {
     const badgeContainer = document.getElementById("qBadges");
     badgeContainer.innerHTML = `
         <span class="px-2.5 py-1 text-xs rounded-full font-semibold ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
-        <span class="px-2.5 py-1 text-xs rounded-full bg-blue-900/30 text-blue-400 border border-blue-800 font-mono">${q.min_exp_years} - ${q.max_exp_years} YOE Track</span>
+        <span class="px-2.5 py-1 text-xs rounded-full bg-blue-900/30 text-blue-400 border border-blue-800 font-mono">${formatCategory(q.category)}</span>
         <span class="px-2.5 py-1 text-xs rounded-full bg-amber-900/30 text-amber-400 border border-amber-800 font-mono">Frequency: ${q.frequency_score}%</span>
         ${(q.company_tags || []).map(t => `<span class="px-2 py-0.5 text-xs bg-gray-800 text-gray-300 rounded border border-gray-700">🏢 ${t}</span>`).join('')}
     `;
@@ -154,13 +173,13 @@ function renderQuestionDetail(q) {
         document.getElementById("qTheoryCard").classList.add("hidden");
     }
 
-    // Common Traps & Cross Questions preview
+    // Common Traps
     const trapsList = document.getElementById("qTrapsList");
     if (trapsList && q.common_traps) {
         trapsList.innerHTML = q.common_traps.map(trap => `<li class="text-xs text-amber-300/90 leading-relaxed">• ${trap}</li>`).join('');
     }
 
-    // Python Sandbox setup
+    // Python Sandbox
     const pySection = document.getElementById("pythonCellSection");
     if (q.has_python_sandbox) {
         pySection.classList.remove("hidden");
@@ -170,7 +189,7 @@ function renderQuestionDetail(q) {
         pySection.classList.add("hidden");
     }
 
-    // SQL Sandbox setup
+    // SQL Sandbox
     const sqlSection = document.getElementById("sqlCellSection");
     if (q.has_sql_sandbox) {
         sqlSection.classList.remove("hidden");
@@ -179,6 +198,26 @@ function renderQuestionDetail(q) {
         document.getElementById("sqlOutputContainer").innerHTML = `<div class="text-xs text-gray-500 font-mono p-4">Click 'Execute SQL' to run query with execution plan.</div>`;
     } else {
         sqlSection.classList.add("hidden");
+    }
+
+    // Redis Sandbox
+    const redisSection = document.getElementById("redisCellSection");
+    if (q.has_redis_sandbox) {
+        redisSection.classList.remove("hidden");
+        document.getElementById("redisCommandInput").value = q.starter_redis || "SET mykey 'val'\nGET mykey";
+        document.getElementById("redisOutputTerminal").innerText = "// Click 'Execute Redis CLI' to test in-memory commands";
+    } else {
+        redisSection.classList.add("hidden");
+    }
+
+    // NoSQL Sandbox
+    const nosqlSection = document.getElementById("nosqlCellSection");
+    if (q.has_nosql_sandbox) {
+        nosqlSection.classList.remove("hidden");
+        document.getElementById("nosqlQueryInput").value = q.starter_nosql || "db.orders.find({})";
+        document.getElementById("nosqlOutputTerminal").innerText = "// Click 'Run Mongo Query' to execute aggregation pipeline";
+    } else {
+        nosqlSection.classList.add("hidden");
     }
 
     // Reset AI Feedback area
@@ -220,7 +259,7 @@ async function runPythonCode() {
         terminal.className = "text-rose-400 font-mono text-xs p-4";
     } finally {
         runBtn.disabled = false;
-        runBtn.innerHTML = `<span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-gray-400">Ctrl+Enter</kbd>`;
+        runBtn.innerHTML = `<span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-gray-300">Ctrl+Enter</kbd>`;
     }
 }
 
@@ -257,7 +296,6 @@ async function runSQLCode() {
             return;
         }
 
-        // Render Table & Query Plan
         let html = `
             <div class="flex items-center justify-between p-3 bg-gray-900 border-b border-gray-800 text-xs">
                 <span class="text-emerald-400 font-semibold">✓ ${result.row_count} rows returned</span>
@@ -293,7 +331,75 @@ async function runSQLCode() {
         container.innerHTML = `<div class="p-4 text-xs font-mono text-rose-400">Error: ${err.message}</div>`;
     } finally {
         runBtn.disabled = false;
-        runBtn.innerHTML = `<span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-gray-400">Ctrl+Enter</kbd>`;
+        runBtn.innerHTML = `<span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-gray-300">Ctrl+Enter</kbd>`;
+    }
+}
+
+async function runRedisCode() {
+    const commands = document.getElementById("redisCommandInput").value;
+    const terminal = document.getElementById("redisOutputTerminal");
+    const runBtn = document.getElementById("runRedisBtn");
+
+    runBtn.disabled = true;
+    runBtn.innerText = "Executing Redis...";
+
+    try {
+        const res = await fetch("/api/v1/sandbox/redis", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ commands: commands })
+        });
+        const result = await res.json();
+        let out = "";
+        result.logs.forEach(log => {
+            if (log.type === "comment") {
+                out += `${log.command}\n`;
+            } else {
+                out += `> ${log.command}\n${JSON.stringify(log.output, null, 2)}\n\n`;
+            }
+        });
+        out += `Execution Time: ${result.execution_time_ms} ms`;
+        terminal.innerText = out;
+        terminal.className = "text-rose-300 font-mono text-xs whitespace-pre-wrap p-4";
+    } catch (err) {
+        terminal.innerText = `Redis Error: ${err.message}`;
+    } finally {
+        runBtn.disabled = false;
+        runBtn.innerText = "▶ Execute Redis CLI";
+    }
+}
+
+async function runNoSQLCode() {
+    const query = document.getElementById("nosqlQueryInput").value;
+    const terminal = document.getElementById("nosqlOutputTerminal");
+    const runBtn = document.getElementById("runNosqlBtn");
+
+    runBtn.disabled = true;
+    runBtn.innerText = "Running Query...";
+
+    try {
+        const res = await fetch("/api/v1/sandbox/nosql", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: query })
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+            terminal.innerText = `Error: ${result.error}`;
+            terminal.className = "text-rose-400 font-mono text-xs whitespace-pre-wrap p-4";
+            return;
+        }
+
+        let out = `// Matches: ${result.document_count} documents | Time: ${result.execution_time_ms} ms\n\n`;
+        out += JSON.stringify(result.documents, null, 2);
+        terminal.innerText = out;
+        terminal.className = "text-emerald-300 font-mono text-xs whitespace-pre-wrap p-4";
+    } catch (err) {
+        terminal.innerText = `NoSQL Error: ${err.message}`;
+    } finally {
+        runBtn.disabled = false;
+        runBtn.innerText = "▶ Run Mongo Query";
     }
 }
 
@@ -305,7 +411,7 @@ async function submitToAIInterviewer() {
     const aiCard = document.getElementById("aiEvaluationCard");
 
     if (!candidateAnswer.trim() && !pyCode.trim() && !sqlCode.trim()) {
-        alert("Please write an architectural explanation or code solution before submitting for review!");
+        alert("Please write an explanation or code solution before submitting for review!");
         return;
     }
 
@@ -326,12 +432,10 @@ async function submitToAIInterviewer() {
         });
         const turn = await res.json();
 
-        // Render AI Score & Feedback
         aiCard.classList.remove("hidden");
         document.getElementById("aiScoreValue").innerText = `${turn.score} / 10`;
         document.getElementById("aiFeedbackContent").innerHTML = formatMarkdown(turn.feedback);
 
-        // Render Cross Questions
         const crossQContainer = document.getElementById("aiCrossQuestions");
         if (turn.cross_questions_asked && turn.cross_questions_asked.length > 0) {
             crossQContainer.innerHTML = `
@@ -351,7 +455,6 @@ async function submitToAIInterviewer() {
             `;
         }
 
-        // Scroll to review
         aiCard.scrollIntoView({ behavior: 'smooth' });
     } catch (err) {
         alert(`AI Evaluation Failed: ${err.message}`);
@@ -395,7 +498,7 @@ async function loadMindmaps() {
         if (!tabList) return;
 
         tabList.innerHTML = topics.map((t, idx) => `
-            <button onclick="renderMindmap('${t.slug}')" class="px-3 py-1.5 text-xs rounded-lg transition font-medium ${idx === 0 ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">
+            <button onclick="renderMindmap('${t.slug}')" class="px-3 py-1.5 text-xs rounded-lg transition font-medium text-left ${idx === 0 ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}">
                 ${t.title}
             </button>
         `).join('');
@@ -420,7 +523,6 @@ async function renderMindmap(slug) {
             mermaid.run({ nodes: container.querySelectorAll('.mermaid') });
         }
 
-        // Render deep node breakdown
         if (topic.nodes && detailsContainer) {
             detailsContainer.innerHTML = topic.nodes.map(n => `
                 <div class="p-4 bg-gray-900 border border-gray-800 rounded-xl space-y-2">
@@ -459,7 +561,7 @@ async function loadSQLSchemas() {
 }
 
 function getDifficultyClass(difficulty) {
-    switch (difficulty.toLowerCase()) {
+    switch (String(difficulty).toLowerCase()) {
         case 'basic':
         case 'junior': return 'badge-junior';
         case 'intermediate':
@@ -468,6 +570,11 @@ function getDifficultyClass(difficulty) {
         case 'senior': return 'badge-senior';
         default: return 'badge-lead';
     }
+}
+
+function formatCategory(cat) {
+    if (!cat) return "";
+    return cat.replace(/_/g, " ").toUpperCase();
 }
 
 function formatMarkdown(text) {

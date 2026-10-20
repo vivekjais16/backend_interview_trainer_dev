@@ -2,76 +2,50 @@
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.12+-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1.svg?style=flat&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00.svg?style=flat&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-47A248.svg?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Redis](https://img.shields.io/badge/Redis-7.0+-DC382D.svg?style=flat&logo=redis&logoColor=white)](https://redis.io/)
+[![Kafka](https://img.shields.io/badge/Apache_Kafka-3.0+-231F20.svg?style=flat&logo=apachekafka&logoColor=white)](https://kafka.apache.org/)
+[![Celery](https://img.shields.io/badge/Celery-5.4+-37814A.svg?style=flat&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13+-FF6600.svg?style=flat&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![Docker](https://img.shields.io/badge/Docker-Containers-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-K8s-326CE5.svg?style=flat&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> An open-source, interactive, Jupyter-style **AI Backend Interview Trainer** tailored for **MNC Technical Rounds** (Google, Amazon, Microsoft, Uber, Stripe, Razorpay). Features a sandboxed **Python Interpreter**, **SQL Compiler with EXPLAIN query plan analysis**, **Theoretical Mind Maps**, and **Adaptive GenAI Bar Raiser Cross-Questioning** calibrated strictly to candidate years of experience.
+> An open-source, interactive, Jupyter-style **AI Backend Interview Trainer** tailored for **MNC Technical Rounds** (Google, Amazon, Microsoft, Uber, Netflix, Stripe, Razorpay). 
+> 
+> Beyond basic syntax, it covers the **entire modern production backend engineering ecosystem**: **PostgreSQL, MySQL, MongoDB, Redis, Apache Kafka, Celery, RabbitMQ, Docker, Kubernetes, and CI/CD**. Features live **Python, SQL, Redis, and Mongo sandboxes**, **Theoretical Mind Maps**, and **Adaptive GenAI Bar Raiser Cross-Questioning** calibrated strictly to candidate years of experience.
 > 
 > **100% Free & Open-Source for Everyone to Prepare According to Their Experience Level!**
 
 ---
 
-## 🎯 Why This Platform?
+## 🎯 The Complete MNC Backend Ecosystem
 
-Most technical interview preparation resources either focus purely on algorithmic LeetCode or static theory. Real MNC backend interviews evaluate:
-1. **Low-level language internals** (GIL, CPython memory allocator, MRO, garbage collection generations).
-2. **High-concurrency failure modes** (Event loop starvation, connection pool exhaustion, lost updates).
-3. **Database execution realities** (B+ Tree indexing, leftmost prefix rule, MVCC, Next-Key deadlocks, EXPLAIN cost).
-4. **Ruthless cross-questioning** ("You chose a Redis distributed lock, what happens when garbage collection halts the worker and the TTL expires before completion?").
+Real MNC backend interviews evaluate your full production readiness across the stack:
 
-This platform bridges that gap by providing a hands-on, notebook-driven simulation of real MNC system design and backend technical rounds.
+| Domain | Key MNC Concepts Tested | Interactive Sandbox Available |
+|---|---|:---:|
+| 🐍 **Python & Asyncio** | GIL internals, Generational GC, memory leak profiling, event loop starvation, `asyncio.to_thread` vs `TaskGroup` | ✅ Sandboxed Python 3.12 Runner |
+| 🐘 **PostgreSQL & MySQL** | MVCC, VACUUM table bloat, JSONB & GIN indexes, InnoDB B+ Trees, Next-Key deadlocks, `EXPLAIN` query plans | ✅ SQL Compiler + EXPLAIN Analyzer |
+| 🍃 **MongoDB & NoSQL** | Document modeling, ESR indexing rule (Equality, Sort, Range), Aggregation pipelines, WiredTiger cache, replica sets | ✅ MongoDB Aggregation Runner |
+| ⚡ **Redis & Caching** | Cache stampede mutex, sliding-window rate limiting with ZSET, Cache-Aside vs Write-Through, Redlock & Lua scripts | ✅ Redis In-Memory CLI Runner |
+| 📨 **Apache Kafka** | Partition skew & hotspot keys, Cooperative Sticky rebalancing, manual offset commits, idempotent producers (`acks=all`) | ✅ Python Stream Simulator |
+| 🌿 **Celery & RabbitMQ** | Worker concurrency (prefork vs gevent), task canvas (Chords/Chains), memory leaks (`max_tasks_per_child`), Dead-Letter Exchanges (DLX) | ✅ Task Retry & Canvas Simulator |
+| 🐳 **Docker & Containers** | Multi-stage builds, non-root user hardening (`USER 1001`), layer caching order, Distroless images, SIGTERM handling | ✅ Multi-stage Template Analyzer |
+| ☸️ **Kubernetes (K8s)** | Zero-downtime rolling updates (`preStop` sleep hook), Startup/Liveness/Readiness probe separation, HPA with KEDA, CPU CFS quota throttling | ✅ Graceful Shutdown Simulator |
+| 🔄 **CI/CD & SRE** | GitHub Actions matrix, Trivy CVE security scanning, Canary rollouts (Argo Rollouts), Expand-and-Contract database migrations | ✅ Migration Pipeline Simulator |
 
 ---
 
-## ✨ Key Features
+## 🎓 Adaptive Experience Calibration
 
-### 1. 🎓 Adaptive Experience Calibration
 Select your experience level, and the entire platform (questions, depth of analysis, cross-question grilling, and rubrics) dynamically recalibrates:
 - **🟢 Junior (0 - 2 YOE)**: Core Python internals, mutable default arguments, object reference equality, basic SQL joins & window functions (`DENSE_RANK()`), REST APIs, and Big-O complexities.
-- **🟡 Mid-Level (3 - 5 YOE)**: Concurrency models (`asyncio` event loop blocking vs `to_thread`), FastAPI dependency injection lifecycle, SQLAlchemy N+1 query optimization, composite index leftmost prefix rule, transaction isolation.
-- **🟣 Senior (6 - 9 YOE)**: Flash-sale race condition prevention, atomic conditional SQL decrements, distributed locks (Redis Redlock vs Lua), idempotent payment webhook state machines, MySQL deadlock mitigation under high writes.
-- **🔴 Staff / Architect (10+ YOE)**: Dual-write consistency (Transactional Outbox Pattern + Debezium CDC), distributed consensus, zero-downtime online schema migrations, multi-region database replication lag, and P99 incident troubleshooting.
-
----
-
-### 2. 🐍 Sandboxed Python Interpreter
-- Run Python 3.12 code directly in the browser with **sub-millisecond execution tracking**.
-- **AST Security Guard**: Prevents dangerous system calls (`os.system`, `subprocess`, socket manipulation).
-- **Infinite Loop & Deadlock Watchdog**: Multiprocess execution timeout protection.
-- Immediate standard output (`stdout`), standard error (`stderr`), and returned values.
-
----
-
-### 3. 🗄️ Isolated SQL Compiler & Query Plan Analyzer
-- Practice real-world SQL against 3 pre-populated enterprise schemas:
-  - 🛒 **E-Commerce & Orders**: `customers`, `products`, `orders`, `order_items` with indexed foreign keys.
-  - 💳 **FinTech Payments & Ledger**: `accounts`, `transactions` with unique `idempotency_key` constraints.
-  - 🏢 **HR & Enterprise Analytics**: `departments`, `employees`, `performance_reviews`.
-- **Automatic `EXPLAIN QUERY PLAN`**: Teaches candidates whether their query performs an instant B-Tree index lookup or a costly full table scan (`SCAN TABLE`).
-
----
-
-### 4. 🧠 Interactive Theoretical Mind Maps
-- Visual Mermaid architecture diagrams for core backend domains:
-  - **Python Internals & Memory Architecture**
-  - **High-Throughput Asyncio & Concurrency**
-  - **FastAPI, Pydantic V2 & Production Microservices**
-  - **MySQL InnoDB Internals, Indexing & Transactions**
-  - **MNC Production Troubleshooting & System Design**
-- Deep node breakdowns with **"What MNC Interviewers Look For"**, code snippets, and common traps.
-
----
-
-### 5. 🎙️ GenAI Bar Raiser & Deep Cross-Questioning
-- Evaluates candidate architectural explanations, code, and SQL against a 5-dimension MNC rubric.
-- **Sharp Probing Follow-Up Cross Questions**: Simulates a FAANG Bar Raiser digging into hand-wavy claims.
-- **Multi-Provider Support**:
-  - `mock`: Built-in offline deterministic Bar Raiser engine (zero API keys needed, 100% free forever!).
-  - `gemini`: Google Gemini 1.5 Flash / Pro.
-  - `openai`: OpenAI GPT-4o / GPT-4o-mini.
-  - `ollama`: Local open-source models (`llama3`, `mistral`, `deepseek`).
+- **🟡 Mid-Level (3 - 5 YOE)**: Concurrency models (`asyncio` event loop blocking vs `to_thread`), Celery worker memory leaks, Redis cache stampedes, MongoDB aggregation pipelines, composite index leftmost prefix rule.
+- **🟣 Senior (6 - 9 YOE)**: Flash-sale race conditions, atomic conditional SQL decrements, Kafka partition hotspotting & cooperative sticky rebalancing, Docker multi-stage hardening, Kubernetes zero-downtime rolling updates with `preStop` hooks.
+- **🔴 Staff / Architect (10+ YOE)**: Dual-write problem (MySQL + Kafka consistency using Transactional Outbox Pattern + Debezium CDC), zero-downtime Blue-Green schema migrations (Expand-and-Contract pattern), multi-region active-active databases, and P99 incident troubleshooting.
 
 ---
 
@@ -84,9 +58,11 @@ graph TD
     subgraph FastAPI Application
         Router["API Router (/api/v1)"]
         
-        Router --> Questions["Questions & Roadmap Engine"]
+        Router --> Questions["Questions & Ecosystem Tracks"]
         Router --> PyRunner["Sandboxed Python Runner (AST + Timeout)"]
         Router --> SQLRunner["SQL Compiler & EXPLAIN Analyzer"]
+        Router --> RedisRunner["Redis CLI & Rate Limiter Engine"]
+        Router --> MongoRunner["MongoDB Aggregation Pipeline Engine"]
         Router --> InterviewEngine["AI Bar Raiser Interviewer"]
         
         InterviewEngine --> AIAdapter{"AI Provider"}
@@ -149,38 +125,6 @@ docker-compose up --build -d
 docker-compose logs -f
 ```
 
-The MySQL service will automatically start, initialize health checks, and mount persistent volumes.
-
----
-
-## ⚙️ Environment Configuration (`.env`)
-
-```ini
-# Application
-APP_NAME="AI Python Backend & MNC Interview Trainer"
-PORT=8000
-HOST=0.0.0.0
-DEBUG=True
-
-# Database Configuration (MySQL default with automatic SQLite fallback)
-DATABASE_URL=mysql+pymysql://root:rootpassword@localhost:3306/interview_trainer
-DB_POOL_SIZE=10
-DB_MAX_OVERFLOW=20
-DB_AUTO_FALLBACK_SQLITE=True
-
-# GenAI Engine: "mock", "gemini", "openai", "ollama"
-AI_PROVIDER=mock
-GEMINI_API_KEY=""
-OPENAI_API_KEY=""
-OLLAMA_BASE_URL="http://localhost:11434"
-AI_MODEL_NAME="gemini-1.5-flash"
-
-# Sandbox Limits
-CODE_EXECUTION_TIMEOUT_SECONDS=5
-MAX_EXECUTION_MEMORY_MB=128
-SQL_MAX_ROWS=100
-```
-
 ---
 
 ## 📡 REST API Reference
@@ -188,23 +132,25 @@ SQL_MAX_ROWS=100
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/` | Interactive Jupyter-style Web UI |
-| `GET` | `/api/v1/questions` | List interview questions with experience level & company filters |
+| `GET` | `/api/v1/questions` | List interview questions with experience level & domain category filters |
 | `GET` | `/api/v1/questions/{id_or_slug}` | Get question detail, scenarios, starter code & cross questions |
 | `POST` | `/api/v1/sandbox/python` | Run sandboxed Python code with execution duration & output |
 | `POST` | `/api/v1/sandbox/sql` | Execute SQL query with `EXPLAIN` query plan analysis |
+| `POST` | `/api/v1/sandbox/redis` | Run in-memory Redis CLI commands (Strings, Hashes, ZSETs) |
+| `POST` | `/api/v1/sandbox/nosql` | Execute MongoDB-style find and aggregation pipelines |
 | `GET` | `/api/v1/sandbox/sql/schemas` | Get metadata for E-Commerce, FinTech, and HR schemas |
 | `POST` | `/api/v1/interview/sessions` | Initialize a new MNC mock interview session |
 | `POST` | `/api/v1/interview/turns` | Submit answer/code for AI Bar Raiser evaluation & cross-questions |
 | `GET` | `/api/v1/interview/sessions/{id}` | Retrieve complete interview turn history and score |
 | `GET` | `/api/v1/mindmaps` | Get all theoretical mindmap roadmaps and Mermaid diagrams |
 | `GET` | `/api/v1/mindmaps/{slug}` | Get specific mindmap topic with deep concept breakdowns |
-| `GET` | `/api/v1/analytics/stats` | System health check, database status, and question stats |
+| `GET` | `/api/v1/analytics/stats` | System health check, database status, and ecosystem domains |
 
 ---
 
 ## 🧪 Running Automated Tests
 
-The test suite validates the Python AST sandbox, SQL compiler, schemas, and API routers:
+The test suite validates the Python AST sandbox, SQL compiler, Redis CLI, MongoDB aggregation engine, schemas, and API routers:
 
 ```bash
 # Run pytest with detailed verbose output
@@ -221,7 +167,7 @@ pytest -v
 To push changes to your GitHub branch:
 ```bash
 git add .
-git commit -m "feat: complete AI Python backend & MNC interview trainer platform with Jupyter sandbox"
+git commit -m "feat: complete MNC interview trainer with Postgres, Mongo, Redis, Kafka, Celery, Docker, K8s, CI/CD"
 git push -u origin dev
 ```
 

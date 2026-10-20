@@ -6,8 +6,8 @@ from app.models.question import QuestionCategory, QuestionDifficulty
 class QuestionBase(BaseModel):
     title: str
     slug: str
-    category: QuestionCategory
-    difficulty: QuestionDifficulty
+    category: str
+    difficulty: str
     min_exp_years: int = 0
     max_exp_years: int = 15
     company_tags: List[str] = []
@@ -24,6 +24,12 @@ class QuestionBase(BaseModel):
     sql_schema: Optional[str] = "ecommerce"
     starter_sql: Optional[str] = None
     solution_sql: Optional[str] = None
+    has_redis_sandbox: bool = False
+    starter_redis: Optional[str] = None
+    solution_redis: Optional[str] = None
+    has_nosql_sandbox: bool = False
+    starter_nosql: Optional[str] = None
+    solution_nosql: Optional[str] = None
     cross_questions: List[str] = []
     common_traps: List[str] = []
     best_practices: List[str] = []
@@ -35,8 +41,8 @@ class QuestionSummary(BaseModel):
     id: int
     title: str
     slug: str
-    category: QuestionCategory
-    difficulty: QuestionDifficulty
+    category: str
+    difficulty: str
     min_exp_years: int
     max_exp_years: int
     company_tags: List[str]
@@ -44,6 +50,8 @@ class QuestionSummary(BaseModel):
     mindmap_topic: Optional[str]
     has_python_sandbox: bool
     has_sql_sandbox: bool
+    has_redis_sandbox: bool = False
+    has_nosql_sandbox: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

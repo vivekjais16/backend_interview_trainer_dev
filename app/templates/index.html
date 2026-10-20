@@ -39,13 +39,13 @@
                 <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
                     {{ app_name }}
                 </h1>
-                <p class="text-[11px] text-gray-400 font-medium">Jupyter AI Sandbox • Python Interpreter • SQL Compiler • MNC Bar Raiser</p>
+                <p class="text-[11px] text-gray-400 font-medium">Jupyter AI Sandbox • Python • Postgres • Mongo • Redis • Kafka • Celery • Docker • K8s • CI/CD</p>
             </div>
         </div>
 
         <!-- Experience Level Switcher -->
         <div class="flex items-center gap-2 bg-darkBg/90 p-1 rounded-xl border border-borderBg shadow-inner">
-            <span class="text-xs text-gray-400 font-semibold px-2.5">Experience Level:</span>
+            <span class="text-xs text-gray-400 font-semibold px-2.5">Track:</span>
             <button data-level="junior" class="exp-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 hover:bg-gray-800 text-emerald-400 transition">
                 🟢 Junior (0-2 YOE)
             </button>
@@ -79,7 +79,7 @@
     <div class="flex-1 flex overflow-hidden">
         
         <!-- Left Sidebar: Questions & Mind Maps -->
-        <aside class="w-80 border-r border-borderBg bg-cardBg flex flex-col shrink-0">
+        <aside class="w-84 border-r border-borderBg bg-cardBg flex flex-col shrink-0" style="width: 22rem;">
             <!-- Sidebar Tab Navigation -->
             <div class="flex border-b border-borderBg text-xs font-semibold">
                 <button id="tabQuestionsBtn" onclick="switchSidebarTab('questions')" class="flex-1 py-3 text-center border-b-2 border-blue-500 text-blue-400 bg-gray-800/40">
@@ -92,10 +92,24 @@
 
             <!-- Panel 1: Questions List -->
             <div id="sidebarQuestionsPanel" class="flex-1 flex flex-col overflow-hidden">
-                <div class="p-3 border-b border-borderBg">
-                    <input type="text" id="questionSearchInput" placeholder="Filter questions or scenario..." 
+                <div class="p-3 border-b border-borderBg space-y-2">
+                    <input type="text" id="questionSearchInput" placeholder="Filter questions or keywords..." 
                            class="w-full bg-darkBg border border-borderBg rounded-lg px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500">
+                    
+                    <!-- Category Filter Chips -->
+                    <div class="flex gap-1 overflow-x-auto pb-1 text-[11px]" id="domainChips">
+                        <button onclick="filterByDomain('')" class="px-2 py-0.5 rounded bg-blue-600 text-white shrink-0 font-medium">All</button>
+                        <button onclick="filterByDomain('postgres_mysql')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">🐘 Postgres/MySQL</button>
+                        <button onclick="filterByDomain('mongodb_nosql')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">🍃 Mongo</button>
+                        <button onclick="filterByDomain('redis_caching')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">⚡ Redis</button>
+                        <button onclick="filterByDomain('kafka_messaging')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">📨 Kafka</button>
+                        <button onclick="filterByDomain('celery_rabbitmq')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">🌿 Celery</button>
+                        <button onclick="filterByDomain('docker_containers')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">🐳 Docker</button>
+                        <button onclick="filterByDomain('kubernetes_devops')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">☸️ K8s</button>
+                        <button onclick="filterByDomain('cicd_pipelines')" class="px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 shrink-0">🔄 CI/CD</button>
+                    </div>
                 </div>
+
                 <div id="questionList" class="flex-1 overflow-y-auto divide-y divide-borderBg">
                     <!-- Loaded dynamically -->
                 </div>
@@ -103,7 +117,7 @@
 
             <!-- Panel 2: Theoretical Mind Map Selection -->
             <div id="sidebarMindmapPanel" class="flex-1 overflow-y-auto hidden p-3 space-y-3">
-                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">MNC Architecture Mindmaps</h4>
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Backend Architecture Mindmaps</h4>
                 <div id="mindmapTabList" class="flex flex-col gap-2">
                     <!-- Loaded dynamically -->
                 </div>
@@ -155,7 +169,7 @@
                 <div id="qTheoryCard" class="mt-4 border-t border-borderBg pt-4 hidden">
                     <details class="group">
                         <summary class="cursor-pointer text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
-                            <span>📚 Theoretical Breakdown & CPython/Database Internals</span>
+                            <span>📚 Theoretical Breakdown & Internal Mechanics</span>
                             <span class="group-open:rotate-180 transition-transform">▼</span>
                         </summary>
                         <div id="qTheoryText" class="mt-3 text-xs text-gray-300 leading-relaxed bg-darkBg p-4 rounded-xl border border-borderBg">
@@ -200,7 +214,7 @@
                 </div>
 
                 <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
-                    <textarea id="pythonCodeInput" rows="11" 
+                    <textarea id="pythonCodeInput" rows="10" 
                               class="w-full bg-transparent text-gray-100 font-mono text-xs p-4 focus:outline-none resize-y leading-relaxed" 
                               spellcheck="false" placeholder="# Write your Python code here..."></textarea>
                 </div>
@@ -258,11 +272,71 @@
                 </div>
             </div>
 
-            <!-- CELL 4: AI Mock Interview Bar Raiser Grilling & Cross Questions -->
+            <!-- CELL 4: Redis In-Memory Sandbox -->
+            <div id="redisCellSection" class="notebook-cell p-6 space-y-4 hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-rose-400 font-bold">[In 4]</span>
+                        <h3 class="text-sm font-bold text-gray-200 flex items-center gap-1.5">
+                            <span>⚡</span> Redis Command & In-Memory Caching Sandbox
+                        </h3>
+                    </div>
+                    <button id="runRedisBtn" onclick="runRedisCode()" class="text-xs bg-rose-600 hover:bg-rose-500 font-bold text-white px-4 py-1.5 rounded-lg shadow-lg shadow-rose-600/30 transition flex items-center gap-1">
+                        <span>▶</span> Execute Redis CLI
+                    </button>
+                </div>
+
+                <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
+                    <textarea id="redisCommandInput" rows="6" 
+                              class="w-full bg-transparent text-gray-100 font-mono text-xs p-4 focus:outline-none resize-y leading-relaxed" 
+                              spellcheck="false" placeholder="SET user:101 'Alex'\nGET user:101"></textarea>
+                </div>
+
+                <div>
+                    <div class="text-[11px] font-mono text-gray-400 mb-1">
+                        <span>[Out 4] Redis CLI Execution Trace:</span>
+                    </div>
+                    <div class="terminal-window">
+                        <pre id="redisOutputTerminal" class="text-gray-400 font-mono text-xs whitespace-pre-wrap p-4">// Click 'Execute Redis CLI' to run commands</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CELL 5: NoSQL / MongoDB Aggregation Sandbox -->
+            <div id="nosqlCellSection" class="notebook-cell p-6 space-y-4 hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-emerald-400 font-bold">[In 5]</span>
+                        <h3 class="text-sm font-bold text-gray-200 flex items-center gap-1.5">
+                            <span>🍃</span> MongoDB & NoSQL Aggregation Sandbox
+                        </h3>
+                    </div>
+                    <button id="runNosqlBtn" onclick="runNoSQLCode()" class="text-xs bg-emerald-600 hover:bg-emerald-500 font-bold text-white px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-1">
+                        <span>▶</span> Run Mongo Query
+                    </button>
+                </div>
+
+                <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
+                    <textarea id="nosqlQueryInput" rows="6" 
+                              class="w-full bg-transparent text-gray-100 font-mono text-xs p-4 focus:outline-none resize-y leading-relaxed" 
+                              spellcheck="false" placeholder="db.orders.aggregate([ { '$match': { 'status': 'DELIVERED' } } ])"></textarea>
+                </div>
+
+                <div>
+                    <div class="text-[11px] font-mono text-gray-400 mb-1">
+                        <span>[Out 5] Returned BSON/JSON Documents:</span>
+                    </div>
+                    <div class="terminal-window max-h-64 overflow-y-auto">
+                        <pre id="nosqlOutputTerminal" class="text-gray-400 font-mono text-xs whitespace-pre-wrap p-4">// Click 'Run Mongo Query' to execute</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CELL 6: AI Mock Interview Bar Raiser Grilling & Cross Questions -->
             <div class="notebook-cell p-6 space-y-4 border-indigo-900/60 bg-gradient-to-b from-cardBg to-indigo-950/20">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-mono text-purple-400 font-bold">[In 4]</span>
+                        <span class="text-xs font-mono text-purple-400 font-bold">[In 6]</span>
                         <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
                             <span>🎙️</span> AI Bar Raiser Interviewer (Evaluation & Cross-Questioning)
                         </h3>
@@ -273,14 +347,14 @@
                 </div>
 
                 <p class="text-xs text-gray-400 leading-relaxed">
-                    Explain your architectural reasoning, edge case handling, locking strategy, or production trade-offs. 
-                    The AI Bar Raiser will inspect your explanation, Python code, and SQL, assign a score (0-10), and challenge you with <strong>rigorous MNC follow-up cross-questions</strong>.
+                    Explain your architectural reasoning, locking strategy, distributed consistency, or failure modes. 
+                    The AI Bar Raiser evaluates your explanation, Python code, and database queries, assigns a score (0-10), and challenges you with <strong>rigorous MNC follow-up cross-questions</strong>.
                 </p>
 
                 <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
                     <textarea id="candidateResponseInput" rows="6" 
                               class="w-full bg-transparent text-gray-100 text-xs p-4 focus:outline-none resize-y leading-relaxed font-sans" 
-                              placeholder="Explain your thought process, architectural choices, Big-O complexities, and how you mitigate concurrency/deadlock risks in production..."></textarea>
+                              placeholder="Explain your thought process, architectural choices, Big-O complexities, and how you mitigate concurrency/deadlock/partition risks in production..."></textarea>
                 </div>
 
                 <div class="flex justify-end">

@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Text, DateTime, Enum, JSON, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, Boolean
 from app.models.base import Base
 
 def utc_now():
@@ -10,7 +10,15 @@ class QuestionCategory(str, enum.Enum):
     PYTHON_INTERNALS = "python_internals"
     ASYNC_CONCURRENCY = "async_concurrency"
     FASTAPI_ARCHITECTURE = "fastapi_architecture"
+    POSTGRES_MYSQL = "postgres_mysql"
     SQL_DATABASE_INTERNALS = "sql_database_internals"
+    MONGODB_NOSQL = "mongodb_nosql"
+    REDIS_CACHING = "redis_caching"
+    KAFKA_MESSAGING = "kafka_messaging"
+    CELERY_RABBITMQ = "celery_rabbitmq"
+    DOCKER_CONTAINERS = "docker_containers"
+    KUBERNETES_DEVOPS = "kubernetes_devops"
+    CICD_PIPELINES = "cicd_pipelines"
     SYSTEM_DESIGN_MNC = "system_design_mnc"
     PRODUCTION_TROUBLESHOOTING = "production_troubleshooting"
 
@@ -26,13 +34,13 @@ class InterviewQuestion(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     slug = Column(String(255), unique=True, index=True, nullable=False)
-    category = Column(Enum(QuestionCategory), index=True, nullable=False)
-    difficulty = Column(Enum(QuestionDifficulty), index=True, nullable=False)
+    category = Column(String(80), index=True, nullable=False)
+    difficulty = Column(String(50), index=True, nullable=False)
     min_exp_years = Column(Integer, default=0, index=True)
     max_exp_years = Column(Integer, default=15)
     
     # MNC Targeting
-    company_tags = Column(JSON, default=list) # e.g. ["Amazon", "Uber", "Microsoft", "Stripe"]
+    company_tags = Column(JSON, default=list) # e.g. ["Amazon", "Uber", "Microsoft", "Stripe", "Netflix"]
     frequency_score = Column(Integer, default=85) # High frequency MNC questions
 
     # Theoretical Mind Map connection
@@ -49,11 +57,20 @@ class InterviewQuestion(Base):
     solution_code = Column(Text, nullable=True)
     test_cases_json = Column(JSON, default=list)
 
-    # SQL Sandbox Content
+    # SQL / NoSQL / Redis Sandbox Content
     has_sql_sandbox = Column(Boolean, default=False)
-    sql_schema = Column(String(50), default="ecommerce") # ecommerce, fintech, hr_tech
+    sql_schema = Column(String(50), default="ecommerce") # ecommerce, fintech, hr_tech, postgres_jsonb
     starter_sql = Column(Text, nullable=True)
     solution_sql = Column(Text, nullable=True)
+
+    # Interactive Domain Sandboxes
+    has_redis_sandbox = Column(Boolean, default=False)
+    starter_redis = Column(Text, nullable=True)
+    solution_redis = Column(Text, nullable=True)
+
+    has_nosql_sandbox = Column(Boolean, default=False)
+    starter_nosql = Column(Text, nullable=True)
+    solution_nosql = Column(Text, nullable=True)
 
     # Deep MNC Interviewer Cross Questions & Gotchas
     cross_questions = Column(JSON, default=list) # Array of follow-up deep probing questions
