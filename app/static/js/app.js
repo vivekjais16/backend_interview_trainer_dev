@@ -604,3 +604,196 @@ function formatMarkdown(text) {
         .replace(/\n\n/g, '<br/><br/>')
         .replace(/\n- /g, '<br/>• ');
 }
+
+// ----------------------------------------------------
+// Flowchart Learning Path & Visual Roadmap Navigation
+// ----------------------------------------------------
+function selectRoadmapStage(domain, mindmapSlug, element) {
+    currentDomainFilter = domain;
+
+    // Highlight the clicked flowchart step
+    document.querySelectorAll(".stage-step-btn").forEach(s => {
+        s.className = "stage-step-btn px-3 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-1.5";
+    });
+    if (element) {
+        element.className = "stage-step-btn px-3 py-1 rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-xs font-bold transition flex items-center gap-1.5";
+    }
+
+    // Reset domain chips
+    document.querySelectorAll("#domainChips button").forEach(b => {
+        b.className = "px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium transition";
+    });
+
+    // Reload question list with new domain filter
+    loadQuestions();
+
+    // Render corresponding architecture mindmap
+    const mindmapSec = document.getElementById("mindmapVisualSection");
+    if (mindmapSec) {
+        mindmapSec.classList.remove("hidden");
+    }
+    if (mindmapSlug) {
+        renderMindmap(mindmapSlug);
+    }
+
+    const title = domain ? domain.replace(/_/g, " ").toUpperCase() : "ALL";
+    showToast(`🗺️ Loaded Learning Path Stage: ${title}`);
+}
+
+// ----------------------------------------------------
+// Clipboard & Toast System
+// ----------------------------------------------------
+function copyToClipboard(elementId, message) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const text = el.value !== undefined ? el.value : el.innerText;
+    if (!text || !text.trim()) {
+        showToast("Nothing to copy", "info");
+        return;
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(message || "Copied to clipboard!");
+        }).catch(() => {
+            fallbackCopy(text, message);
+        });
+    } else {
+        fallbackCopy(text, message);
+    }
+}
+
+function fallbackCopy(text, message) {
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    temp.style.position = "fixed";
+    temp.style.opacity = "0";
+    document.body.appendChild(temp);
+    temp.focus();
+    temp.select();
+    try {
+        document.execCommand("copy");
+        showToast(message || "Copied to clipboard!");
+    } catch (e) {
+        showToast("Failed to copy", "error");
+    }
+    document.body.removeChild(temp);
+}
+
+function showToast(message, type = "success") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = "pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-700 text-xs font-semibold transform translate-y-2 opacity-0 transition-all duration-200";
+
+    let icon = "✓";
+    if (type === "info") icon = "ℹ️";
+    if (type === "error") icon = "⚠️";
+    if (message.includes("🗺️") || message.includes("💡")) icon = "";
+
+    toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+    });
+
+    setTimeout(() => {
+        toast.classList.add("translate-y-2", "opacity-0");
+        setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 200);
+    }, 2500);
+}
+
+// ----------------------------------------------------
+// MNC Architectural Blueprint Generator
+// ----------------------------------------------------
+function giveArchitecturalHint() {
+    const input = document.getElementById("candidateResponseInput");
+    if (!input) return;
+
+    const blueprint = `## 🏛️ MNC Architectural Blueprint & Technical Approach:
+
+1. High-Level Architecture & Component Flow:
+   - Identify entry points, async worker queues, and persistence layers.
+   - Choose communication protocol (gRPC vs REST, Kafka event streaming).
+
+2. Concurrency, Locking & Race Condition Mitigation:
+   - Python asyncio event loop vs multiprocessing workers.
+   - DB row-level locking (SELECT FOR UPDATE) vs Redis distributed lock (Redlock).
+
+3. Edge Cases, Failover & Idempotency:
+   - Retry policy with exponential backoff and jitter.
+   - Idempotency keys to guarantee at-most-once processing.
+   - Circuit breaking & fallback defaults for downstream outages.
+
+4. Observability & P99 SLA Guarantees:
+   - Distributed tracing (OpenTelemetry) on high-latency critical paths.
+   - Connection pool limits (Hikari/SQLAlchemy max_overflow).
+   - Target P99 latency: < 50ms at scale.
+`;
+
+    if (input.value.trim()) {
+        input.value = blueprint + "\n\n" + input.value;
+    } else {
+        input.value = blueprint;
+    }
+    input.focus();
+    showToast("💡 4-Pillar MNC Architectural Blueprint loaded!");
+}
+
+function clearCandidateAnswer() {
+    const input = document.getElementById("candidateResponseInput");
+    if (!input) return;
+    if (input.value.trim() && !confirm("Clear your response draft?")) {
+        return;
+    }
+    input.value = "";
+    showToast("Response draft cleared");
+}
+
+// ----------------------------------------------------
+// Mindmap Fullscreen Expansion Toggle
+// ----------------------------------------------------
+let isMindmapFullscreen = false;
+function toggleMindmapFullscreen() {
+    const sec = document.getElementById("mindmapVisualSection");
+    const btn = document.getElementById("mindmapFullscreenBtn");
+    if (!sec) return;
+
+    isMindmapFullscreen = !isMindmapFullscreen;
+    if (isMindmapFullscreen) {
+        sec.classList.add("fixed", "inset-0", "z-50", "h-screen", "w-screen", "bg-white", "p-8", "overflow-y-auto");
+        sec.classList.remove("p-6", "rounded-2xl", "mb-6");
+        if (btn) btn.innerHTML = "<span>⤡</span> Collapse";
+        showToast("Mindmap expanded to fullscreen");
+    } else {
+        sec.classList.remove("fixed", "inset-0", "z-50", "h-screen", "w-screen", "bg-white", "p-8", "overflow-y-auto");
+        sec.classList.add("p-6", "rounded-2xl", "mb-6");
+        if (btn) btn.innerHTML = "<span>⤢</span> Fullscreen";
+        showToast("Mindmap collapsed");
+    }
+}
+
+// ----------------------------------------------------
+// Global Window Export (ensures 100% operational buttons)
+// ----------------------------------------------------
+window.selectRoadmapStage = selectRoadmapStage;
+window.copyToClipboard = copyToClipboard;
+window.showToast = showToast;
+window.giveArchitecturalHint = giveArchitecturalHint;
+window.clearCandidateAnswer = clearCandidateAnswer;
+window.toggleMindmapFullscreen = toggleMindmapFullscreen;
+window.runPythonCode = runPythonCode;
+window.runSQLCode = runSQLCode;
+window.runRedisCode = runRedisCode;
+window.runNoSQLCode = runNoSQLCode;
+window.submitToAIInterviewer = submitToAIInterviewer;
+window.revealSolution = revealSolution;
+window.resetStarterCode = resetStarterCode;
+window.filterByDomain = filterByDomain;
+window.selectQuestion = selectQuestion;
+window.renderMindmap = renderMindmap;
+
