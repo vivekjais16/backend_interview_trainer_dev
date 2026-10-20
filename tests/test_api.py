@@ -18,6 +18,11 @@ def client():
     with TestClient(app) as c:
         yield c
 
+def test_home_page(client):
+    res = client.get("/")
+    assert res.status_code == 200
+    assert "AI Python Backend" in res.text
+
 def test_api_analytics_stats(client):
     res = client.get("/api/v1/analytics/stats")
     assert res.status_code == 200

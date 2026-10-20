@@ -6,7 +6,7 @@ from app.services.nosql_runner import run_nosql_query
 router = APIRouter(prefix="/sandbox/nosql", tags=["NoSQL / MongoDB Sandbox"])
 
 class NoSQLRunRequest(BaseModel):
-    query: str = Field(..., description="MongoDB style find or aggregate query", example="db.orders.aggregate([ { '$match': { 'status': 'DELIVERED' } } ])")
+    query: str = Field(..., description="MongoDB style find or aggregate query")
 
 class NoSQLRunResponse(BaseModel):
     success: bool

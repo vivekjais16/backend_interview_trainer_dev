@@ -59,9 +59,12 @@ app.include_router(api_v1_router)
 
 @app.get("/", response_class=HTMLResponse, tags=["Web UI"])
 async def serve_home(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "app_name": settings.APP_NAME,
-        "db_mode": "SQLite (Local Auto-Fallback)" if is_fallback_sqlite else "MySQL (Production)",
-        "ai_provider": settings.AI_PROVIDER
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "app_name": settings.APP_NAME,
+            "db_mode": "SQLite (Local Auto-Fallback)" if is_fallback_sqlite else "MySQL (Production)",
+            "ai_provider": settings.AI_PROVIDER
+        }
+    )
