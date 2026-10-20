@@ -184,16 +184,16 @@
 
                     <!-- Category Filter Chips -->
                     <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]" id="domainChips">
-                        <button onclick="filterByDomain('')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs">All</button>
-                        <button onclick="filterByDomain('python_internals')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Python</button>
-                        <button onclick="filterByDomain('postgres_mysql')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Postgres/MySQL</button>
-                        <button onclick="filterByDomain('mongodb_nosql')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Mongo</button>
-                        <button onclick="filterByDomain('redis_caching')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Redis</button>
-                        <button onclick="filterByDomain('kafka_messaging')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Kafka</button>
-                        <button onclick="filterByDomain('celery_rabbitmq')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Celery</button>
-                        <button onclick="filterByDomain('docker_containers')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Docker</button>
-                        <button onclick="filterByDomain('kubernetes_devops')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">K8s</button>
-                        <button onclick="filterByDomain('cicd_pipelines')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">CI/CD</button>
+                        <button onclick="filterByDomain('', this)" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs">All</button>
+                        <button onclick="filterByDomain('python_internals', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Python</button>
+                        <button onclick="filterByDomain('postgres_mysql', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Postgres/MySQL</button>
+                        <button onclick="filterByDomain('mongodb_nosql', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Mongo</button>
+                        <button onclick="filterByDomain('redis_caching', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Redis</button>
+                        <button onclick="filterByDomain('kafka_messaging', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Kafka</button>
+                        <button onclick="filterByDomain('celery_rabbitmq', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Celery</button>
+                        <button onclick="filterByDomain('docker_containers', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Docker</button>
+                        <button onclick="filterByDomain('kubernetes_devops', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">K8s</button>
+                        <button onclick="filterByDomain('cicd_pipelines', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">CI/CD</button>
                     </div>
                 </div>
 
@@ -811,16 +811,16 @@
             const visual = document.getElementById("mindmapVisualSection");
 
             if (tab === "questions") {
-                qBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
-                mBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
-                qPanel.classList.remove("hidden");
-                mPanel.classList.add("hidden");
+                if (qBtn) qBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
+                if (mBtn) mBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
+                if (qPanel) qPanel.classList.remove("hidden");
+                if (mPanel) mPanel.classList.add("hidden");
             } else {
-                mBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
-                qBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
-                mPanel.classList.remove("hidden");
-                qPanel.classList.add("hidden");
-                visual.classList.remove("hidden");
+                if (mBtn) mBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
+                if (qBtn) qBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
+                if (mPanel) mPanel.classList.remove("hidden");
+                if (qPanel) qPanel.classList.add("hidden");
+                if (visual) visual.classList.remove("hidden");
             }
         }
 
@@ -836,28 +836,31 @@
             const btnNosql = document.getElementById("tabNosqlBtn");
 
             [btnPy, btnSql, btnRedis, btnNosql].forEach(btn => {
-                btn.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium";
+                if (btn) btn.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium";
             });
 
-            pySection.classList.add("hidden");
-            sqlSection.classList.add("hidden");
-            redisSection.classList.add("hidden");
-            nosqlSection.classList.add("hidden");
+            if (pySection) pySection.classList.add("hidden");
+            if (sqlSection) sqlSection.classList.add("hidden");
+            if (redisSection) redisSection.classList.add("hidden");
+            if (nosqlSection) nosqlSection.classList.add("hidden");
 
             if (tab === "python") {
-                pySection.classList.remove("hidden");
-                btnPy.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+                if (pySection) pySection.classList.remove("hidden");
+                if (btnPy) btnPy.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
             } else if (tab === "sql") {
-                sqlSection.classList.remove("hidden");
-                btnSql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+                if (sqlSection) sqlSection.classList.remove("hidden");
+                if (btnSql) btnSql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
             } else if (tab === "redis") {
-                redisSection.classList.remove("hidden");
-                btnRedis.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+                if (redisSection) redisSection.classList.remove("hidden");
+                if (btnRedis) btnRedis.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
             } else if (tab === "nosql") {
-                nosqlSection.classList.remove("hidden");
-                btnNosql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+                if (nosqlSection) nosqlSection.classList.remove("hidden");
+                if (btnNosql) btnNosql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
             }
         }
+
+        window.switchSidebarTab = switchSidebarTab;
+        window.switchSandboxTab = switchSandboxTab;
     </script>
     <script src="/static/js/app.js"></script>
 </body>

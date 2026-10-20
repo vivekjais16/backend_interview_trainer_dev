@@ -26,12 +26,25 @@ function getPhaseClass(phase) {
 
 function selectCareerPhase(phase, el) {
     currentPhaseFilter = phase;
-    
+    currentDomainFilter = ""; // Reset technology domain filter to show all questions for this phase
+
+    // Reset domain chip buttons to 'All'
+    document.querySelectorAll("#domainChips button").forEach(b => {
+        b.className = "px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium transition";
+    });
+    const allChip = document.querySelector("#domainChips button:first-child");
+    if (allChip) allChip.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
+
     // Update button styles in phase bar
     document.querySelectorAll(".phase-step-btn").forEach(btn => {
         btn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-2";
     });
     
+    if (!el) {
+        const map = { 'basic': 'phaseBtnBasic', 'intermediate': 'phaseBtnInter', 'advanced': 'phaseBtnAdv', '': 'phaseBtnAll' };
+        el = document.getElementById(map[phase] || 'phaseBtnAll');
+    }
+
     if (el) {
         if (phase === 'basic') {
             el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold transition flex items-center gap-2 shadow-2xs";
@@ -140,17 +153,44 @@ function setupEventListeners() {
             runSQLCode();
         }
     });
+
+    // SQL Schema Change notification
+    document.getElementById("sqlSchemaSelect")?.addEventListener("change", (e) => {
+        const val = e.target.value;
+        showToast(`Active SQL Schema: ${val.toUpperCase()}`);
+    });
 }
 
-function filterByDomain(domain) {
+function filterByDomain(domain, btnElement) {
     currentDomainFilter = domain;
     
+    // When filtering by a specific technology domain, unlock phase so user sees all questions in this topic!
+    if (domain) {
+        currentPhaseFilter = "";
+        document.querySelectorAll(".phase-step-btn").forEach(btn => {
+            btn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-2";
+        });
+        const allPhaseBtn = document.getElementById("phaseBtnAll");
+        if (allPhaseBtn) {
+            allPhaseBtn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        }
+    }
+
     // Update chip buttons
     document.querySelectorAll("#domainChips button").forEach(b => {
         b.className = "px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium transition";
     });
-    if (window.event && window.event.currentTarget) {
-        window.event.currentTarget.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
+    
+    let target = btnElement;
+    if (!target && window.event && window.event.currentTarget) {
+        target = window.event.currentTarget;
+    }
+    if (!target) {
+        const btns = Array.from(document.querySelectorAll("#domainChips button"));
+        target = btns.find(b => b.getAttribute("onclick")?.includes(`'${domain}'`)) || btns[0];
+    }
+    if (target) {
+        target.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
     }
 
     loadQuestions();
@@ -332,6 +372,15 @@ function renderQuestionDetail(q) {
             `;
         }
 
+        if (q.solution_nosql) {
+            walkHtml += `
+                <div class="mt-2">
+                    <h5 class="font-bold text-slate-900 text-xs mb-1 font-mono">🍃 MongoDB Document Pipeline Guide:</h5>
+                    <pre class="terminal-console p-3 rounded-lg text-emerald-300 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">${q.solution_nosql}</pre>
+                </div>
+            `;
+        }
+
         walkthroughText.innerHTML = walkHtml || "<p class='text-slate-500 italic'>No walkthrough content available for this problem.</p>";
     }
 
@@ -379,9 +428,10 @@ function renderQuestionDetail(q) {
         if (q.sql_schema) document.getElementById("sqlSchemaSelect").value = q.sql_schema;
     }
 
-    // Reset AI Feedback area
+    // Reset AI Feedback area & Big-O complexity card
     document.getElementById("aiEvaluationCard").classList.add("hidden");
     document.getElementById("candidateResponseInput").value = "";
+    document.getElementById("pyComplexityCard")?.classList.add("hidden");
 }
 
 async function runPythonCode() {
@@ -661,6 +711,7 @@ async function submitToAIInterviewer() {
 
         const crossQContainer = document.getElementById("aiCrossQuestions");
         if (turn.cross_questions_asked && turn.cross_questions_asked.length > 0) {
+            window.lastCrossQuestions = turn.cross_questions_asked;
             crossQContainer.innerHTML = `
                 <div class="mt-4 p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl">
                     <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2.5 flex items-center gap-2">
@@ -671,7 +722,7 @@ async function submitToAIInterviewer() {
                         ${turn.cross_questions_asked.map((cq, i) => `
                             <div class="p-3 bg-white border border-indigo-100 rounded-xl text-xs text-slate-800 flex items-start justify-between gap-3 shadow-2xs">
                                 <div><span class="font-bold text-indigo-600">Q${i+1}:</span> ${cq}</div>
-                                <button onclick="injectCrossQuestion('${cq.replace(/'/g, "\\'")}')" class="text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg shrink-0 transition">Address This</button>
+                                <button onclick="injectCrossQuestionByIndex(${i})" class="text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg shrink-0 transition">Address This</button>
                             </div>
                         `).join('')}
                     </div>
@@ -688,10 +739,22 @@ async function submitToAIInterviewer() {
     }
 }
 
-function injectCrossQuestion(cqText) {
+function injectCrossQuestionByIndex(idx) {
+    if (!window.lastCrossQuestions || !window.lastCrossQuestions[idx]) return;
+    const cqText = window.lastCrossQuestions[idx];
     const textarea = document.getElementById("candidateResponseInput");
+    if (!textarea) return;
     textarea.value = `[Addressing Follow-Up Cross Question: "${cqText}"]\n\n` + textarea.value;
     textarea.focus();
+    showToast("Follow-up question added to response draft");
+}
+
+function injectCrossQuestion(cqText) {
+    const textarea = document.getElementById("candidateResponseInput");
+    if (!textarea) return;
+    textarea.value = `[Addressing Follow-Up Cross Question: "${cqText}"]\n\n` + textarea.value;
+    textarea.focus();
+    showToast("Follow-up question added to response draft");
 }
 
 function toggleEasyWalkthrough() {
@@ -752,21 +815,36 @@ async function loadMindmaps() {
         if (!tabList) return;
 
         tabList.innerHTML = topics.map((t, idx) => `
-            <button onclick="renderMindmap('${t.slug}')" class="px-3.5 py-2 text-xs rounded-xl transition font-semibold text-left border border-slate-200 ${idx === 0 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-100'}">
+            <button onclick="renderMindmap('${t.slug}', this)" class="mindmap-topic-btn px-3.5 py-2 text-xs rounded-xl transition font-semibold text-left border border-slate-200 ${idx === 0 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-bold' : 'bg-white text-slate-700 hover:bg-slate-100'}">
                 ${t.title}
             </button>
         `).join('');
 
         if (topics.length > 0) {
-            await renderMindmap(topics[0].slug);
+            await renderMindmap(topics[0].slug, tabList.querySelector("button"));
         }
     } catch (err) {
         console.error("Error loading mindmaps:", err);
     }
 }
 
-async function renderMindmap(slug) {
+async function renderMindmap(slug, btnElement) {
     try {
+        const visual = document.getElementById("mindmapVisualSection");
+        if (visual) visual.classList.remove("hidden");
+
+        // Update active topic button style
+        document.querySelectorAll(".mindmap-topic-btn").forEach(b => {
+            b.className = "mindmap-topic-btn px-3.5 py-2 text-xs rounded-xl transition font-semibold text-left border border-slate-200 bg-white text-slate-700 hover:bg-slate-100";
+        });
+        let target = btnElement;
+        if (!target && window.event && window.event.currentTarget) {
+            target = window.event.currentTarget;
+        }
+        if (target) {
+            target.className = "mindmap-topic-btn px-3.5 py-2 text-xs rounded-xl transition font-bold text-left border border-indigo-600 bg-indigo-600 text-white shadow-xs";
+        }
+
         const res = await fetch(`/api/v1/mindmaps/${slug}`);
         const topic = await res.json();
         const container = document.getElementById("mindmapDiagramContainer");
@@ -1360,9 +1438,67 @@ function revealArenaInStudio() {
     selectQuestion(q.id);
 }
 
+function switchSidebarTab(tab) {
+    const qBtn = document.getElementById("tabQuestionsBtn");
+    const mBtn = document.getElementById("tabMindmapBtn");
+    const qPanel = document.getElementById("sidebarQuestionsPanel");
+    const mPanel = document.getElementById("sidebarMindmapPanel");
+    const visual = document.getElementById("mindmapVisualSection");
+
+    if (tab === "questions") {
+        if (qBtn) qBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
+        if (mBtn) mBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
+        if (qPanel) qPanel.classList.remove("hidden");
+        if (mPanel) mPanel.classList.add("hidden");
+    } else {
+        if (mBtn) mBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
+        if (qBtn) qBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
+        if (mPanel) mPanel.classList.remove("hidden");
+        if (qPanel) qPanel.classList.add("hidden");
+        if (visual) visual.classList.remove("hidden");
+    }
+}
+
+function switchSandboxTab(tab) {
+    const pySection = document.getElementById("pythonCellSection");
+    const sqlSection = document.getElementById("sqlCellSection");
+    const redisSection = document.getElementById("redisCellSection");
+    const nosqlSection = document.getElementById("nosqlCellSection");
+
+    const btnPy = document.getElementById("tabPyBtn");
+    const btnSql = document.getElementById("tabSqlBtn");
+    const btnRedis = document.getElementById("tabRedisBtn");
+    const btnNosql = document.getElementById("tabNosqlBtn");
+
+    [btnPy, btnSql, btnRedis, btnNosql].forEach(btn => {
+        if (btn) btn.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium";
+    });
+
+    if (pySection) pySection.classList.add("hidden");
+    if (sqlSection) sqlSection.classList.add("hidden");
+    if (redisSection) redisSection.classList.add("hidden");
+    if (nosqlSection) nosqlSection.classList.add("hidden");
+
+    if (tab === "python") {
+        if (pySection) pySection.classList.remove("hidden");
+        if (btnPy) btnPy.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+    } else if (tab === "sql") {
+        if (sqlSection) sqlSection.classList.remove("hidden");
+        if (btnSql) btnSql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+    } else if (tab === "redis") {
+        if (redisSection) redisSection.classList.remove("hidden");
+        if (btnRedis) btnRedis.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+    } else if (tab === "nosql") {
+        if (nosqlSection) nosqlSection.classList.remove("hidden");
+        if (btnNosql) btnNosql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+    }
+}
+
 // ----------------------------------------------------
 // Global Window Export (ensures 100% operational buttons)
 // ----------------------------------------------------
+window.switchSidebarTab = switchSidebarTab;
+window.switchSandboxTab = switchSandboxTab;
 window.selectRoadmapStage = selectRoadmapStage;
 window.copyToClipboard = copyToClipboard;
 window.showToast = showToast;
@@ -1374,6 +1510,8 @@ window.runSQLCode = runSQLCode;
 window.runRedisCode = runRedisCode;
 window.runNoSQLCode = runNoSQLCode;
 window.submitToAIInterviewer = submitToAIInterviewer;
+window.injectCrossQuestion = injectCrossQuestion;
+window.injectCrossQuestionByIndex = injectCrossQuestionByIndex;
 window.revealSolution = revealSolution;
 window.resetStarterCode = resetStarterCode;
 window.filterByDomain = filterByDomain;

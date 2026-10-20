@@ -123,3 +123,16 @@ def test_api_filter_by_phase(client):
     for q in qs:
         assert q["phase"] == "intermediate"
 
+def test_api_filter_by_domains(client):
+    domains = [
+        "python_internals", "postgres_mysql", "mongodb_nosql",
+        "redis_caching", "kafka_messaging", "celery_rabbitmq",
+        "docker_containers", "kubernetes_devops", "cicd_pipelines"
+    ]
+    for d in domains:
+        res = client.get(f"/api/v1/questions?category={d}")
+        assert res.status_code == 200
+        qs = res.json()
+        assert len(qs) >= 1, f"Expected questions for domain {d}, got 0"
+
+

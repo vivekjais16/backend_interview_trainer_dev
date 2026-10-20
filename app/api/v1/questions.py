@@ -117,7 +117,7 @@ def list_questions(
     phase: Optional[str] = Query(None, description="Filter by phase: basic, intermediate, advanced"),
     experience_years: Optional[int] = Query(None, ge=0, le=40, description="Filter by candidate years of experience"),
     experience_level: Optional[str] = Query(None, description="junior (0-2), mid (3-5), senior (6-9), lead (10+)"),
-    category: Optional[QuestionCategory] = Query(None, description="Filter by topic category"),
+    category: Optional[str] = Query(None, description="Filter by topic category"),
     difficulty: Optional[QuestionDifficulty] = Query(None, description="Filter by difficulty"),
     company: Optional[str] = Query(None, description="Filter by MNC company name (e.g. Amazon, Google, Uber)"),
     search: Optional[str] = Query(None, description="Search query in title or scenario"),
@@ -151,7 +151,43 @@ def list_questions(
             query = query.filter(InterviewQuestion.min_exp_years >= 10)
 
     if category:
-        query = query.filter(InterviewQuestion.category == category)
+        cat_str = str(category).lower().strip()
+        if cat_str in ("python_internals", "python"):
+            query = query.filter(
+                or_(
+                    InterviewQuestion.category == "python_internals",
+                    InterviewQuestion.category == "async_concurrency",
+                    InterviewQuestion.category == "fastapi_architecture"
+                )
+            )
+        elif cat_str in ("postgres_mysql", "sql", "sql_database_internals"):
+            query = query.filter(
+                or_(
+                    InterviewQuestion.category == "postgres_mysql",
+                    InterviewQuestion.category == "sql_database_internals"
+                )
+            )
+        elif cat_str in ("kafka_messaging", "kafka"):
+            query = query.filter(
+                or_(
+                    InterviewQuestion.category == "kafka_messaging",
+                    InterviewQuestion.category == "system_design_mnc"
+                )
+            )
+        elif cat_str in ("docker_containers", "docker"):
+            query = query.filter(InterviewQuestion.category == "docker_containers")
+        elif cat_str in ("kubernetes_devops", "k8s"):
+            query = query.filter(InterviewQuestion.category == "kubernetes_devops")
+        elif cat_str in ("cicd_pipelines", "cicd"):
+            query = query.filter(InterviewQuestion.category == "cicd_pipelines")
+        elif cat_str in ("mongodb_nosql", "nosql", "mongo"):
+            query = query.filter(InterviewQuestion.category == "mongodb_nosql")
+        elif cat_str in ("redis_caching", "redis"):
+            query = query.filter(InterviewQuestion.category == "redis_caching")
+        elif cat_str in ("celery_rabbitmq", "celery"):
+            query = query.filter(InterviewQuestion.category == "celery_rabbitmq")
+        else:
+            query = query.filter(InterviewQuestion.category == cat_str)
     if difficulty:
         query = query.filter(InterviewQuestion.difficulty == difficulty)
     if search:
