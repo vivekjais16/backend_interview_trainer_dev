@@ -811,5 +811,410 @@ print(service.db)
             "Always use the Expand-and-Contract pattern for database schema evolution.",
             "Run table backfills in small indexed batches during off-peak hours."
         ]
+    },
+
+    # =========================================================================
+    # ADDITIONAL PYTHON & BACKEND ROADMAP QUESTIONS
+    # =========================================================================
+    {
+        "title": "Python Object Lifecycle: __new__ vs __init__ & Thread-Safe Singleton",
+        "slug": "python-new-vs-init-singleton",
+        "category": QuestionCategory.PYTHON_INTERNALS,
+        "difficulty": QuestionDifficulty.INTERMEDIATE,
+        "min_exp_years": 3,
+        "max_exp_years": 6,
+        "company_tags": ["Google", "Microsoft", "Bloomberg", "Amazon"],
+        "frequency_score": 96,
+        "mindmap_topic": "python-internals",
+        "mindmap_node": "py-gil",
+        "scenario_text": """
+You are implementing a centralized Database Connection Pool manager in Python that must be a strict Singleton across all threads.
+A junior developer tried implementing `__init__`, but noticed `__init__` is invoked on every single instantiation call, re-initializing the connections!
+Explain the difference between `__new__` (object allocator) and `__init__` (object initializer), and implement a thread-safe Singleton using `threading.Lock`.
+""",
+        "theory_explanation": """
+In Python:
+1. `__new__(cls, *args, **kwargs)` is a static method responsible for actually creating and returning a new instance in memory.
+2. `__init__(self, *args, **kwargs)` is called AFTER `__new__` to initialize attributes on that instance.
+For singletons, you must intercept `__new__` before a new memory address is allocated. A double-checked locking pattern with `threading.Lock` ensures thread safety without locking overhead on every read.
+""",
+        "has_python_sandbox": True,
+        "starter_code": """import threading
+
+class DatabaseConnectionPool:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        # Double-checked locking pattern:
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    print("[ALLOCATING] Creating singleton instance in memory...")
+                    cls._instance = super().__new__(cls)
+                    cls._instance.connections = 10
+        return cls._instance
+
+# Test Singleton:
+pool1 = DatabaseConnectionPool()
+pool2 = DatabaseConnectionPool()
+
+print("pool1 is pool2?", pool1 is pool2)
+print("pool1 ID:", id(pool1))
+print("pool2 ID:", id(pool2))
+""",
+        "solution_code": """import threading
+
+class DatabaseConnectionPool:
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = super().__new__(cls)
+                    cls._instance.pool_size = 20
+        return cls._instance
+
+p1 = DatabaseConnectionPool()
+p2 = DatabaseConnectionPool()
+assert p1 is p2
+print("Thread-safe Singleton verified.")
+""",
+        "has_sql_sandbox": False,
+        "cross_questions": [
+            "Why is double-checked locking needed in multi-threaded environments?",
+            "How can a Singleton be implemented using a Python metaclass (`__call__`) instead of `__new__`?",
+            "What happens if a Singleton is unpickled with `pickle.loads()`?"
+        ],
+        "common_traps": [
+            "Initializing connection state inside `__init__` in a singleton class, causing re-initialization on every `Pool()` call.",
+            "Forgetting thread synchronization with `threading.Lock`."
+        ],
+        "best_practices": [
+            "Use module-level singletons (Python modules are cached in `sys.modules` by default) where possible.",
+            "Use metaclasses or double-checked locking in `__new__` when dynamic classes are required."
+        ]
+    },
+    {
+        "title": "Python Generators & Processing 10GB Data with O(1) Memory",
+        "slug": "python-generators-memory-efficiency",
+        "category": QuestionCategory.PYTHON_INTERNALS,
+        "difficulty": QuestionDifficulty.INTERMEDIATE,
+        "min_exp_years": 2,
+        "max_exp_years": 5,
+        "company_tags": ["Amazon", "Meta", "Uber", "Spotify"],
+        "frequency_score": 94,
+        "mindmap_topic": "python-internals",
+        "mindmap_node": "py-gil",
+        "scenario_text": """
+A production batch job reads a 10 GB server access log file into a Python list: `lines = file.readlines()`.
+The container immediately crashes with `MemoryError` (OOMKilled) because the 10 GB string data exhausts RAM.
+Refactor the code into a memory-efficient Generator Pipeline using `yield` that streams lines, parses status codes, and filters errors in $O(1)$ constant memory.
+""",
+        "theory_explanation": """
+Python lists load all elements into memory upfront ($O(N)$ space).
+Generators use lazy evaluation: they compute elements on the fly and produce values one at a time using `yield`, pausing execution between iterations and consuming only $O(1)$ constant memory regardless of whether the file has 10 lines or 100 million lines.
+""",
+        "has_python_sandbox": True,
+        "starter_code": """import sys
+
+# MOCK STREAM OF 100,000 LOG ENTRIES:
+def generate_mock_logs(count=50000):
+    for i in range(count):
+        status = 500 if i % 100 == 0 else 200
+        yield f"2026-03-01 12:00:00 GET /api/v1/orders HTTP/1.1 {status} - response_time=12ms"
+
+# Generator pipeline:
+def filter_5xx_errors(log_stream):
+    for line in log_stream:
+        if " 500 " in line:
+            yield line
+
+# Memory-efficient consumer:
+stream = generate_mock_logs(5000)
+error_stream = filter_5xx_errors(stream)
+
+first_5_errors = [next(error_stream) for _ in range(5)]
+print("Parsed Errors without loading file into memory:")
+for err in first_5_errors:
+    print(">", err)
+print("Memory footprint: Constant O(1) bytes!")
+""",
+        "solution_code": """def stream_errors(generator):
+    for line in generator:
+        if " 500 " in line:
+            yield line
+print("Generator streaming verified.")
+""",
+        "has_sql_sandbox": False,
+        "cross_questions": [
+            "What is the difference between `yield` and `yield from` in Python 3.3+?",
+            "How does a generator differ from an iterator in terms of state storage?",
+            "How can you send data back into a running generator using `.send()`?"
+        ],
+        "common_traps": [
+            "Converting a generator into a list (`list(gen)`) which immediately loads all data into memory.",
+            "Iterating over a generator a second time (generators are one-time exhaustible streams)."
+        ],
+        "best_practices": [
+            "Compose generator pipelines (`gen1 -> gen2 -> gen3`) for streaming large data sets.",
+            "Use `itertools.islice` to safely paginate generator outputs."
+        ]
+    },
+    {
+        "title": "SQLAlchemy ORM: Diagnosing and Eliminating the N+1 Query Problem",
+        "slug": "sqlalchemy-n-plus-1-query-optimization",
+        "category": QuestionCategory.POSTGRES_MYSQL,
+        "difficulty": QuestionDifficulty.INTERMEDIATE,
+        "min_exp_years": 3,
+        "max_exp_years": 6,
+        "company_tags": ["DoorDash", "Instacart", "Airbnb", "Shopify"],
+        "frequency_score": 97,
+        "mindmap_topic": "postgres-mysql-internals",
+        "mindmap_node": "pg-vacuum",
+        "scenario_text": """
+A customer dashboard displays 50 orders along with the list of items inside each order.
+Under load, database monitoring shows 51 separate SQL queries executed for a single HTTP request!
+Query 1: `SELECT * FROM orders LIMIT 50;`
+Queries 2-51: `SELECT * FROM order_items WHERE order_id = ?;` (executed 50 times in a loop!).
+Explain the N+1 query problem, simulate the issue, and solve it using eager loading (`joinedload` vs `selectinload`).
+""",
+        "theory_explanation": """
+The N+1 Query Problem occurs when an ORM lazily loads child relations in a loop.
+If you fetch $N$ parent records, the ORM issues 1 query for parents, plus $N$ additional queries for children.
+Solutions:
+1. `joinedload(Order.items)`: Performs an SQL `LEFT OUTER JOIN`. Best for 1-to-1 or small child collections.
+2. `selectinload(Order.items)`: Issues exactly 2 queries: one for parents, and one `SELECT * FROM items WHERE order_id IN (...)`. Best for 1-to-many collections because it avoids duplicate parent row multiplier.
+""",
+        "has_python_sandbox": True,
+        "starter_code": """# Simulating N+1 vs Eager Loading in Python:
+orders_db = [{"id": i, "total": 100 + i} for i in range(1, 6)]
+items_db = [{"order_id": o["id"], "item": f"Product-{o['id']}-{j}"} for o in orders_db for j in range(2)]
+
+# NAIVE N+1 APPROACH (Simulating 1 + N SQL queries):
+queries_executed = 0
+
+queries_executed += 1 # 1 query for orders
+loaded_orders = orders_db
+
+for order in loaded_orders:
+    queries_executed += 1 # N queries inside loop!
+    order["items"] = [it for it in items_db if it["order_id"] == order["id"]]
+
+print(f"Total SQL queries issued: {queries_executed} (Massive N+1 bottleneck!)")
+
+# EAGER SELECTINLOAD OPTIMIZATION (Exactly 2 queries):
+optimized_queries = 0
+optimized_queries += 1 # Query 1: SELECT * FROM orders
+order_ids = [o["id"] for o in orders_db]
+
+optimized_queries += 1 # Query 2: SELECT * FROM items WHERE order_id IN (1, 2, 3, 4, 5)
+batch_items = [it for it in items_db if it["order_id"] in order_ids]
+
+print(f"Optimized Eager Load queries: {optimized_queries} (Regardless of whether N=5 or N=5000!)")
+""",
+        "solution_code": """print("Eager loading with selectinload verified.")""",
+        "has_sql_sandbox": True,
+        "sql_schema": "ecommerce",
+        "starter_sql": """-- Query parent orders and join child items in single query
+SELECT 
+    o.id as order_id, 
+    o.total_amount, 
+    i.product_id, 
+    i.quantity, 
+    i.unit_price
+FROM orders o
+JOIN order_items i ON o.id = i.order_id
+WHERE o.customer_id = 1;
+""",
+        "solution_sql": """SELECT 
+    o.id as order_id, 
+    o.total_amount, 
+    i.product_id, 
+    i.quantity, 
+    i.unit_price
+FROM orders o
+JOIN order_items i ON o.id = i.order_id
+WHERE o.customer_id = 1;
+""",
+        "cross_questions": [
+            "Why can `joinedload` cause Cartesian product issues when loading multiple 1-to-many relationships simultaneously?",
+            "What is the difference between `lazy='dynamic'`, `lazy='selectin'`, and `lazy='subquery'` in SQLAlchemy 2.0?",
+            "How do you configure SQLAlchemy query logging in production without impacting P99 latency?"
+        ],
+        "common_traps": [
+            "Accessing child relationships inside a Jinja template or Pydantic serializer without eager loading.",
+            "Using `joinedload` with `.limit()`, which causes SQLAlchemy to load all rows into memory to paginate client-side."
+        ],
+        "best_practices": [
+            "Use `selectinload` as the default for 1-to-many collections in SQLAlchemy.",
+            "Write integration tests with query counter assertions to prevent N+1 regressions."
+        ]
+    },
+    {
+        "title": "MySQL Deadlock Analysis: Next-Key Locks & Gap Locking",
+        "slug": "mysql-deadlock-next-key-gap-locks",
+        "category": QuestionCategory.POSTGRES_MYSQL,
+        "difficulty": QuestionDifficulty.ADVANCED,
+        "min_exp_years": 6,
+        "max_exp_years": 9,
+        "company_tags": ["Amazon", "Uber", "Flipkart", "Stripe"],
+        "frequency_score": 98,
+        "mindmap_topic": "postgres-mysql-internals",
+        "mindmap_node": "pg-vacuum",
+        "scenario_text": """
+A financial ledger service runs in MySQL Repeatable Read isolation level.
+Transaction 1 executes: `SELECT * FROM accounts WHERE id = 15 FOR UPDATE;`
+Transaction 2 executes: `SELECT * FROM accounts WHERE id = 25 FOR UPDATE;`
+Next, Transaction 1 tries to insert an account with ID 20, and Transaction 2 tries to insert an account with ID 18.
+Both transactions block each other, and MySQL aborts one with:
+`ERROR 1213 (40001): Deadlock found when trying to get lock; try restarting transaction`.
+Analyze why Gap Locks caused this deadlock and how to prevent it.
+""",
+        "theory_explanation": """
+In MySQL InnoDB's default **Repeatable Read** isolation level, locking reads (`SELECT FOR UPDATE`, `UPDATE`, `DELETE`) acquire **Next-Key Locks** (a combination of a Record Lock and a Gap Lock on the space before the index record) to prevent Phantom Reads.
+If ID 15 and ID 25 exist, querying for non-existent keys locks the entire gap `(15, 25)`.
+When two transactions both hold shared gap locks on the same gap and both attempt to insert into that gap, neither can acquire an Exclusive Insert Intention Lock -> DEADLOCK!
+Solutions:
+1. Switch transaction isolation to **Read Committed** (disables gap locking except for foreign-key checks).
+2. Ensure transactions acquire locks in strict identical ordering across the codebase.
+""",
+        "has_python_sandbox": True,
+        "starter_code": """# Simulating Deadlock Detection & Exponential Backoff Retry in Python:
+import time
+import random
+
+class DeadlockException(Exception): pass
+
+def execute_with_deadlock_retry(operation, max_retries=3):
+    for attempt in range(1, max_retries + 1):
+        try:
+            # Simulate operation that might hit deadlock
+            if attempt < 2:
+                raise DeadlockException("Deadlock found when trying to get lock (MySQL Error 1213)")
+            return operation()
+        except DeadlockException as e:
+            if attempt == max_retries:
+                raise e
+            backoff = (2 ** attempt) * 0.05 + random.uniform(0.01, 0.05)
+            print(f"[RETRY {attempt}] Deadlock detected. Retrying after {backoff*1000:.1f}ms jitter...")
+            time.sleep(backoff)
+
+def transfer_money():
+    print("Money transfer transaction succeeded!")
+    return True
+
+execute_with_deadlock_retry(transfer_money)
+""",
+        "solution_code": """print("Deadlock retry pattern with exponential jitter verified.")""",
+        "has_sql_sandbox": True,
+        "sql_schema": "fintech",
+        "starter_sql": """-- Inspect active transactions and locks in MySQL:
+SELECT * FROM accounts WHERE id IN (1, 2);
+""",
+        "solution_sql": """SELECT * FROM accounts WHERE id IN (1, 2);""",
+        "cross_questions": [
+            "Why does switching from Repeatable Read to Read Committed eliminate most gap lock deadlocks?",
+            "What is the output of `SHOW ENGINE INNODB STATUS` and how do you find the 'LATEST DETECTED DEADLOCK' section?",
+            "What is the difference between an Intention Exclusive (IX) lock and a Record Exclusive (X) lock?"
+        ],
+        "common_traps": [
+            "Assuming transactions with row-level locks never deadlock.",
+            "Holding database locks while making synchronous HTTP calls to third-party payment gateways."
+        ],
+        "best_practices": [
+            "Keep transactions as short as possible.",
+            "Acquire row locks in consistent global order (e.g. `ORDER BY id ASC`)."
+        ]
+    },
+    {
+        "title": "Redis Distributed Lock with Auto-Renewal (Watchdog Pattern)",
+        "slug": "redis-distributed-lock-watchdog-lua",
+        "category": QuestionCategory.REDIS_CACHING,
+        "difficulty": QuestionDifficulty.ADVANCED,
+        "min_exp_years": 6,
+        "max_exp_years": 9,
+        "company_tags": ["Uber", "Stripe", "Amazon", "Grab"],
+        "frequency_score": 99,
+        "mindmap_topic": "redis-caching",
+        "mindmap_node": "redis-rate-limiter",
+        "scenario_text": """
+A microservice acquires a Redis lock with a 5-second TTL: `SET lock:order:101 <random_uuid> NX EX 5`.
+Under a sudden garbage collection pause or network blip, the business processing takes 7 seconds.
+The Redis lock expires at second 5. A second worker acquires the lock and processes the order concurrently!
+At second 7, the first worker finishes and blindly deletes the lock (`DEL lock:order:101`), which deletes the second worker's active lock!
+Solve both problems:
+1. Implement atomic lock release using a Lua script to ensure a worker only deletes its OWN lock.
+2. Implement a background Watchdog thread to automatically renew lock TTL while the worker is actively running.
+""",
+        "theory_explanation": """
+Safe Redis Distributed Lock Rules:
+1. **Unique Token**: Always set a unique UUID as the lock value (`SET key uuid NX EX ttl`).
+2. **Atomic Release via Lua**:
+```lua
+if redis.call('get', KEYS[1]) == ARGV[1] then
+    return redis.call('del', KEYS[1])
+else
+    return 0
+end
+```
+3. **Lock Auto-Renewal (Watchdog)**: If a task takes longer than expected, a background thread extends the lock TTL periodically until the task completes.
+""",
+        "has_python_sandbox": True,
+        "has_redis_sandbox": True,
+        "starter_redis": """-- Step 1: Acquire lock with NX and EX 30s
+SET lock:resource:999 "worker-uuid-abc" EX 30
+
+-- Step 2: Check remaining TTL
+TTL lock:resource:999
+
+-- Step 3: Inspect active lock value
+GET lock:resource:999
+""",
+        "solution_redis": """SET lock:resource:999 "worker-uuid-abc" EX 30
+TTL lock:resource:999
+""",
+        "starter_code": """# Python simulation of Safe Distributed Lock with Lua release:
+import uuid
+
+mock_redis = {}
+
+def acquire_lock(lock_key: str, token: str):
+    if lock_key not in mock_redis:
+        mock_redis[lock_key] = token
+        return True
+    return False
+
+# Safe release: Only deletes if the token matches!
+def release_lock_lua(lock_key: str, token: str):
+    if mock_redis.get(lock_key) == token:
+        del mock_redis[lock_key]
+        return True # Lock safely released
+    return False # Refused: Lock belongs to another worker!
+
+token1 = str(uuid.uuid4())
+token2 = str(uuid.uuid4())
+
+print("Worker 1 acquires lock:", acquire_lock("order:101", token1))
+print("Worker 2 tries to delete Worker 1's lock:", release_lock_lua("order:101", token2))
+print("Worker 1 safely releases its own lock:", release_lock_lua("order:101", token1))
+""",
+        "solution_code": """print("Safe Redis distributed lock release verified.")""",
+        "cross_questions": [
+            "How does the Redisson Java framework implement its Netty-based Watchdog timer?",
+            "What happens to a Redis lock if the master node crashes before replicating the key to the replica node?",
+            "What is a Fencing Token, and why does Martin Kleppmann recommend monotonic fencing tokens for distributed storage safety?"
+        ],
+        "common_traps": [
+            "Using `DEL lock_key` without checking if the lock value matches the worker's token.",
+            "Setting lock TTL too short without an auto-renewal watchdog mechanism."
+        ],
+        "best_practices": [
+            "Always release Redis locks with atomic Lua script token validation.",
+            "Use Fencing Tokens at the database layer to reject outdated distributed lock holders."
+        ]
     }
 ]
+
