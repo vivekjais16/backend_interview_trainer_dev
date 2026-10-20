@@ -302,6 +302,22 @@
                         </ul>
                     </details>
                 </div>
+
+                <!-- Easy-to-Understand Solution Walkthrough Card -->
+                <div id="solutionWalkthroughCard" class="mt-3 p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-3 hidden">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>💡 Step-by-Step Easy Answer & Solution Breakdown</span>
+                        </h4>
+                        <button onclick="document.getElementById('solutionWalkthroughCard').classList.add('hidden')" class="text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition">
+                            ✕ Hide
+                        </button>
+                    </div>
+                    <div id="solutionWalkthroughText" class="text-xs text-slate-800 leading-relaxed space-y-2 font-normal">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
             </div>
 
             <!-- CELL 2: Unified Interactive Sandbox Workspace with IDE Windows -->

@@ -151,18 +151,21 @@ class AIService:
                 f"Walk me through your observability strategy: What metrics would trigger PagerDuty alerts for P99 latency degradation?"
             ]
 
-        feedback_md = f"""### 🎯 MNC Interviewer Feedback ({target_company} Bar Raiser Review)
+        feedback_md = f"""### 🎯 MNC Bar Raiser Review ({target_company} Technical Round)
 
-**Overall Rating**: **{final_score:.1f} / 10.0** — *{"Strong Hire" if final_score >= 8.0 else "Hire with Feedback" if final_score >= 6.5 else "Needs Improvement on Deep Internals"}*
+**Evaluation Verdict**: **{final_score:.1f} / 10.0** — *{"Strong Hire — Demonstrates Deep Technical Mastery" if final_score >= 8.5 else "Hire — Solid Fundamentals & Clear Explanations" if final_score >= 7.0 else "Leaning Hire — Good Start, Needs Deeper Failure State Exploration"}*
 
-#### ✅ Strengths Observed:
-{"".join(f"- {s}\\n" for s in (strengths or ["Addressed the primary problem statement directly."]))}
+#### 💡 In Plain English (The Core Takeaway):
+At companies like {target_company}, high-scale systems prioritize **predictable P99 latency**, **zero data loss**, and **clean failure isolation**. The best candidates clearly articulate *why* a particular data structure or architectural pattern was chosen over naive alternatives.
 
-#### ⚠️ Areas for MNC Technical Elevation:
-{"".join(f"- {i}\\n" for i in (improvements or ["Elaborate on production observability and distributed recovery patterns."]))}
+#### ✅ What You Did Well:
+{"".join(f"- {s}\\n" for s in (strengths or ["Addressed the primary problem statement with technical clarity."]))}
 
-#### 💡 Staff Engineer Best Practice:
-At companies like {target_company}, high-scale backend services prioritize **fault domains**, **predictable P99 latency**, and **zero-data-loss idempotency**. When discussing APIs, always address connection recycling, statement timeouts, and graceful shutdown handling.
+#### ⚠️ How to Elevate to Senior / Lead Level:
+{"".join(f"- {i}\\n" for i in (improvements or ["Discuss edge cases like connection timeouts, database retries, and distributed race conditions."]))}
+
+#### 🚀 30-Second Interview Punchline You Can Use:
+"Our approach guarantees high throughput by offloading blocking operations, using indexed lookups to prevent table scans, and applying exponential backoff with jitter to eliminate thundering herd spikes."
 """
         return {
             "score": round(final_score, 1),

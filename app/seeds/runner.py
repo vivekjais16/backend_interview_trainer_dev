@@ -8,19 +8,23 @@ from app.services.mindmap_service import MINDMAP_DATA
 logger = logging.getLogger(__name__)
 
 def seed_database(db: Session):
-    # 1. Sync Questions by slug
-    existing_q_slugs = {q.slug for q in db.query(InterviewQuestion.slug).all()}
+    # 1. Sync Questions by slug (creates new ones & updates existing ones with latest easy-to-understand explanations)
+    existing_questions = {q.slug: q for q in db.query(InterviewQuestion).all()}
     new_questions = 0
+    updated_questions = 0
     for q_data in SEED_QUESTIONS:
-        if q_data["slug"] not in existing_q_slugs:
+        slug = q_data["slug"]
+        if slug not in existing_questions:
             question = InterviewQuestion(**q_data)
             db.add(question)
             new_questions += 1
-    if new_questions > 0:
-        db.commit()
-        logger.info(f"Seeded {new_questions} new MNC interview questions.")
-    else:
-        logger.info(f"All {len(existing_q_slugs)} interview questions are up to date.")
+        else:
+            q = existing_questions[slug]
+            for key, val in q_data.items():
+                setattr(q, key, val)
+            updated_questions += 1
+    db.commit()
+    logger.info(f"Questions sync: {new_questions} created, {updated_questions} updated with enhanced explanations.")
 
     # 2. Sync Mindmaps by slug
     existing_m_slugs = {m.slug for m in db.query(MindmapTopic.slug).all()}
@@ -31,7 +35,6 @@ def seed_database(db: Session):
             db.add(topic)
             new_mindmaps += 1
         else:
-            # Update mermaid diagram or nodes if updated
             t = db.query(MindmapTopic).filter(MindmapTopic.slug == m_data["slug"]).first()
             if t:
                 t.mermaid_diagram = m_data.get("mermaid_diagram")

@@ -182,9 +182,12 @@ function renderQuestionDetail(q) {
     document.getElementById("qTitle").innerText = q.title;
     document.getElementById("qScenario").innerHTML = formatMarkdown(q.scenario_text);
     
-    // Clean Badges & Enterprise Company Chips
+    // Clean Badges & Enterprise Company Chips + Walkthrough Button
     const badgeContainer = document.getElementById("qBadges");
     badgeContainer.innerHTML = `
+        <button onclick="toggleEasyWalkthrough()" class="px-3 py-1 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition flex items-center gap-1.5 shadow-2xs">
+            <span>💡</span> Easy Answer Walkthrough
+        </button>
         <span class="px-2.5 py-1 text-xs rounded-full font-bold ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
         <span class="px-2.5 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold font-mono">${formatCategory(q.category)}</span>
         <span class="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-semibold font-mono">Ask Frequency: ${q.frequency_score}%</span>
@@ -208,6 +211,54 @@ function renderQuestionDetail(q) {
                 <span>${trap}</span>
             </li>
         `).join('');
+    }
+
+    // Populate Easy-to-Understand Walkthrough
+    const walkthroughCard = document.getElementById("solutionWalkthroughCard");
+    const walkthroughText = document.getElementById("solutionWalkthroughText");
+    if (walkthroughCard && walkthroughText) {
+        walkthroughCard.classList.add("hidden");
+        let walkHtml = "";
+
+        if (q.best_practices && q.best_practices.length > 0) {
+            walkHtml += `
+                <div class="mb-3">
+                    <h5 class="font-bold text-emerald-950 text-xs mb-1">🎯 What Top MNC Interviewers Look For:</h5>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-700">
+                        ${q.best_practices.map(bp => `<li>${bp}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        if (q.solution_code) {
+            walkHtml += `
+                <div class="mt-2">
+                    <h5 class="font-bold text-slate-900 text-xs mb-1 font-mono">🐍 Model Python Solution with Line-by-Line Guide:</h5>
+                    <pre class="terminal-console p-3 rounded-lg text-emerald-300 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">${q.solution_code}</pre>
+                </div>
+            `;
+        }
+
+        if (q.solution_sql) {
+            walkHtml += `
+                <div class="mt-2">
+                    <h5 class="font-bold text-slate-900 text-xs mb-1 font-mono">🗄️ Optimal SQL Query Breakdown:</h5>
+                    <pre class="terminal-console p-3 rounded-lg text-blue-300 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">${q.solution_sql}</pre>
+                </div>
+            `;
+        }
+
+        if (q.solution_redis) {
+            walkHtml += `
+                <div class="mt-2">
+                    <h5 class="font-bold text-slate-900 text-xs mb-1 font-mono">⚡ Redis In-Memory Sequence:</h5>
+                    <pre class="terminal-console p-3 rounded-lg text-rose-300 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">${q.solution_redis}</pre>
+                </div>
+            `;
+        }
+
+        walkthroughText.innerHTML = walkHtml || "<p class='text-slate-500 italic'>No walkthrough content available for this problem.</p>";
     }
 
     // Auto-focus the relevant sandbox tab based on question capabilities
@@ -506,6 +557,16 @@ function injectCrossQuestion(cqText) {
     textarea.focus();
 }
 
+function toggleEasyWalkthrough() {
+    const card = document.getElementById("solutionWalkthroughCard");
+    if (!card) return;
+    card.classList.toggle("hidden");
+    if (!card.classList.contains("hidden")) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        showToast("💡 Easy-to-understand answer walkthrough opened");
+    }
+}
+
 function revealSolution() {
     if (!currentQuestion) return;
     if (currentQuestion.solution_code && document.getElementById("pythonCodeInput")) {
@@ -514,6 +575,19 @@ function revealSolution() {
     if (currentQuestion.solution_sql && document.getElementById("sqlQueryInput")) {
         document.getElementById("sqlQueryInput").value = currentQuestion.solution_sql;
     }
+    if (currentQuestion.solution_redis && document.getElementById("redisCommandInput")) {
+        document.getElementById("redisCommandInput").value = currentQuestion.solution_redis;
+    }
+    if (currentQuestion.solution_nosql && document.getElementById("nosqlQueryInput")) {
+        document.getElementById("nosqlQueryInput").value = currentQuestion.solution_nosql;
+    }
+    // Also reveal the step-by-step walkthrough card
+    const walkthrough = document.getElementById("solutionWalkthroughCard");
+    if (walkthrough) {
+        walkthrough.classList.remove("hidden");
+        walkthrough.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    showToast("💡 Model solution & step-by-step walkthrough loaded!");
 }
 
 function resetStarterCode() {
@@ -524,6 +598,13 @@ function resetStarterCode() {
     if (document.getElementById("sqlQueryInput")) {
         document.getElementById("sqlQueryInput").value = currentQuestion.starter_sql || "";
     }
+    if (document.getElementById("redisCommandInput")) {
+        document.getElementById("redisCommandInput").value = currentQuestion.starter_redis || "";
+    }
+    if (document.getElementById("nosqlQueryInput")) {
+        document.getElementById("nosqlQueryInput").value = currentQuestion.starter_nosql || "";
+    }
+    showToast("Code reset to starter template");
 }
 
 async function loadMindmaps() {
@@ -816,4 +897,6 @@ window.resetStarterCode = resetStarterCode;
 window.filterByDomain = filterByDomain;
 window.selectQuestion = selectQuestion;
 window.renderMindmap = renderMindmap;
+window.toggleEasyWalkthrough = toggleEasyWalkthrough;
+
 
