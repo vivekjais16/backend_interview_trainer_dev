@@ -15,9 +15,20 @@ class QuestionServiceContract(ABC):
         difficulty: Optional[str] = None,
         company: Optional[str] = None,
         search: Optional[str] = None,
+        most_asked: Optional[bool] = None,
         db: Session = None
     ) -> List[Any]:
         """Filters and retrieves questions matching criteria."""
+        pass
+
+    @abstractmethod
+    def get_most_asked_questions(self, limit: int = 50, db: Session = None) -> List[Any]:
+        """Retrieves top-priority most-asked MNC interview questions."""
+        pass
+
+    @abstractmethod
+    def get_concepts(self) -> List[Dict[str, Any]]:
+        """Retrieves centralized concept reference guide (InterviewBit & GFG style)."""
         pass
 
     @abstractmethod

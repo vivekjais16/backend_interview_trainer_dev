@@ -61,12 +61,17 @@ class QuestionDomainService(QuestionServiceContract):
         difficulty: Optional[str] = None,
         company: Optional[str] = None,
         search: Optional[str] = None,
+        most_asked: Optional[bool] = None,
         db: Session = None
     ) -> List[QuestionSummary]:
         if not db:
             return []
 
         query = db.query(InterviewQuestion)
+
+        # 0. Most Asked / Top Frequency Filter
+        if most_asked:
+            query = query.filter(InterviewQuestion.frequency_score >= 95)
 
         # 1. Phase filtering
         if phase:
@@ -160,6 +165,7 @@ class QuestionDomainService(QuestionServiceContract):
         # Convert to QuestionSummary
         results = []
         for q in questions:
+            freq = q.frequency_score or 85
             results.append(QuestionSummary(
                 id=q.id,
                 title=q.title,
@@ -169,16 +175,53 @@ class QuestionDomainService(QuestionServiceContract):
                 min_exp_years=q.min_exp_years,
                 max_exp_years=q.max_exp_years,
                 company_tags=q.company_tags or [],
-                frequency_score=q.frequency_score or 85,
+                frequency_score=freq,
                 mindmap_topic=q.mindmap_topic,
                 has_python_sandbox=bool(q.has_python_sandbox),
                 has_sql_sandbox=bool(q.has_sql_sandbox),
                 has_redis_sandbox=bool(q.has_redis_sandbox),
                 has_nosql_sandbox=bool(q.has_nosql_sandbox),
                 phase=q.phase or "basic",
-                has_mcq=bool(q.mcq_question and q.mcq_options and len(q.mcq_options) >= 2)
+                has_mcq=bool(q.mcq_question and q.mcq_options and len(q.mcq_options) >= 2),
+                is_most_asked=bool(freq >= 95)
             ))
         return results
+
+    def get_most_asked_questions(self, limit: int = 50, db: Session = None) -> List[QuestionSummary]:
+        """Retrieves top-priority most-asked MNC interview questions."""
+        if not db:
+            return []
+        questions = db.query(InterviewQuestion).filter(
+            InterviewQuestion.frequency_score >= 95
+        ).order_by(InterviewQuestion.frequency_score.desc(), InterviewQuestion.id.asc()).limit(limit).all()
+
+        return [
+            QuestionSummary(
+                id=q.id,
+                title=q.title,
+                slug=q.slug,
+                category=q.category,
+                difficulty=q.difficulty,
+                min_exp_years=q.min_exp_years,
+                max_exp_years=q.max_exp_years,
+                company_tags=q.company_tags or [],
+                frequency_score=q.frequency_score or 95,
+                mindmap_topic=q.mindmap_topic,
+                has_python_sandbox=bool(q.has_python_sandbox),
+                has_sql_sandbox=bool(q.has_sql_sandbox),
+                has_redis_sandbox=bool(q.has_redis_sandbox),
+                has_nosql_sandbox=bool(q.has_nosql_sandbox),
+                phase=q.phase or "basic",
+                has_mcq=bool(q.mcq_question and q.mcq_options and len(q.mcq_options) >= 2),
+                is_most_asked=True
+            )
+            for q in questions
+        ]
+
+    def get_concepts(self) -> List[Dict[str, Any]]:
+        """Retrieves centralized concept reference guide (InterviewBit & GFG style)."""
+        from app.core.concept_hub import get_concepts_catalog
+        return get_concepts_catalog()
 
     def get_question(self, question_id_or_slug: Union[int, str], db: Session) -> Optional[InterviewQuestion]:
         if isinstance(question_id_or_slug, int) or (isinstance(question_id_or_slug, str) and question_id_or_slug.isdigit()):

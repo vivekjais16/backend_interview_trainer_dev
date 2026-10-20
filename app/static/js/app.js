@@ -5,7 +5,10 @@ let currentDomainFilter = "";
 let currentPhaseFilter = "basic"; // "basic", "intermediate", "advanced", or ""
 let activeSessionId = null;
 let currentMindmapSlug = "python-internals";
-let currentAppMode = "studio"; // "studio" or "mcq"
+let currentAppMode = "studio"; // "studio", "mcq", or "concepts"
+let currentMostAskedFilter = false;
+let allMasterConcepts = [];
+let currentConceptCategory = "";
 
 // MCQ Speed Arena State
 let arenaQuestions = [];
@@ -32,7 +35,7 @@ function selectCareerPhase(phase, el) {
     document.querySelectorAll("#domainChips button").forEach(b => {
         b.className = "px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium transition";
     });
-    const allChip = document.querySelector("#domainChips button:first-child");
+    const allChip = document.querySelector("#domainChips button:nth-child(2)");
     if (allChip) allChip.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
 
     // Update button styles in phase bar
@@ -68,22 +71,56 @@ function switchAppMode(mode) {
     currentAppMode = mode;
     const studioWorkspace = document.getElementById("studioWorkspace");
     const mcqArenaWorkspace = document.getElementById("mcqArenaWorkspace");
+    const conceptsHubWorkspace = document.getElementById("conceptsHubWorkspace");
     const modeStudioBtn = document.getElementById("modeStudioBtn");
     const modeMcqBtn = document.getElementById("modeMcqBtn");
+    const modeConceptBtn = document.getElementById("modeConceptBtn");
+
+    // Hide all workspaces
+    if (studioWorkspace) studioWorkspace.classList.add("hidden");
+    if (mcqArenaWorkspace) mcqArenaWorkspace.classList.add("hidden");
+    if (conceptsHubWorkspace) conceptsHubWorkspace.classList.add("hidden");
+
+    // Reset button styles
+    const inactiveClass = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5";
+    if (modeStudioBtn) modeStudioBtn.className = inactiveClass;
+    if (modeMcqBtn) modeMcqBtn.className = inactiveClass;
+    if (modeConceptBtn) modeConceptBtn.className = inactiveClass;
 
     if (mode === "studio") {
         if (studioWorkspace) studioWorkspace.classList.remove("hidden");
-        if (mcqArenaWorkspace) mcqArenaWorkspace.classList.add("hidden");
         if (modeStudioBtn) modeStudioBtn.className = "px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-2xs transition flex items-center gap-1.5";
-        if (modeMcqBtn) modeMcqBtn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5";
-    } else {
-        if (studioWorkspace) studioWorkspace.classList.add("hidden");
+    } else if (mode === "mcq") {
         if (mcqArenaWorkspace) mcqArenaWorkspace.classList.remove("hidden");
-        if (modeStudioBtn) modeStudioBtn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5";
         if (modeMcqBtn) modeMcqBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
-        
         startMcqQuiz(currentPhaseFilter || arenaPhase);
+    } else if (mode === "concepts") {
+        if (conceptsHubWorkspace) conceptsHubWorkspace.classList.remove("hidden");
+        if (modeConceptBtn) modeConceptBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
+        loadConceptsHub();
     }
+}
+
+function toggleMostAskedFilter(btn) {
+    currentMostAskedFilter = !currentMostAskedFilter;
+    const mostAskedBtn = document.getElementById("mostAskedBtn");
+    const chipMostAsked = document.getElementById("chipMostAsked");
+
+    if (currentMostAskedFilter) {
+        if (mostAskedBtn) mostAskedBtn.className = "px-3.5 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-white font-bold shadow-md shadow-amber-500/20 transition flex items-center gap-1.5 ml-2";
+        if (chipMostAsked) chipMostAsked.className = "px-2.5 py-1 rounded-lg bg-amber-600 text-white font-bold shrink-0 shadow-2xs transition flex items-center gap-1";
+        showToast("🔥 Filtered by Most Asked MNC Interview Questions");
+    } else {
+        if (mostAskedBtn) mostAskedBtn.className = "px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold transition flex items-center gap-1.5 shadow-2xs ml-2";
+        if (chipMostAsked) chipMostAsked.className = "px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-800 shrink-0 font-bold transition flex items-center gap-1 shadow-2xs";
+        showToast("Cleared Most Asked Filter — Showing All Questions");
+    }
+
+    if (currentAppMode === 'concepts') {
+        switchAppMode('studio');
+    }
+
+    loadQuestions();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -108,6 +145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     setupEventListeners();
     await initInterviewSession();
+    await updatePhaseCounts();
     await loadQuestions();
     await loadMindmaps();
     await loadSQLSchemas();
@@ -222,6 +260,9 @@ async function loadQuestions() {
 
     try {
         const params = [];
+        if (currentMostAskedFilter) {
+            params.push("most_asked=true");
+        }
         if (currentPhaseFilter) {
             params.push(`phase=${encodeURIComponent(currentPhaseFilter)}`);
         } else if (currentExperienceLevel) {
@@ -239,7 +280,7 @@ async function loadQuestions() {
             listEl.innerHTML = `
                 <div class="p-8 text-center text-slate-500 text-xs space-y-2">
                     <p class="font-semibold text-slate-700">No questions found for this filter.</p>
-                    <p>Try clicking <button onclick="selectCareerPhase('', document.getElementById('phaseBtnAll'))" class="text-indigo-600 font-bold underline">Show All 20 Questions</button>.</p>
+                    <p>Try clicking <button onclick="selectCareerPhase('', document.getElementById('phaseBtnAll'))" class="text-indigo-600 font-bold underline">Show All Questions</button>.</p>
                 </div>
             `;
             return;
@@ -255,7 +296,8 @@ async function loadQuestions() {
                     <span class="text-[10px] text-slate-400 font-mono font-medium">${q.min_exp_years}-${q.max_exp_years} YOE</span>
                 </div>
                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-relaxed">${q.title}</h4>
-                <div class="flex flex-wrap gap-1 mt-0.5">
+                <div class="flex flex-wrap gap-1 mt-0.5 items-center">
+                    ${q.is_most_asked ? `<span class="text-[9px] bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.2 rounded font-mono font-bold flex items-center gap-0.5">🔥 Most Asked</span>` : ''}
                     <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/80 font-medium font-mono">${formatCategory(q.category)}</span>
                     ${(q.company_tags || []).slice(0, 3).map(tag => `<span class="company-tag">${tag}</span>`).join('')}
                     ${q.has_mcq ? `<span class="text-[9px] bg-amber-50 text-amber-800 border border-amber-200 px-1 rounded font-mono font-bold">MCQ</span>` : ''}
@@ -1495,6 +1537,182 @@ function switchSandboxTab(tab) {
 }
 
 // ----------------------------------------------------
+// ----------------------------------------------------
+// Centralized Phase Counters & Concept Hub (IB / GFG Reference)
+// ----------------------------------------------------
+async function updatePhaseCounts() {
+    try {
+        const res = await fetch("/api/v1/questions/phases");
+        if (!res.ok) return;
+        const data = await res.json();
+        const phases = data.phases || [];
+        const total = data.total_questions || 1020;
+
+        const basicPhase = phases.find(p => p.id === 'basic');
+        const interPhase = phases.find(p => p.id === 'intermediate');
+        const advPhase = phases.find(p => p.id === 'advanced');
+
+        const btnBasic = document.getElementById("phaseBtnBasic");
+        const btnInter = document.getElementById("phaseBtnInter");
+        const btnAdv = document.getElementById("phaseBtnAdv");
+        const labelAll = document.getElementById("labelPhaseAll");
+
+        if (btnBasic && basicPhase) {
+            const badge = btnBasic.querySelector("span:nth-child(3)");
+            if (badge) badge.innerText = `${basicPhase.count} Qs`;
+        }
+        if (btnInter && interPhase) {
+            const badge = btnInter.querySelector("span:nth-child(3)");
+            if (badge) badge.innerText = `${interPhase.count} Qs`;
+        }
+        if (btnAdv && advPhase) {
+            const badge = btnAdv.querySelector("span:nth-child(3)");
+            if (badge) badge.innerText = `${advPhase.count} Qs`;
+        }
+        if (labelAll) {
+            labelAll.innerText = `⚡ All (${total} Qs)`;
+        }
+    } catch (e) {
+        console.warn("Could not fetch phase counts:", e);
+    }
+}
+
+async function loadConceptsHub() {
+    const container = document.getElementById("conceptsListContainer");
+    if (!container) return;
+
+    if (allMasterConcepts.length === 0) {
+        container.innerHTML = `<div class="p-8 text-center text-slate-400 text-xs font-medium animate-pulse">Loading centralized master concepts...</div>`;
+        try {
+            const res = await fetch("/api/v1/questions/concepts");
+            allMasterConcepts = await res.json();
+        } catch (err) {
+            container.innerHTML = `<div class="p-4 text-rose-600 text-xs font-semibold">Error loading concept guide: ${err.message}</div>`;
+            return;
+        }
+    }
+    renderConceptsList();
+}
+
+function renderConceptsList() {
+    const container = document.getElementById("conceptsListContainer");
+    if (!container) return;
+
+    const searchTerm = (document.getElementById("conceptSearchInput")?.value || "").toLowerCase().trim();
+    let filtered = allMasterConcepts;
+
+    if (currentConceptCategory) {
+        filtered = filtered.filter(c => c.category === currentConceptCategory);
+    }
+    if (searchTerm) {
+        filtered = filtered.filter(c => 
+            (c.title || "").toLowerCase().includes(searchTerm) ||
+            (c.summary || "").toLowerCase().includes(searchTerm) ||
+            (c.interview_punchline || "").toLowerCase().includes(searchTerm) ||
+            (c.key_mechanisms || []).some(m => m.toLowerCase().includes(searchTerm))
+        );
+    }
+
+    if (!filtered.length) {
+        container.innerHTML = `
+            <div class="p-10 text-center bg-white rounded-xl border border-slate-200 text-slate-500 text-xs space-y-2">
+                <p class="font-bold text-slate-700 text-sm">No matching concept guide found.</p>
+                <p>Try searching for "B-Tree", "GIL", "Cache Stampede", "Outbox", or "Memory Model".</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = filtered.map(concept => `
+        <div class="premium-card p-6 bg-white rounded-xl border border-slate-200/90 shadow-2xs hover:shadow-sm transition space-y-4">
+            <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono uppercase bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-bold">
+                            ${concept.category_name}
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                            ⭐ ${concept.badge}
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-mono font-medium">${concept.difficulty}</span>
+                    </div>
+                    <h3 class="text-base font-extrabold text-slate-900 tracking-tight">${concept.title}</h3>
+                </div>
+                ${concept.related_slugs && concept.related_slugs.length ? `
+                    <button onclick="solveRelatedQuestion('${concept.related_slugs[0]}')" class="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition flex items-center gap-1.5 shadow-2xs shrink-0">
+                        <span>▶</span> Practice in Sandbox
+                    </button>
+                ` : ''}
+            </div>
+
+            <p class="text-xs text-slate-700 leading-relaxed font-medium">
+                ${concept.summary}
+            </p>
+
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2">
+                <div class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                    <span>⚙️</span> Under The Hood Mechanisms:
+                </div>
+                <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                    ${(concept.key_mechanisms || []).map(m => `<li>${m}</li>`).join('')}
+                </ul>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                ${concept.complexity ? `
+                    <div class="bg-indigo-50/50 border border-indigo-100 rounded-lg p-3">
+                        <div class="text-[10px] font-mono font-bold text-indigo-700 uppercase tracking-wide">Time & Space Complexity</div>
+                        <div class="text-slate-800 font-mono text-[11px] font-semibold mt-0.5">${concept.complexity}</div>
+                    </div>
+                ` : ''}
+                <div class="bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
+                    <div class="text-[10px] font-mono font-bold text-emerald-800 uppercase tracking-wide">30-Second Interview Punchline</div>
+                    <div class="text-slate-800 italic text-[11px] font-medium mt-0.5">"${concept.interview_punchline}"</div>
+                </div>
+            </div>
+
+            ${concept.code_snippet ? `
+                <div class="ide-window text-xs rounded-lg overflow-hidden border border-slate-800">
+                    <div class="ide-header py-1.5 px-3 bg-slate-900 flex items-center justify-between">
+                        <span class="text-[10px] font-mono text-slate-400">REFERENCE IMPLEMENTATION</span>
+                        <button onclick="navigator.clipboard.writeText(\`${concept.code_snippet.replace(/`/g, '\\`')}\`); showToast('Snippet copied!');" class="text-[10px] text-slate-400 hover:text-white underline">Copy</button>
+                    </div>
+                    <pre class="p-3 bg-slate-950 text-emerald-400 font-mono text-[11px] overflow-x-auto"><code>${concept.code_snippet}</code></pre>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+function filterConceptsList() {
+    renderConceptsList();
+}
+
+function filterConceptsByCategory(cat, btnEl) {
+    currentConceptCategory = cat;
+    document.querySelectorAll("#conceptCategoryChips button").forEach(b => {
+        b.className = "px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition";
+    });
+    if (btnEl) {
+        btnEl.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shrink-0 shadow-2xs transition";
+    }
+    renderConceptsList();
+}
+
+async function solveRelatedQuestion(slug) {
+    switchAppMode('studio');
+    try {
+        const res = await fetch(`/api/v1/questions/${slug}`);
+        if (res.ok) {
+            const q = await res.json();
+            await selectQuestion(q.id);
+            showToast(`Loaded scenario: ${q.title}`);
+        }
+    } catch (err) {
+        console.error("Failed to load related question:", err);
+    }
+}
+
 // Global Window Export (ensures 100% operational buttons)
 // ----------------------------------------------------
 window.switchSidebarTab = switchSidebarTab;
@@ -1529,5 +1747,11 @@ window.restartCurrentPhaseQuiz = restartCurrentPhaseQuiz;
 window.advanceToNextPhase = advanceToNextPhase;
 window.selectQuestionMcq = selectQuestionMcq;
 window.resetCurrentMcq = resetCurrentMcq;
+window.toggleMostAskedFilter = toggleMostAskedFilter;
+window.loadConceptsHub = loadConceptsHub;
+window.filterConceptsList = filterConceptsList;
+window.filterConceptsByCategory = filterConceptsByCategory;
+window.solveRelatedQuestion = solveRelatedQuestion;
+
 
 

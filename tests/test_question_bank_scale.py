@@ -64,3 +64,53 @@ def test_domain_coverage():
     ]
     for domain in required_domains:
         assert domain.value in categories or domain in categories, f"Missing required domain: {domain}"
+
+
+def test_most_asked_questions_api():
+    """Verify /api/v1/questions/most-asked endpoint and most_asked filter flag."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    # 1. Test dedicated /most-asked endpoint
+    resp = client.get("/api/v1/questions/most-asked?limit=30")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) > 0
+    assert len(data) <= 30
+    for item in data:
+        assert item["is_most_asked"] is True
+        assert item["frequency_score"] >= 95
+
+    # 2. Test query parameter ?most_asked=true
+    resp_filter = client.get("/api/v1/questions?most_asked=true")
+    assert resp_filter.status_code == 200
+    filtered_data = resp_filter.json()
+    assert len(filtered_data) > 0
+    for item in filtered_data:
+        assert item["is_most_asked"] is True
+        assert item["frequency_score"] >= 95
+
+
+def test_centralized_concepts_hub_api():
+    """Verify /api/v1/questions/concepts endpoint provides comprehensive InterviewBit & GFG concepts."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+    resp = client.get("/api/v1/questions/concepts")
+    assert resp.status_code == 200
+    concepts = resp.json()
+    assert len(concepts) >= 5, "Expected at least 5 master concepts"
+
+    required_categories = {"python", "sql", "redis", "devops", "system_design"}
+    found_categories = {c["category"] for c in concepts}
+    assert required_categories.issubset(found_categories), f"Missing categories: {required_categories - found_categories}"
+
+    for c in concepts:
+        assert "title" in c
+        assert "summary" in c
+        assert "key_mechanisms" in c and len(c["key_mechanisms"]) >= 2
+        assert "interview_punchline" in c
+        assert "complexity" in c
+

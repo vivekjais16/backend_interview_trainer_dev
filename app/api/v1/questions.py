@@ -46,6 +46,22 @@ def verify_mcq_answer(
         raise HTTPException(status_code=404, detail="Question or MCQ not found")
     return res
 
+@router.get("/most-asked", response_model=List[QuestionSummary])
+def get_most_asked_questions(
+    limit: int = Query(50, ge=1, le=200, description="Max questions to return"),
+    db: Session = Depends(get_db),
+    q_service: QuestionServiceContract = Depends(get_question_service)
+):
+    """Returns top high-frequency most-asked MNC interview questions."""
+    return q_service.get_most_asked_questions(limit=limit, db=db)
+
+@router.get("/concepts")
+def get_centralized_concepts(
+    q_service: QuestionServiceContract = Depends(get_question_service)
+):
+    """Returns centralized InterviewBit and GeeksforGeeks master concept cheat sheets."""
+    return q_service.get_concepts()
+
 @router.get("", response_model=List[QuestionSummary])
 def list_questions(
     phase: Optional[str] = Query(None, description="Filter by phase: basic, intermediate, advanced"),
@@ -55,6 +71,7 @@ def list_questions(
     difficulty: Optional[QuestionDifficulty] = Query(None, description="Filter by difficulty"),
     company: Optional[str] = Query(None, description="Filter by MNC company name (e.g. Amazon, Google, Uber)"),
     search: Optional[str] = Query(None, description="Search query in title or scenario"),
+    most_asked: Optional[bool] = Query(None, description="Filter for top frequency most asked questions"),
     db: Session = Depends(get_db),
     q_service: QuestionServiceContract = Depends(get_question_service)
 ):
@@ -67,6 +84,7 @@ def list_questions(
         difficulty=difficulty,
         company=company,
         search=search,
+        most_asked=most_asked,
         db=db
     )
 

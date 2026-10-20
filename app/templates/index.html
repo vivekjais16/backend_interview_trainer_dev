@@ -129,11 +129,18 @@
             </button>
 
             <button id="phaseBtnAll" onclick="selectCareerPhase('', this)" class="phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-semibold transition flex items-center gap-1.5 ml-1">
-                <span>⚡ All (20 Qs)</span>
+                <span id="labelPhaseAll">⚡ All (1020 Qs)</span>
+            </button>
+
+            <!-- HIGH-PRIORITY MOST ASKED BUTTON (Pareto Top 100) -->
+            <button id="mostAskedBtn" onclick="toggleMostAskedFilter(this)" class="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold transition flex items-center gap-1.5 shadow-2xs ml-2">
+                <span>🔥</span>
+                <span>Most Asked Questions</span>
+                <span class="text-[9px] font-mono uppercase bg-amber-200 text-amber-900 px-1.5 py-0.2 rounded font-extrabold">Top MNC</span>
             </button>
         </div>
 
-        <!-- Mode Switcher: Studio Sandbox vs Interactive MCQ Arena -->
+        <!-- Mode Switcher: Studio Sandbox vs Interactive MCQ Arena vs Master Concept Hub -->
         <div class="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs shrink-0">
             <button id="modeStudioBtn" onclick="switchAppMode('studio')" class="px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-2xs transition flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,8 +150,15 @@
             </button>
             <button id="modeMcqBtn" onclick="switchAppMode('mcq')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                <span>Interactive MCQ Arena</span>
-                <span class="text-[9px] font-mono uppercase bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">New</span>
+                <span>MCQ Arena</span>
+                <span class="text-[9px] font-mono uppercase bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">Speed</span>
+            </button>
+            <button id="modeConceptBtn" onclick="switchAppMode('concepts')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Master Concept Hub</span>
+                <span class="text-[9px] font-mono uppercase bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded font-bold">IB / GFG</span>
             </button>
         </div>
     </section>
@@ -177,13 +191,17 @@
                         <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <input type="text" id="questionSearchInput" placeholder="Search questions, companies, topics..." 
+                        <input type="text" id="questionSearchInput" placeholder="Search 1,020+ questions, companies, topics..." 
                                class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-2xs font-medium">
                         <kbd class="absolute right-2.5 top-2 font-mono text-[9px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-slate-400 font-semibold">⌘K</kbd>
                     </div>
 
                     <!-- Category Filter Chips -->
                     <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px]" id="domainChips">
+                        <button id="chipMostAsked" onclick="toggleMostAskedFilter(this)" class="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-800 shrink-0 font-bold transition flex items-center gap-1 shadow-2xs">
+                            <span>🔥</span>
+                            <span>Most Asked</span>
+                        </button>
                         <button onclick="filterByDomain('', this)" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs">All</button>
                         <button onclick="filterByDomain('python_internals', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Python</button>
                         <button onclick="filterByDomain('postgres_mysql', this)" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium">Postgres/MySQL</button>
@@ -797,6 +815,53 @@
                             <span>Advance to Next Phase</span> <span>→</span>
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <!-- 3. CENTRALIZED MASTER CONCEPT HUB (InterviewBit & GeeksforGeeks Reference) -->
+            <div id="conceptsHubWorkspace" class="max-w-5xl mx-auto space-y-6 hidden">
+                <!-- Header Banner -->
+                <div class="premium-card p-6 bg-gradient-to-r from-indigo-950 via-indigo-900 to-slate-900 text-white rounded-2xl shadow-md border-0 relative overflow-hidden">
+                    <div class="relative z-10 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 uppercase tracking-wider">
+                                Centralized Reference Guide
+                            </span>
+                            <span class="text-xs text-amber-300 font-bold flex items-center gap-1">
+                                <span>⭐</span> Curated from InterviewBit, GeeksforGeeks & Top Tech MNCs
+                            </span>
+                        </div>
+                        <h2 class="text-2xl font-black tracking-tight text-white">
+                            Master Technical Concept Hub & Cheat Sheets
+                        </h2>
+                        <p class="text-xs text-indigo-200/90 max-w-3xl leading-relaxed">
+                            Centralized reference for Python Memory & GIL, SQL B-Trees & Isolation Levels, Redis Caching Catastrophes, Docker Multi-Stage Hardening, and High-Scale System Design. Includes under-the-hood internal mechanics, complexity formulas, and 30-second interview punchlines.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Concept Search & Category Filter Chips -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
+                    <div class="relative flex-1">
+                        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" id="conceptSearchInput" oninput="filterConceptsList()" placeholder="Search concepts (e.g., B-Tree, GIL, Cache Stampede, Outbox, ESR Rule, Memoryview)..." 
+                               class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition font-medium">
+                    </div>
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs" id="conceptCategoryChips">
+                        <button onclick="filterConceptsByCategory('', this)" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shrink-0 shadow-2xs transition">All Concepts</button>
+                        <button onclick="filterConceptsByCategory('python', this)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition">Python</button>
+                        <button onclick="filterConceptsByCategory('sql', this)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition">SQL / DB</button>
+                        <button onclick="filterConceptsByCategory('redis', this)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition">Redis</button>
+                        <button onclick="filterConceptsByCategory('devops', this)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition">Containers</button>
+                        <button onclick="filterConceptsByCategory('system_design', this)" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold shrink-0 transition">System Design</button>
+                    </div>
+                </div>
+
+                <!-- Concept Cards Container -->
+                <div id="conceptsListContainer" class="space-y-4">
+                    <div class="p-8 text-center text-slate-400 text-xs font-medium animate-pulse">Loading centralized master concepts...</div>
                 </div>
             </div>
         </main>

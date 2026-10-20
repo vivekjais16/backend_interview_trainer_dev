@@ -59,11 +59,13 @@ class QuestionSummary(BaseModel):
     has_nosql_sandbox: bool = False
     phase: Optional[str] = "basic"
     has_mcq: bool = False
+    is_most_asked: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
 class QuestionDetail(QuestionBase):
     id: int
+    is_most_asked: bool = False
     created_at: datetime
     updated_at: datetime
 
