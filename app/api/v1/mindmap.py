@@ -3,26 +3,28 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models.mindmap import MindmapTopic
+from app.core.container import get_mindmap_service
+from app.contracts.mindmap import MindmapServiceContract
 from app.schemas.mindmap import MindmapTopicResponse
-from app.services.mindmap_service import get_all_mindmaps, get_mindmap_by_slug
 
 router = APIRouter(prefix="/mindmaps", tags=["Theoretical Mindmaps"])
 
 @router.get("", response_model=List[MindmapTopicResponse])
-def list_mindmaps(db: Session = Depends(get_db)):
-    topics = db.query(MindmapTopic).order_by(MindmapTopic.order_index.asc()).all()
-    if not topics:
-        # Fallback to in-memory data if not yet seeded in DB
-        return get_all_mindmaps()
-    return topics
+def list_mindmaps(
+    db: Session = Depends(get_db),
+    mindmap_svc: MindmapServiceContract = Depends(get_mindmap_service)
+):
+    """Returns architecture roadmap topics with Mermaid flowchart specifications."""
+    return mindmap_svc.get_topics(db=db)
 
 @router.get("/{slug}", response_model=MindmapTopicResponse)
-def get_mindmap(slug: str, db: Session = Depends(get_db)):
-    topic = db.query(MindmapTopic).filter(MindmapTopic.slug == slug).first()
+def get_mindmap(
+    slug: str,
+    db: Session = Depends(get_db),
+    mindmap_svc: MindmapServiceContract = Depends(get_mindmap_service)
+):
+    """Retrieves deep architectural breakdown and system internals for a topic."""
+    topic = mindmap_svc.get_topic_by_slug(slug, db=db)
     if not topic:
-        mem_topic = get_mindmap_by_slug(slug)
-        if mem_topic:
-            return mem_topic
         raise HTTPException(status_code=404, detail="Mindmap topic not found")
     return topic

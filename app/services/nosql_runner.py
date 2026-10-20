@@ -160,3 +160,15 @@ def run_nosql_query(query_str: str) -> Dict[str, Any]:
             "execution_time_ms": 0.0,
             "error": str(e)
         }
+
+from app.contracts.execution import DocumentExecutionContract
+
+class NoSQLExecutionService(DocumentExecutionContract):
+    """
+    Decoupled NoSQL MongoDB Execution Microservice Adapter.
+    Implements DocumentExecutionContract to run document queries and aggregation stages safely.
+    """
+    def execute(self, query_str: str) -> Dict[str, Any]:
+        return run_nosql_query(query_str)
+
+nosql_execution_service = NoSQLExecutionService()

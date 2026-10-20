@@ -525,3 +525,28 @@ def get_mindmap_by_slug(slug: str) -> Optional[Dict[str, Any]]:
         if m["slug"] == slug:
             return m
     return None
+
+from app.contracts.mindmap import MindmapServiceContract
+
+class MindmapDomainService(MindmapServiceContract):
+    """
+    Decoupled Mindmap Knowledge Microservice Adapter.
+    Implements MindmapServiceContract to serve interactive Mermaid architecture diagrams.
+    """
+    def get_topics(self, db: Optional[Any] = None) -> List[Any]:
+        if db:
+            from app.models.mindmap import MindmapTopic
+            topics = db.query(MindmapTopic).order_by(MindmapTopic.order_index.asc()).all()
+            if topics:
+                return topics
+        return get_all_mindmaps()
+
+    def get_topic_by_slug(self, slug: str, db: Optional[Any] = None) -> Optional[Any]:
+        if db:
+            from app.models.mindmap import MindmapTopic
+            topic = db.query(MindmapTopic).filter(MindmapTopic.slug == slug).first()
+            if topic:
+                return topic
+        return get_mindmap_by_slug(slug)
+
+mindmap_domain_service = MindmapDomainService()

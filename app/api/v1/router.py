@@ -7,9 +7,12 @@ from app.api.v1.nosql_runner import router as nosql_runner_router
 from app.api.v1.interview import router as interview_router
 from app.api.v1.mindmap import router as mindmap_router
 from app.api.v1.analytics import router as analytics_router
+from app.api.v1.health import router as health_router
 
 api_v1_router = APIRouter(prefix="/api/v1")
 
+# Modular Microservices Gateway Routers
+api_v1_router.include_router(health_router)
 api_v1_router.include_router(questions_router)
 api_v1_router.include_router(code_runner_router)
 api_v1_router.include_router(sql_runner_router)

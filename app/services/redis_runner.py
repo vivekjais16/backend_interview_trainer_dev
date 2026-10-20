@@ -200,3 +200,15 @@ def run_redis_commands(script: str) -> Dict[str, Any]:
         "logs": logs,
         "execution_time_ms": duration_ms
     }
+
+from app.contracts.execution import CacheExecutionContract
+
+class RedisExecutionService(CacheExecutionContract):
+    """
+    Decoupled Redis Cache Execution Microservice Adapter.
+    Implements CacheExecutionContract to execute in-memory Redis CLI instructions safely.
+    """
+    def execute(self, script: str) -> Dict[str, Any]:
+        return run_redis_commands(script)
+
+redis_execution_service = RedisExecutionService()

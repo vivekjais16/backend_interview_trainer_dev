@@ -3,6 +3,8 @@ import logging
 import httpx
 from typing import Dict, Any, List, Optional
 from app.core.config import settings
+from app.contracts.ai import AIEvaluationContract
+from app.core.resilience import CircuitBreaker
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +17,14 @@ Evaluate candidate answer on 5 MNC engineering dimensions:
 5. Experience Calibration: Is the answer appropriate for their YOE (Junior: foundational clarity; Senior: trade-offs, P99 latency, cost, distributed consensus)?
 """
 
-class AIService:
+class AIService(AIEvaluationContract):
     def __init__(self):
         self.provider = settings.AI_PROVIDER.lower()
         self.gemini_key = settings.GEMINI_API_KEY
         self.openai_key = settings.OPENAI_API_KEY
         self.ollama_url = settings.OLLAMA_BASE_URL
         self.model = settings.AI_MODEL_NAME
+        self.circuit_breaker = CircuitBreaker("ai_evaluator", failure_threshold=3, recovery_timeout_seconds=30.0)
 
     async def evaluate_candidate_turn(
         self,
@@ -36,25 +39,38 @@ class AIService:
     ) -> Dict[str, Any]:
         """
         Evaluates candidate response and generates deep MNC cross-questions.
-        Uses configured provider (Gemini, OpenAI, Ollama) or falls back to the deterministic MNC engine.
+        Uses configured provider (Gemini, OpenAI, Ollama) with CircuitBreaker protection or falls back to the deterministic MNC engine.
         """
+        if not self.circuit_breaker.can_execute():
+            logger.warning("AI circuit breaker is OPEN. Falling back directly to deterministic MNC evaluator.")
+            return self._evaluate_offline_mnc(
+                question_title, scenario_text, experience_level, target_company,
+                candidate_response, candidate_code, candidate_sql, previous_cross_questions
+            )
+
         # If API keys are available, call live LLMs
         if self.provider == "gemini" and self.gemini_key:
             try:
-                return await self._call_gemini(
+                res = await self._call_gemini(
                     question_title, scenario_text, experience_level, target_company,
                     candidate_response, candidate_code, candidate_sql, previous_cross_questions
                 )
+                self.circuit_breaker.record_success()
+                return res
             except Exception as e:
+                self.circuit_breaker.record_failure()
                 logger.error(f"Gemini API error, falling back to offline evaluator: {e}")
 
         elif self.provider == "openai" and self.openai_key:
             try:
-                return await self._call_openai(
+                res = await self._call_openai(
                     question_title, scenario_text, experience_level, target_company,
                     candidate_response, candidate_code, candidate_sql, previous_cross_questions
                 )
+                self.circuit_breaker.record_success()
+                return res
             except Exception as e:
+                self.circuit_breaker.record_failure()
                 logger.error(f"OpenAI API error, falling back to offline evaluator: {e}")
 
         elif self.provider == "ollama":

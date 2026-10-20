@@ -441,3 +441,18 @@ def run_python_code(code_str: str, timeout_seconds: int = 5, test_cases: Optiona
     result["test_results"] = []
     result["complexity_analysis"] = analyze_code_complexity(code_str)
     return result
+
+from app.contracts.execution import CodeExecutionContract
+
+class PythonExecutionService(CodeExecutionContract):
+    """
+    Decoupled Python Execution Microservice Adapter.
+    Implements CodeExecutionContract to isolate sandboxed execution from API transport.
+    """
+    def execute(self, code: str, timeout_seconds: int = 5) -> Dict[str, Any]:
+        return run_python_code(code, timeout_seconds=timeout_seconds)
+
+    def analyze_complexity(self, code: str) -> Dict[str, Any]:
+        return analyze_code_complexity(code)
+
+python_execution_service = PythonExecutionService()

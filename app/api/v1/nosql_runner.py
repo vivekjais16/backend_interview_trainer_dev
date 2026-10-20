@@ -1,7 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
-from app.services.nosql_runner import run_nosql_query
+
+from app.core.container import get_document_execution_service
+from app.contracts.execution import DocumentExecutionContract
 
 router = APIRouter(prefix="/sandbox/nosql", tags=["NoSQL / MongoDB Sandbox"])
 
@@ -16,6 +18,9 @@ class NoSQLRunResponse(BaseModel):
     error: Optional[str] = None
 
 @router.post("", response_model=NoSQLRunResponse)
-def execute_nosql_sandbox(payload: NoSQLRunRequest):
-    result = run_nosql_query(payload.query)
-    return result
+def execute_nosql_sandbox(
+    payload: NoSQLRunRequest,
+    doc_svc: DocumentExecutionContract = Depends(get_document_execution_service)
+):
+    """Executes MongoDB query or aggregation pipeline against isolated collections."""
+    return doc_svc.execute(payload.query)

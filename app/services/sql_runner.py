@@ -335,3 +335,34 @@ def run_sql_query(query: str, schema_name: str = "ecommerce", include_explain: b
         }
     finally:
         conn.close()
+
+from app.contracts.execution import DatabaseExecutionContract
+
+class SQLExecutionService(DatabaseExecutionContract):
+    """
+    Decoupled SQL Database Execution Microservice Adapter.
+    Implements DatabaseExecutionContract to execute queries safely with EXPLAIN plan inspection.
+    """
+    def execute(self, query: str, schema_name: str = "ecommerce", include_explain: bool = True, max_rows: int = 50) -> Dict[str, Any]:
+        return run_sql_query(query, schema_name=schema_name, include_explain=include_explain, max_rows=max_rows)
+
+    def get_schemas(self) -> List[Dict[str, Any]]:
+        return [
+            {
+                "id": "ecommerce",
+                "name": "E-Commerce System (Orders, Customers, Products, Items)",
+                "tables": ["customers", "products", "orders", "order_items"]
+            },
+            {
+                "id": "fintech",
+                "name": "Fintech Ledger (Accounts, Transactions, Audit Logs)",
+                "tables": ["accounts", "transactions"]
+            },
+            {
+                "id": "hr_tech",
+                "name": "HR Platform (Employees, Departments, Salaries)",
+                "tables": ["departments", "employees"]
+            }
+        ]
+
+sql_execution_service = SQLExecutionService()
