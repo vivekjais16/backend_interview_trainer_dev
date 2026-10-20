@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f17',
+                        cardBg: '#131924',
+                        borderBg: '#212a38',
+                        accentBlue: '#3b82f6',
+                        accentGreen: '#10b981',
+                        accentPurple: '#8b5cf6',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Mermaid for Interactive Mindmaps -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-darkBg text-gray-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-borderBg bg-cardBg/90 backdrop-blur sticky top-0 z-40 px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white font-bold text-lg">
+                ⚡
+            </div>
+            <div>
+                <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+                    {{ app_name }}
+                </h1>
+                <p class="text-[11px] text-gray-400 font-medium">Jupyter AI Sandbox • Python Interpreter • SQL Compiler • MNC Bar Raiser</p>
+            </div>
+        </div>
+
+        <!-- Experience Level Switcher -->
+        <div class="flex items-center gap-2 bg-darkBg/90 p-1 rounded-xl border border-borderBg shadow-inner">
+            <span class="text-xs text-gray-400 font-semibold px-2.5">Experience Level:</span>
+            <button data-level="junior" class="exp-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 hover:bg-gray-800 text-emerald-400 transition">
+                🟢 Junior (0-2 YOE)
+            </button>
+            <button data-level="mid" class="exp-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-800 ring-2 ring-blue-500 text-amber-400 transition">
+                🟡 Mid (3-5 YOE)
+            </button>
+            <button data-level="senior" class="exp-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 hover:bg-gray-800 text-purple-400 transition">
+                🟣 Senior (6-9 YOE)
+            </button>
+            <button data-level="lead" class="exp-selector-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 hover:bg-gray-800 text-rose-400 transition">
+                🔴 Staff / Architect (10+ YOE)
+            </button>
+        </div>
+
+        <!-- Status Badges -->
+        <div class="flex items-center gap-3 text-xs">
+            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>{{ db_mode }}</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-950/40 border border-indigo-800/60 text-indigo-300">
+                <span>🤖 AI: {{ ai_provider | upper }}</span>
+            </div>
+            <a href="/docs" target="_blank" class="px-3 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-borderBg transition font-mono">
+                API Docs
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Left Sidebar: Questions & Mind Maps -->
+        <aside class="w-80 border-r border-borderBg bg-cardBg flex flex-col shrink-0">
+            <!-- Sidebar Tab Navigation -->
+            <div class="flex border-b border-borderBg text-xs font-semibold">
+                <button id="tabQuestionsBtn" onclick="switchSidebarTab('questions')" class="flex-1 py-3 text-center border-b-2 border-blue-500 text-blue-400 bg-gray-800/40">
+                    📋 MNC Questions
+                </button>
+                <button id="tabMindmapBtn" onclick="switchSidebarTab('mindmap')" class="flex-1 py-3 text-center text-gray-400 hover:text-gray-200">
+                    🧠 Theory Mind Map
+                </button>
+            </div>
+
+            <!-- Panel 1: Questions List -->
+            <div id="sidebarQuestionsPanel" class="flex-1 flex flex-col overflow-hidden">
+                <div class="p-3 border-b border-borderBg">
+                    <input type="text" id="questionSearchInput" placeholder="Filter questions or scenario..." 
+                           class="w-full bg-darkBg border border-borderBg rounded-lg px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500">
+                </div>
+                <div id="questionList" class="flex-1 overflow-y-auto divide-y divide-borderBg">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Panel 2: Theoretical Mind Map Selection -->
+            <div id="sidebarMindmapPanel" class="flex-1 overflow-y-auto hidden p-3 space-y-3">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">MNC Architecture Mindmaps</h4>
+                <div id="mindmapTabList" class="flex flex-col gap-2">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center & Right: Jupyter-style Interactive Workspace -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+
+            <!-- MIND MAP VISUAL VIEW (Collapsible when Mind Map tab active) -->
+            <div id="mindmapVisualSection" class="notebook-cell p-5 hidden">
+                <div class="flex items-center justify-between mb-3 border-b border-borderBg pb-3">
+                    <h3 class="text-sm font-bold text-blue-400 flex items-center gap-2">
+                        <span>🧠</span> Theoretical Mind Map & MNC Knowledge Graph
+                    </h3>
+                    <button onclick="document.getElementById('mindmapVisualSection').classList.add('hidden')" class="text-xs text-gray-400 hover:text-gray-200">
+                        ✕ Close View
+                    </button>
+                </div>
+                <div id="mindmapDiagramContainer" class="p-4 bg-darkBg rounded-xl border border-borderBg overflow-x-auto text-center">
+                    <!-- Mermaid SVG rendered here -->
+                </div>
+                <div id="mindmapNodesDetail" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Deep nodes rendered here -->
+                </div>
+            </div>
+
+            <!-- CELL 1: Scenario & Theory Card -->
+            <div class="notebook-cell p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2 font-mono text-xs text-blue-400 font-semibold">
+                            <span>[In 1]</span>
+                            <span>MNC Technical Round Question</span>
+                        </div>
+                        <h2 id="qTitle" class="text-xl font-bold text-white tracking-tight">Select an Interview Question</h2>
+                    </div>
+                    <div id="qBadges" class="flex flex-wrap gap-2 justify-end">
+                        <!-- Badges injected -->
+                    </div>
+                </div>
+
+                <!-- Scenario -->
+                <div class="mt-4 p-4 bg-darkBg/90 border border-borderBg rounded-xl text-gray-300 text-sm leading-relaxed" id="qScenario">
+                    Select a question from the left sidebar to begin your adaptive MNC technical interview round.
+                </div>
+
+                <!-- Theory & Common Traps Accordion -->
+                <div id="qTheoryCard" class="mt-4 border-t border-borderBg pt-4 hidden">
+                    <details class="group">
+                        <summary class="cursor-pointer text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>📚 Theoretical Breakdown & CPython/Database Internals</span>
+                            <span class="group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div id="qTheoryText" class="mt-3 text-xs text-gray-300 leading-relaxed bg-darkBg p-4 rounded-xl border border-borderBg">
+                            <!-- Theory content -->
+                        </div>
+                    </details>
+                </div>
+
+                <div class="mt-3">
+                    <details class="group">
+                        <summary class="cursor-pointer text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+                            <span>⚠️ Common Traps & High-Concurrency Gotchas</span>
+                            <span class="group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <ul id="qTrapsList" class="mt-2 space-y-1.5 bg-darkBg p-4 rounded-xl border border-borderBg">
+                            <!-- Traps -->
+                        </ul>
+                    </details>
+                </div>
+            </div>
+
+            <!-- CELL 2: Interactive Python Interpreter Sandbox -->
+            <div id="pythonCellSection" class="notebook-cell p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-emerald-400 font-bold">[In 2]</span>
+                        <h3 class="text-sm font-bold text-gray-200 flex items-center gap-1.5">
+                            <span>🐍</span> Sandboxed Python Interpreter
+                        </h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="revealSolution()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-borderBg transition">
+                            💡 Model Solution
+                        </button>
+                        <button onclick="resetStarterCode()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-borderBg transition">
+                            ↺ Reset
+                        </button>
+                        <button id="runPythonBtn" onclick="runPythonCode()" class="text-xs bg-emerald-600 hover:bg-emerald-500 font-bold text-white px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 transition flex items-center gap-1">
+                            <span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-gray-300">Ctrl+Enter</kbd>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
+                    <textarea id="pythonCodeInput" rows="11" 
+                              class="w-full bg-transparent text-gray-100 font-mono text-xs p-4 focus:outline-none resize-y leading-relaxed" 
+                              spellcheck="false" placeholder="# Write your Python code here..."></textarea>
+                </div>
+
+                <!-- Python Execution Output Terminal -->
+                <div>
+                    <div class="text-[11px] font-mono text-gray-400 mb-1 flex items-center justify-between">
+                        <span>[Out 2] Terminal Output (STDOUT / STDERR):</span>
+                        <span class="text-gray-500">Safe AST sandbox with timeout protection</span>
+                    </div>
+                    <div class="terminal-window">
+                        <pre id="pyOutputTerminal" class="text-gray-400 font-mono text-xs whitespace-pre-wrap p-4">// Click 'Run Python' to execute code</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CELL 3: Interactive SQL Compiler Sandbox -->
+            <div id="sqlCellSection" class="notebook-cell p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-blue-400 font-bold">[In 3]</span>
+                        <h3 class="text-sm font-bold text-gray-200 flex items-center gap-1.5">
+                            <span>🗄️</span> Isolated SQL Compiler & Query Plan Analyzer
+                        </h3>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                            <span>Schema:</span>
+                            <select id="sqlSchemaSelect" class="bg-darkBg border border-borderBg rounded-lg px-2.5 py-1 text-xs text-gray-200 focus:outline-none focus:border-blue-500">
+                                <option value="ecommerce">E-Commerce & Orders</option>
+                                <option value="fintech">FinTech & Ledger</option>
+                                <option value="hr_tech">HR & Employee Analytics</option>
+                            </select>
+                        </div>
+                        <button id="runSqlBtn" onclick="runSQLCode()" class="text-xs bg-blue-600 hover:bg-blue-500 font-bold text-white px-4 py-1.5 rounded-lg shadow-lg shadow-blue-600/30 transition flex items-center gap-1">
+                            <span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-gray-300">Ctrl+Enter</kbd>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
+                    <textarea id="sqlQueryInput" rows="7" 
+                              class="w-full bg-transparent text-gray-100 font-mono text-xs p-4 focus:outline-none resize-y leading-relaxed" 
+                              spellcheck="false" placeholder="-- Write your SQL query here..."></textarea>
+                </div>
+
+                <!-- SQL Output Table and Query Plan -->
+                <div>
+                    <div class="text-[11px] font-mono text-gray-400 mb-1">
+                        <span>[Out 3] Query Results & EXPLAIN Execution Plan:</span>
+                    </div>
+                    <div id="sqlOutputContainer" class="terminal-window overflow-hidden">
+                        <div class="text-xs text-gray-500 font-mono p-4">Click 'Execute SQL' to run query with execution plan.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CELL 4: AI Mock Interview Bar Raiser Grilling & Cross Questions -->
+            <div class="notebook-cell p-6 space-y-4 border-indigo-900/60 bg-gradient-to-b from-cardBg to-indigo-950/20">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-mono text-purple-400 font-bold">[In 4]</span>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                            <span>🎙️</span> AI Bar Raiser Interviewer (Evaluation & Cross-Questioning)
+                        </h3>
+                    </div>
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-900/40 text-purple-300 border border-purple-800">
+                        Adaptive to Selected Experience Track
+                    </span>
+                </div>
+
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    Explain your architectural reasoning, edge case handling, locking strategy, or production trade-offs. 
+                    The AI Bar Raiser will inspect your explanation, Python code, and SQL, assign a score (0-10), and challenge you with <strong>rigorous MNC follow-up cross-questions</strong>.
+                </p>
+
+                <div class="relative rounded-xl overflow-hidden border border-borderBg bg-darkBg">
+                    <textarea id="candidateResponseInput" rows="6" 
+                              class="w-full bg-transparent text-gray-100 text-xs p-4 focus:outline-none resize-y leading-relaxed font-sans" 
+                              placeholder="Explain your thought process, architectural choices, Big-O complexities, and how you mitigate concurrency/deadlock risks in production..."></textarea>
+                </div>
+
+                <div class="flex justify-end">
+                    <button id="submitAiBtn" onclick="submitToAIInterviewer()" class="text-xs bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 font-bold text-white px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+                        <span>🎙️</span> Submit Answer & Code to AI Bar Raiser
+                    </button>
+                </div>
+
+                <!-- AI Evaluation Card (Hidden initially) -->
+                <div id="aiEvaluationCard" class="mt-6 p-6 bg-darkBg/95 border border-indigo-900/70 rounded-2xl space-y-4 hidden">
+                    <div class="flex items-center justify-between border-b border-borderBg pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🎯</span>
+                            <h4 class="text-sm font-bold text-white">Bar Raiser Performance Review</h4>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400">Score:</span>
+                            <span id="aiScoreValue" class="text-sm font-mono font-bold px-3 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800">
+                                8.5 / 10
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="aiFeedbackContent" class="text-xs text-gray-300 leading-relaxed">
+                        <!-- AI Feedback markdown -->
+                    </div>
+
+                    <!-- Follow up cross questions -->
+                    <div id="aiCrossQuestions">
+                        <!-- Cross questions -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function switchSidebarTab(tab) {
+            const qBtn = document.getElementById("tabQuestionsBtn");
+            const mBtn = document.getElementById("tabMindmapBtn");
+            const qPanel = document.getElementById("sidebarQuestionsPanel");
+            const mPanel = document.getElementById("sidebarMindmapPanel");
+            const visual = document.getElementById("mindmapVisualSection");
+
+            if (tab === "questions") {
+                qBtn.className = "flex-1 py-3 text-center border-b-2 border-blue-500 text-blue-400 bg-gray-800/40";
+                mBtn.className = "flex-1 py-3 text-center text-gray-400 hover:text-gray-200";
+                qPanel.classList.remove("hidden");
+                mPanel.classList.add("hidden");
+            } else {
+                mBtn.className = "flex-1 py-3 text-center border-b-2 border-blue-500 text-blue-400 bg-gray-800/40";
+                qBtn.className = "flex-1 py-3 text-center text-gray-400 hover:text-gray-200";
+                mPanel.classList.remove("hidden");
+                qPanel.classList.add("hidden");
+                visual.classList.remove("hidden");
+            }
+        }
+    </script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
