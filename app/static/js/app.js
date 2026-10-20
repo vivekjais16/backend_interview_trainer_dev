@@ -2,8 +2,76 @@
 let currentQuestion = null;
 let currentExperienceLevel = "mid";
 let currentDomainFilter = "";
+let currentPhaseFilter = "basic"; // "basic", "intermediate", "advanced", or ""
 let activeSessionId = null;
 let currentMindmapSlug = "python-internals";
+let currentAppMode = "studio"; // "studio" or "mcq"
+
+// MCQ Speed Arena State
+let arenaQuestions = [];
+let arenaCurrentIndex = 0;
+let arenaPhase = "basic";
+let arenaScore = 0;
+let arenaTotalAnswered = 0;
+let arenaStreak = 0;
+let arenaBestStreak = 0;
+let arenaAnsweredCurrent = false;
+
+function getPhaseClass(phase) {
+    const p = (phase || '').toLowerCase();
+    if (p === 'basic') return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
+    if (p === 'intermediate') return 'bg-blue-100 text-blue-800 border border-blue-300';
+    return 'bg-purple-100 text-purple-800 border border-purple-300';
+}
+
+function selectCareerPhase(phase, el) {
+    currentPhaseFilter = phase;
+    
+    // Update button styles in phase bar
+    document.querySelectorAll(".phase-step-btn").forEach(btn => {
+        btn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-2";
+    });
+    
+    if (el) {
+        if (phase === 'basic') {
+            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold transition flex items-center gap-2 shadow-2xs";
+        } else if (phase === 'intermediate') {
+            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-800 font-bold transition flex items-center gap-2 shadow-2xs";
+        } else if (phase === 'advanced') {
+            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-purple-300 bg-purple-50 text-purple-800 font-bold transition flex items-center gap-2 shadow-2xs";
+        } else {
+            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        }
+    }
+    
+    if (currentAppMode === 'mcq') {
+        switchArenaPhase(phase);
+    } else {
+        loadQuestions();
+    }
+}
+
+function switchAppMode(mode) {
+    currentAppMode = mode;
+    const studioWorkspace = document.getElementById("studioWorkspace");
+    const mcqArenaWorkspace = document.getElementById("mcqArenaWorkspace");
+    const modeStudioBtn = document.getElementById("modeStudioBtn");
+    const modeMcqBtn = document.getElementById("modeMcqBtn");
+
+    if (mode === "studio") {
+        if (studioWorkspace) studioWorkspace.classList.remove("hidden");
+        if (mcqArenaWorkspace) mcqArenaWorkspace.classList.add("hidden");
+        if (modeStudioBtn) modeStudioBtn.className = "px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-2xs transition flex items-center gap-1.5";
+        if (modeMcqBtn) modeMcqBtn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5";
+    } else {
+        if (studioWorkspace) studioWorkspace.classList.add("hidden");
+        if (mcqArenaWorkspace) mcqArenaWorkspace.classList.remove("hidden");
+        if (modeStudioBtn) modeStudioBtn.className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5";
+        if (modeMcqBtn) modeMcqBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
+        
+        startMcqQuiz(currentPhaseFilter || arenaPhase);
+    }
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
     // Initialize Mermaid in Light Theme
@@ -85,11 +153,6 @@ function filterByDomain(domain) {
         window.event.currentTarget.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
     }
 
-    // Highlight roadmap steps
-    document.querySelectorAll(".stage-step-btn").forEach(s => {
-        s.className = "stage-step-btn px-3 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-1.5";
-    });
-
     loadQuestions();
 }
 
@@ -115,13 +178,20 @@ async function loadQuestions() {
     const listEl = document.getElementById("questionList");
     if (!listEl) return;
 
-    listEl.innerHTML = `<div class="p-6 text-slate-400 text-xs font-medium animate-pulse text-center">Loading ${currentExperienceLevel.toUpperCase()} questions...</div>`;
+    listEl.innerHTML = `<div class="p-6 text-slate-400 text-xs font-medium animate-pulse text-center">Loading questions...</div>`;
 
     try {
-        let url = `/api/v1/questions?experience_level=${currentExperienceLevel}`;
-        if (currentDomainFilter) {
-            url += `&category=${currentDomainFilter}`;
+        const params = [];
+        if (currentPhaseFilter) {
+            params.push(`phase=${encodeURIComponent(currentPhaseFilter)}`);
+        } else if (currentExperienceLevel) {
+            params.push(`experience_level=${encodeURIComponent(currentExperienceLevel)}`);
         }
+        if (currentDomainFilter) {
+            params.push(`category=${encodeURIComponent(currentDomainFilter)}`);
+        }
+        
+        const url = `/api/v1/questions` + (params.length ? `?${params.join("&")}` : "");
         const res = await fetch(url);
         const questions = await res.json();
 
@@ -129,7 +199,7 @@ async function loadQuestions() {
             listEl.innerHTML = `
                 <div class="p-8 text-center text-slate-500 text-xs space-y-2">
                     <p class="font-semibold text-slate-700">No questions found for this filter.</p>
-                    <p>Try clicking <button onclick="filterByDomain('')" class="text-indigo-600 font-bold underline">Show All</button> to see all available questions.</p>
+                    <p>Try clicking <button onclick="selectCareerPhase('', document.getElementById('phaseBtnAll'))" class="text-indigo-600 font-bold underline">Show All 20 Questions</button>.</p>
                 </div>
             `;
             return;
@@ -138,13 +208,17 @@ async function loadQuestions() {
         listEl.innerHTML = questions.map((q, idx) => `
             <div onclick="selectQuestion(${q.id})" id="q-card-${q.id}" class="p-3.5 hover:bg-indigo-50/40 cursor-pointer transition flex flex-col gap-1.5 ${idx === 0 ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}">
                 <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold ${getPhaseClass(q.phase)}">${(q.phase || 'basic').toUpperCase()}</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
+                    </div>
                     <span class="text-[10px] text-slate-400 font-mono font-medium">${q.min_exp_years}-${q.max_exp_years} YOE</span>
                 </div>
                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-relaxed">${q.title}</h4>
                 <div class="flex flex-wrap gap-1 mt-0.5">
                     <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/80 font-medium font-mono">${formatCategory(q.category)}</span>
                     ${(q.company_tags || []).slice(0, 3).map(tag => `<span class="company-tag">${tag}</span>`).join('')}
+                    ${q.has_mcq ? `<span class="text-[9px] bg-amber-50 text-amber-800 border border-amber-200 px-1 rounded font-mono font-bold">MCQ</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -259,6 +333,24 @@ function renderQuestionDetail(q) {
         }
 
         walkthroughText.innerHTML = walkHtml || "<p class='text-slate-500 italic'>No walkthrough content available for this problem.</p>";
+    }
+
+    // Populate Concept MCQ Quick Check Card in Cell 1
+    const mcqCard = document.getElementById("qMcqCard");
+    if (mcqCard) {
+        if (q.mcq_question && q.mcq_options && q.mcq_options.length >= 2) {
+            mcqCard.classList.remove("hidden");
+            document.getElementById("qMcqPrompt").innerText = q.mcq_question;
+            const phaseBadge = document.getElementById("qMcqPhaseBadge");
+            if (phaseBadge) {
+                const p = (q.phase || "basic").toUpperCase();
+                phaseBadge.innerText = `PHASE: ${p}`;
+                phaseBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${getPhaseClass(q.phase)}`;
+            }
+            renderQuestionMcqOptions(q);
+        } else {
+            mcqCard.classList.add("hidden");
+        }
     }
 
     // Auto-focus the relevant sandbox tab based on question capabilities
@@ -879,6 +971,351 @@ function toggleMindmapFullscreen() {
 }
 
 // ----------------------------------------------------
+// Interactive Concept MCQ Quick Check (Cell 1)
+// ----------------------------------------------------
+function renderQuestionMcqOptions(q) {
+    const container = document.getElementById("qMcqOptionsContainer");
+    const expBox = document.getElementById("qMcqExplanationBox");
+    if (expBox) expBox.classList.add("hidden");
+    if (!container || !q.mcq_options) return;
+
+    container.innerHTML = q.mcq_options.map((opt, idx) => `
+        <button onclick="selectQuestionMcq(${idx})" id="q-opt-${idx}" class="q-opt-btn p-3 rounded-lg border border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/40 text-left text-xs font-semibold text-slate-800 transition flex items-start gap-2.5 shadow-2xs">
+            <span class="w-5 h-5 rounded bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center font-bold text-[11px] shrink-0 font-mono">${String.fromCharCode(65 + idx)}</span>
+            <span class="leading-relaxed mt-0.5">${opt.replace(/^[A-D]\)\s*/, '')}</span>
+        </button>
+    `).join('');
+}
+
+async function selectQuestionMcq(selectedIndex) {
+    if (!currentQuestion) return;
+    const q = currentQuestion;
+
+    try {
+        const res = await fetch("/api/v1/questions/verify-mcq", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question_id: q.id, selected_index: selectedIndex })
+        });
+        const result = await res.json();
+
+        q.mcq_options.forEach((opt, idx) => {
+            const btn = document.getElementById(`q-opt-${idx}`);
+            if (!btn) return;
+            btn.disabled = true;
+            btn.classList.remove("hover:border-indigo-400", "hover:bg-indigo-50/40");
+            
+            if (idx === result.correct_index) {
+                btn.className = "q-opt-btn p-3 rounded-lg border-2 border-emerald-500 bg-emerald-50 text-left text-xs font-bold text-emerald-950 transition flex items-start gap-2.5 shadow-xs";
+                btn.querySelector("span").className = "w-5 h-5 rounded bg-emerald-600 text-white flex items-center justify-center font-bold text-[11px] shrink-0 font-mono";
+                btn.querySelector("span").innerText = "✓";
+            } else if (idx === selectedIndex && !result.is_correct) {
+                btn.className = "q-opt-btn p-3 rounded-lg border-2 border-rose-400 bg-rose-50 text-left text-xs font-semibold text-rose-950 transition flex items-start gap-2.5 shadow-xs";
+                btn.querySelector("span").className = "w-5 h-5 rounded bg-rose-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0 font-mono";
+                btn.querySelector("span").innerText = "✗";
+            } else {
+                btn.className = "q-opt-btn p-3 rounded-lg border border-slate-200 bg-slate-50 opacity-60 text-left text-xs font-medium text-slate-500 transition flex items-start gap-2.5";
+            }
+        });
+
+        const expBox = document.getElementById("qMcqExplanationBox");
+        const banner = document.getElementById("qMcqFeedbackBanner");
+        const text = document.getElementById("qMcqExplanationText");
+
+        if (expBox && banner && text) {
+            expBox.classList.remove("hidden");
+            if (result.is_correct) {
+                banner.className = "font-bold text-emerald-800 flex items-center gap-2 text-xs";
+                banner.innerHTML = `<span>✓ Correct Answer!</span>`;
+                showToast("✓ Correct Concept Answer!", "success");
+            } else {
+                banner.className = "font-bold text-amber-800 flex items-center gap-2 text-xs";
+                banner.innerHTML = `<span>⚠️ Conceptual Trap (Option ${String.fromCharCode(65 + result.correct_index)} is correct)</span>`;
+                showToast("✗ Conceptual Trap detected", "warning");
+            }
+            text.innerText = result.explanation;
+        }
+
+    } catch (e) {
+        console.error("Failed to verify question MCQ:", e);
+    }
+}
+
+function resetCurrentMcq() {
+    if (currentQuestion) {
+        renderQuestionMcqOptions(currentQuestion);
+        showToast("MCQ check reset");
+    }
+}
+
+// ----------------------------------------------------
+// Interactive MCQ Arena Controller (Phase-by-Phase Speed Mode)
+// ----------------------------------------------------
+async function switchArenaPhase(phase) {
+    arenaPhase = phase;
+    
+    // Update button styling
+    ["Basic", "Inter", "Adv", "All"].forEach(id => {
+        const btn = document.getElementById(`arenaPhase${id}Btn`);
+        if (btn) btn.className = "px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-1.5";
+    });
+    
+    const activeMap = { 'basic': 'Basic', 'intermediate': 'Inter', 'advanced': 'Adv', '': 'All' };
+    const activeBtn = document.getElementById(`arenaPhase${activeMap[phase] || 'All'}Btn`);
+    if (activeBtn) {
+        if (phase === 'basic') {
+            activeBtn.className = "px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        } else if (phase === 'intermediate') {
+            activeBtn.className = "px-3 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        } else if (phase === 'advanced') {
+            activeBtn.className = "px-3 py-1.5 rounded-lg border border-purple-300 bg-purple-50 text-purple-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        } else {
+            activeBtn.className = "px-3 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        }
+    }
+    
+    await startMcqQuiz(phase);
+}
+
+async function startMcqQuiz(phase) {
+    try {
+        let url = `/api/v1/questions/mcq-quiz`;
+        if (phase) url += `?phase=${encodeURIComponent(phase)}`;
+        const res = await fetch(url);
+        arenaQuestions = await res.json();
+        arenaCurrentIndex = 0;
+        arenaScore = 0;
+        arenaTotalAnswered = 0;
+        arenaStreak = 0;
+        arenaAnsweredCurrent = false;
+
+        const scoreEl = document.getElementById("arenaScore");
+        const streakEl = document.getElementById("arenaStreak");
+        if (scoreEl) scoreEl.innerText = `0 / ${arenaQuestions.length}`;
+        if (streakEl) streakEl.innerText = `0`;
+
+        const compCard = document.getElementById("arenaCompletionCard");
+        const qCard = document.getElementById("arenaQuestionCard");
+        if (compCard) compCard.classList.add("hidden");
+        if (qCard) qCard.classList.remove("hidden");
+
+        renderArenaQuestion();
+    } catch (e) {
+        console.error("Failed to load MCQ quiz:", e);
+    }
+}
+
+function renderArenaQuestion() {
+    if (!arenaQuestions.length || arenaCurrentIndex >= arenaQuestions.length) {
+        showArenaCompletion();
+        return;
+    }
+    const q = arenaQuestions[arenaCurrentIndex];
+    arenaAnsweredCurrent = false;
+
+    // Badges & Progress
+    const progressText = document.getElementById("arenaProgressText");
+    if (progressText) progressText.innerText = `Question ${arenaCurrentIndex + 1} of ${arenaQuestions.length}`;
+    
+    const pct = Math.round(((arenaCurrentIndex + 1) / arenaQuestions.length) * 100);
+    const progressBar = document.getElementById("arenaProgressBar");
+    if (progressBar) progressBar.style.width = `${pct}%`;
+
+    const phaseBadge = document.getElementById("arenaCardPhaseBadge");
+    if (phaseBadge) {
+        phaseBadge.innerText = (q.phase || "basic").toUpperCase();
+        phaseBadge.className = `text-xs font-mono font-bold px-2.5 py-0.5 rounded-full ${getPhaseClass(q.phase)}`;
+    }
+
+    const catBadge = document.getElementById("arenaCardCategoryBadge");
+    if (catBadge) catBadge.innerText = formatCategory(q.category);
+
+    const titleEl = document.getElementById("arenaQuestionTitle");
+    if (titleEl) titleEl.innerText = q.title;
+
+    const textEl = document.getElementById("arenaQuestionText");
+    if (textEl) textEl.innerText = q.mcq_question;
+
+    const tagsContainer = document.getElementById("arenaCompanyTags");
+    if (tagsContainer) {
+        tagsContainer.innerHTML = (q.company_tags || []).slice(0, 3).map(tag => `<span class="company-tag">${tag}</span>`).join('');
+    }
+
+    // Hide explanation box
+    const expCard = document.getElementById("arenaExplanationCard");
+    if (expCard) expCard.classList.add("hidden");
+
+    // Render 4 options
+    const optionsContainer = document.getElementById("arenaOptionsList");
+    if (optionsContainer && q.mcq_options) {
+        optionsContainer.innerHTML = q.mcq_options.map((opt, idx) => `
+            <button onclick="selectArenaOption(${idx})" id="arena-opt-${idx}" class="arena-opt-btn p-4 rounded-xl border border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/30 text-left text-xs font-semibold text-slate-800 transition flex items-start gap-3 shadow-2xs">
+                <span class="w-6 h-6 rounded-lg bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0 font-mono">${String.fromCharCode(65 + idx)}</span>
+                <span class="leading-relaxed mt-0.5">${opt.replace(/^[A-D]\)\s*/, '')}</span>
+            </button>
+        `).join('');
+    }
+
+    // Prev / Next button states
+    const prevBtn = document.getElementById("arenaPrevBtn");
+    const nextBtn = document.getElementById("arenaNextBtn");
+    if (prevBtn) prevBtn.disabled = (arenaCurrentIndex === 0);
+    if (nextBtn) nextBtn.innerText = (arenaCurrentIndex === arenaQuestions.length - 1) ? "Finish Phase 🏁" : "Next Question →";
+}
+
+async function selectArenaOption(selectedIndex) {
+    if (arenaAnsweredCurrent) return;
+    arenaAnsweredCurrent = true;
+
+    const q = arenaQuestions[arenaCurrentIndex];
+    
+    try {
+        const res = await fetch("/api/v1/questions/verify-mcq", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question_id: q.id, selected_index: selectedIndex })
+        });
+        const result = await res.json();
+        
+        arenaTotalAnswered++;
+        if (result.is_correct) {
+            arenaScore++;
+            arenaStreak++;
+            if (arenaStreak > arenaBestStreak) arenaBestStreak = arenaStreak;
+            showToast("✓ Correct Answer! Well done.", "success");
+        } else {
+            arenaStreak = 0;
+            showToast("✗ Incorrect Choice. See explanation below.", "warning");
+        }
+
+        const scoreEl = document.getElementById("arenaScore");
+        const streakEl = document.getElementById("arenaStreak");
+        if (scoreEl) scoreEl.innerText = `${arenaScore} / ${arenaQuestions.length}`;
+        if (streakEl) streakEl.innerText = `${arenaStreak}`;
+
+        // Colorize options
+        q.mcq_options.forEach((opt, idx) => {
+            const btn = document.getElementById(`arena-opt-${idx}`);
+            if (!btn) return;
+            btn.disabled = true;
+            btn.classList.remove("hover:border-indigo-400", "hover:bg-indigo-50/30");
+            
+            if (idx === result.correct_index) {
+                btn.className = "arena-opt-btn p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-left text-xs font-bold text-emerald-950 transition flex items-start gap-3 shadow-xs";
+                btn.querySelector("span").className = "w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono";
+                btn.querySelector("span").innerText = "✓";
+            } else if (idx === selectedIndex && !result.is_correct) {
+                btn.className = "arena-opt-btn p-4 rounded-xl border-2 border-rose-400 bg-rose-50 text-left text-xs font-semibold text-rose-950 transition flex items-start gap-3 shadow-xs";
+                btn.querySelector("span").className = "w-6 h-6 rounded-lg bg-rose-500 text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono";
+                btn.querySelector("span").innerText = "✗";
+            } else {
+                btn.className = "arena-opt-btn p-4 rounded-xl border border-slate-200 bg-slate-50 opacity-60 text-left text-xs font-medium text-slate-500 transition flex items-start gap-3";
+            }
+        });
+
+        // Show Explanation Box
+        const expCard = document.getElementById("arenaExplanationCard");
+        const expHeader = document.getElementById("arenaExplanationHeader");
+        const expBody = document.getElementById("arenaExplanationBody");
+
+        if (expCard && expHeader && expBody) {
+            expCard.classList.remove("hidden");
+            if (result.is_correct) {
+                expCard.className = "p-5 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-2";
+                expHeader.className = "font-bold text-xs text-emerald-900 flex items-center gap-2";
+                expHeader.innerHTML = `<span>✓ Spot On!</span> <span class="font-normal text-emerald-700">Option ${String.fromCharCode(65 + result.correct_index)} is the optimal architectural answer.</span>`;
+            } else {
+                expCard.className = "p-5 rounded-xl border border-amber-200 bg-amber-50/60 space-y-2";
+                expHeader.className = "font-bold text-xs text-amber-900 flex items-center gap-2";
+                expHeader.innerHTML = `<span>⚠️ Conceptual Trap Detected!</span> <span class="font-normal text-amber-700">Correct Option is ${String.fromCharCode(65 + result.correct_index)}.</span>`;
+            }
+            expBody.innerText = result.explanation;
+        }
+
+    } catch (e) {
+        console.error("Failed to verify MCQ:", e);
+    }
+}
+
+function nextArenaQuestion() {
+    if (arenaCurrentIndex < arenaQuestions.length - 1) {
+        arenaCurrentIndex++;
+        renderArenaQuestion();
+    } else {
+        showArenaCompletion();
+    }
+}
+
+function prevArenaQuestion() {
+    if (arenaCurrentIndex > 0) {
+        arenaCurrentIndex--;
+        renderArenaQuestion();
+    }
+}
+
+function showArenaCompletion() {
+    const qCard = document.getElementById("arenaQuestionCard");
+    const completionCard = document.getElementById("arenaCompletionCard");
+    if (qCard) qCard.classList.add("hidden");
+    if (completionCard) completionCard.classList.remove("hidden");
+
+    const phaseTitles = {
+        'basic': 'Phase 1: Foundation (Basic)',
+        'intermediate': 'Phase 2: Production Engineering (Intermediate)',
+        'advanced': 'Phase 3: High Scale & Architecture (Advanced)',
+        '': 'All 20 Questions'
+    };
+
+    const compTitle = document.getElementById("arenaCompletionTitle");
+    const compSubtitle = document.getElementById("arenaCompletionSubtitle");
+    const finalScore = document.getElementById("arenaFinalScore");
+    const finalStreak = document.getElementById("arenaFinalStreak");
+
+    if (compTitle) compTitle.innerText = `${phaseTitles[arenaPhase] || 'Assessment'} Complete!`;
+    const accuracy = arenaQuestions.length > 0 ? Math.round((arenaScore / arenaQuestions.length) * 100) : 100;
+    if (compSubtitle) compSubtitle.innerText = `You scored ${arenaScore} out of ${arenaQuestions.length} (${accuracy}% accuracy) with a top streak of ${arenaBestStreak}!`;
+    if (finalScore) finalScore.innerText = `${arenaScore} / ${arenaQuestions.length} (${accuracy}%)`;
+    if (finalStreak) finalStreak.innerText = `${arenaBestStreak} 🔥`;
+
+    const advanceBtn = document.getElementById("arenaAdvancePhaseBtn");
+    if (advanceBtn) {
+        if (arenaPhase === 'basic') {
+            advanceBtn.innerHTML = `<span>Advance to Phase 2: Intermediate</span> <span>→</span>`;
+            advanceBtn.onclick = () => switchArenaPhase('intermediate');
+            advanceBtn.classList.remove("hidden");
+        } else if (arenaPhase === 'intermediate') {
+            advanceBtn.innerHTML = `<span>Advance to Phase 3: Advanced</span> <span>→</span>`;
+            advanceBtn.onclick = () => switchArenaPhase('advanced');
+            advanceBtn.classList.remove("hidden");
+        } else {
+            advanceBtn.innerHTML = `<span>Review All 20 Questions</span> <span>→</span>`;
+            advanceBtn.onclick = () => switchArenaPhase('');
+        }
+    }
+}
+
+function restartCurrentPhaseQuiz() {
+    startMcqQuiz(arenaPhase);
+}
+
+function advanceToNextPhase() {
+    if (arenaPhase === 'basic') {
+        switchArenaPhase('intermediate');
+    } else if (arenaPhase === 'intermediate') {
+        switchArenaPhase('advanced');
+    } else {
+        switchArenaPhase('');
+    }
+}
+
+function revealArenaInStudio() {
+    if (!arenaQuestions.length) return;
+    const q = arenaQuestions[arenaCurrentIndex];
+    switchAppMode('studio');
+    selectQuestion(q.id);
+}
+
+// ----------------------------------------------------
 // Global Window Export (ensures 100% operational buttons)
 // ----------------------------------------------------
 window.selectRoadmapStage = selectRoadmapStage;
@@ -898,5 +1335,16 @@ window.filterByDomain = filterByDomain;
 window.selectQuestion = selectQuestion;
 window.renderMindmap = renderMindmap;
 window.toggleEasyWalkthrough = toggleEasyWalkthrough;
+window.selectCareerPhase = selectCareerPhase;
+window.switchAppMode = switchAppMode;
+window.switchArenaPhase = switchArenaPhase;
+window.selectArenaOption = selectArenaOption;
+window.nextArenaQuestion = nextArenaQuestion;
+window.prevArenaQuestion = prevArenaQuestion;
+window.revealArenaInStudio = revealArenaInStudio;
+window.restartCurrentPhaseQuiz = restartCurrentPhaseQuiz;
+window.advanceToNextPhase = advanceToNextPhase;
+window.selectQuestionMcq = selectQuestionMcq;
+window.resetCurrentMcq = resetCurrentMcq;
 
 

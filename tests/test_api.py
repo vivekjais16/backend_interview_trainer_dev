@@ -82,3 +82,44 @@ def test_api_interview_session_and_turn(client):
     assert turn_data["score"] >= 0
     assert len(turn_data["cross_questions_asked"]) > 0
     assert "feedback" in turn_data
+
+def test_api_phases(client):
+    res = client.get("/api/v1/questions/phases")
+    assert res.status_code == 200
+    data = res.json()
+    assert "phases" in data
+    assert len(data["phases"]) == 3
+    assert data["total_questions"] >= 20
+    assert data["phases"][0]["id"] == "basic"
+    assert data["phases"][1]["id"] == "intermediate"
+    assert data["phases"][2]["id"] == "advanced"
+
+def test_api_mcq_quiz_and_verify(client):
+    # 1. Fetch MCQs for basic phase
+    quiz_res = client.get("/api/v1/questions/mcq-quiz?phase=basic")
+    assert quiz_res.status_code == 200
+    items = quiz_res.json()
+    assert len(items) >= 6
+    first_q = items[0]
+    assert "mcq_question" in first_q
+    assert len(first_q["mcq_options"]) == 4
+
+    # 2. Verify answer
+    verify_res = client.post("/api/v1/questions/verify-mcq", json={
+        "question_id": first_q["id"],
+        "selected_index": 1
+    })
+    assert verify_res.status_code == 200
+    v_data = verify_res.json()
+    assert "is_correct" in v_data
+    assert "correct_index" in v_data
+    assert "explanation" in v_data
+
+def test_api_filter_by_phase(client):
+    res = client.get("/api/v1/questions?phase=intermediate")
+    assert res.status_code == 200
+    qs = res.json()
+    assert len(qs) >= 7
+    for q in qs:
+        assert q["phase"] == "intermediate"
+

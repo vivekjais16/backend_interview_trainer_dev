@@ -77,5 +77,12 @@ class InterviewQuestion(Base):
     common_traps = Column(JSON, default=list)    # Common mistakes candidates make
     best_practices = Column(JSON, default=list)  # Industry standards (P99 latency, ACID, caching)
 
+    # Phase Progression & Interactive MCQ Assessment
+    phase = Column(String(50), default="basic", index=True) # basic, intermediate, advanced
+    mcq_question = Column(Text, nullable=True)
+    mcq_options = Column(JSON, default=list) # 4 distinct choices: ["A) ...", "B) ...", "C) ...", "D) ..."]
+    mcq_correct_index = Column(Integer, default=0) # 0-indexed correct option
+    mcq_explanation = Column(Text, nullable=True) # Plain-English explanation
+
     created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)

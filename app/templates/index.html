@@ -97,55 +97,54 @@
         </div>
     </header>
 
-    <!-- Visual Career Roadmap Stepper Bar -->
-    <section class="bg-white border-b border-slate-200/80 px-6 py-2 overflow-x-auto shadow-2xs">
+    <!-- Phase Progression & Mode Switcher Bar -->
+    <section class="bg-white border-b border-slate-200/90 px-6 py-2.5 overflow-x-auto shadow-2xs flex items-center justify-between gap-4">
+        <!-- 3-Phase Stepper: Basic -> Intermediate -> Advanced -->
         <div class="flex items-center gap-2 min-w-max text-xs">
             <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px] mr-1 flex items-center gap-1.5">
-                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span>MNC Path:</span>
+                <span>Phase:</span>
             </span>
             
-            <button onclick="selectRoadmapStage('python_internals', 'python-internals', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">1</span>
-                <span class="font-semibold text-slate-800">Python Internals & GIL</span>
+            <button id="phaseBtnBasic" onclick="selectCareerPhase('basic', this)" class="phase-step-btn px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold transition flex items-center gap-2 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Phase 1: Basic</span>
+                <span class="text-[10px] font-mono bg-emerald-200/70 px-1.5 py-0.2 rounded font-semibold text-emerald-900">6 Qs</span>
             </button>
-            <span class="text-slate-300">→</span>
+            <span class="text-slate-300 font-bold">→</span>
 
-            <button onclick="selectRoadmapStage('async_concurrency', 'async-concurrency', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">2</span>
-                <span class="font-semibold text-slate-800">Asyncio & Event Loop</span>
+            <button id="phaseBtnInter" onclick="selectCareerPhase('intermediate', this)" class="phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 text-slate-700 font-semibold transition flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span>Phase 2: Intermediate</span>
+                <span class="text-[10px] font-mono bg-blue-100 px-1.5 py-0.2 rounded font-semibold text-blue-800">7 Qs</span>
             </button>
-            <span class="text-slate-300">→</span>
+            <span class="text-slate-300 font-bold">→</span>
 
-            <button onclick="selectRoadmapStage('postgres_mysql', 'postgres-mysql-internals', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">3</span>
-                <span class="font-semibold text-slate-800">PostgreSQL & MySQL B+ Trees</span>
+            <button id="phaseBtnAdv" onclick="selectCareerPhase('advanced', this)" class="phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-purple-50 text-slate-700 font-semibold transition flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                <span>Phase 3: Advanced</span>
+                <span class="text-[10px] font-mono bg-purple-100 px-1.5 py-0.2 rounded font-semibold text-purple-800">7 Qs</span>
             </button>
-            <span class="text-slate-300">→</span>
 
-            <button onclick="selectRoadmapStage('redis_caching', 'redis-caching', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">4</span>
-                <span class="font-semibold text-slate-800">Redis & Mongo NoSQL</span>
+            <button id="phaseBtnAll" onclick="selectCareerPhase('', this)" class="phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 font-semibold transition flex items-center gap-1.5 ml-1">
+                <span>⚡ All (20 Qs)</span>
             </button>
-            <span class="text-slate-300">→</span>
+        </div>
 
-            <button onclick="selectRoadmapStage('kafka_messaging', 'kafka-messaging', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">5</span>
-                <span class="font-semibold text-slate-800">Kafka & Celery Streaming</span>
+        <!-- Mode Switcher: Studio Sandbox vs Interactive MCQ Arena -->
+        <div class="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs shrink-0">
+            <button id="modeStudioBtn" onclick="switchAppMode('studio')" class="px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-2xs transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                <span>Studio Sandbox</span>
             </button>
-            <span class="text-slate-300">→</span>
-
-            <button onclick="selectRoadmapStage('kubernetes_devops', 'kubernetes-devops', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">6</span>
-                <span class="font-semibold text-slate-800">Docker & K8s Deployments</span>
-            </button>
-            <span class="text-slate-300">→</span>
-
-            <button onclick="selectRoadmapStage('system_design_mnc', 'cicd-production', this)" class="stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2">
-                <span class="w-4 h-4 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[9px] font-mono">7</span>
-                <span class="font-semibold text-slate-800">MNC System Design & P99</span>
+            <button id="modeMcqBtn" onclick="switchAppMode('mcq')" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <span>Interactive MCQ Arena</span>
+                <span class="text-[9px] font-mono uppercase bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">New</span>
             </button>
         </div>
     </section>
@@ -216,7 +215,8 @@
         </aside>
 
         <!-- Center & Right: Jupyter-style Interactive Workspace -->
-        <main class="flex-1 overflow-y-auto p-8 space-y-6 bg-slate-50">
+        <main class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div id="studioWorkspace" class="space-y-6">
 
             <!-- MIND MAP VISUAL VIEW (Collapsible when Mind Map tab active) -->
             <div id="mindmapVisualSection" class="premium-card p-6 hidden">
@@ -316,6 +316,33 @@
                     </div>
                     <div id="solutionWalkthroughText" class="text-xs text-slate-800 leading-relaxed space-y-2 font-normal">
                         <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Interactive Concept MCQ Quick Check Card -->
+                <div id="qMcqCard" class="mt-4 p-5 bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/50 border border-indigo-200/90 rounded-xl space-y-3.5 shadow-2xs hidden">
+                    <div class="flex items-center justify-between border-b border-indigo-100 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">MCQ</span>
+                            <span class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Concept Knowledge Check</span>
+                            <span id="qMcqPhaseBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold">Phase 1: Basic</span>
+                        </div>
+                        <button id="qMcqResetBtn" onclick="resetCurrentMcq()" class="text-[11px] text-slate-500 hover:text-indigo-600 font-medium transition flex items-center gap-1">
+                            <span>↺</span> Reset Check
+                        </button>
+                    </div>
+                    
+                    <p id="qMcqPrompt" class="text-xs font-bold text-slate-900 leading-relaxed"></p>
+
+                    <!-- 4 Option Buttons (A, B, C, D) -->
+                    <div id="qMcqOptionsContainer" class="grid grid-cols-1 gap-2 pt-1">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <!-- Explanation reveal on answer -->
+                    <div id="qMcqExplanationBox" class="mt-3 p-4 bg-white border border-slate-200 rounded-xl text-xs space-y-1.5 hidden shadow-xs">
+                        <div id="qMcqFeedbackBanner" class="font-bold flex items-center gap-2 text-xs"></div>
+                        <p id="qMcqExplanationText" class="text-slate-700 leading-relaxed font-normal"></p>
                     </div>
                 </div>
             </div>
@@ -624,7 +651,135 @@
                     </div>
                 </div>
             </div>
+            </div> <!-- End studioWorkspace -->
 
+            <!-- DEDICATED INTERACTIVE MCQ QUIZ ARENA WORKSPACE -->
+            <div id="mcqArenaWorkspace" class="max-w-4xl mx-auto space-y-6 hidden">
+                <!-- Header with Phase Filter & Scoreboard -->
+                <div class="premium-card p-6 border-indigo-200">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                        <div>
+                            <div class="flex items-center gap-2 font-mono text-xs text-indigo-600 font-bold mb-1">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                <span>INTERACTIVE MCQ SPEED ARENA</span>
+                            </div>
+                            <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">Phase-by-Phase Technical MCQ Assessment</h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Master real-world MNC concepts with instant feedback & plain-English walkthroughs.</p>
+                        </div>
+                        <!-- Score & Streak Pills -->
+                        <div class="flex items-center gap-2">
+                            <div class="px-3.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-1.5 text-xs font-bold shadow-2xs">
+                                <span>🔥 Streak:</span>
+                                <span id="arenaStreak" class="font-mono text-amber-600 text-sm">0</span>
+                            </div>
+                            <div class="px-3.5 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 flex items-center gap-1.5 text-xs font-bold shadow-2xs">
+                                <span>🏆 Score:</span>
+                                <span id="arenaScore" class="font-mono text-indigo-600 text-sm">0 / 0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase Stepper Selection within MCQ Arena -->
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-2 text-xs font-semibold">
+                            <span class="text-slate-400 font-bold text-[11px] uppercase tracking-wider">Phase:</span>
+                            <button onclick="switchArenaPhase('basic')" id="arenaPhaseBasicBtn" class="px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold transition flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span>Phase 1: Basic (6 Qs)</span>
+                            </button>
+                            <button onclick="switchArenaPhase('intermediate')" id="arenaPhaseInterBtn" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 text-slate-700 font-semibold transition flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span>Phase 2: Intermediate (7 Qs)</span>
+                            </button>
+                            <button onclick="switchArenaPhase('advanced')" id="arenaPhaseAdvBtn" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-purple-50 text-slate-700 font-semibold transition flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                                <span>Phase 3: Advanced (7 Qs)</span>
+                            </button>
+                            <button onclick="switchArenaPhase('')" id="arenaPhaseAllBtn" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-semibold transition flex items-center gap-1.5">
+                                <span>⚡ All Phases (20 Qs)</span>
+                            </button>
+                        </div>
+                        <!-- Progress Bar Info -->
+                        <div class="text-xs font-mono text-slate-500">
+                            <span id="arenaProgressText">Question 1 of 6</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Visual Progress Bar -->
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
+                        <div id="arenaProgressBar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: 16%;"></div>
+                    </div>
+                </div>
+
+                <!-- Active Question Card -->
+                <div id="arenaQuestionCard" class="premium-card p-8 space-y-6">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span id="arenaCardPhaseBadge" class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">PHASE 1: BASIC</span>
+                            <span id="arenaCardCategoryBadge" class="text-xs font-semibold text-slate-500">Python Internals</span>
+                        </div>
+                        <div id="arenaCompanyTags" class="flex items-center gap-1 text-[11px]"></div>
+                    </div>
+
+                    <div>
+                        <h3 id="arenaQuestionTitle" class="text-base font-bold text-slate-800 mb-2"></h3>
+                        <p id="arenaQuestionText" class="text-sm font-semibold text-slate-900 leading-relaxed bg-slate-50/80 p-5 rounded-xl border border-slate-200"></p>
+                    </div>
+
+                    <!-- 4 Option Choices -->
+                    <div id="arenaOptionsList" class="grid grid-cols-1 gap-3">
+                        <!-- Dynamically rendered -->
+                    </div>
+
+                    <!-- Result Explanation Box (Revealed on click) -->
+                    <div id="arenaExplanationCard" class="p-5 rounded-xl border space-y-2 hidden">
+                        <div id="arenaExplanationHeader" class="font-bold text-xs flex items-center gap-2"></div>
+                        <p id="arenaExplanationBody" class="text-xs text-slate-700 leading-relaxed font-normal"></p>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <button onclick="prevArenaQuestion()" id="arenaPrevBtn" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                            ← Previous
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <button onclick="revealArenaInStudio()" class="text-xs text-indigo-600 hover:underline font-semibold">
+                                Open in Full Sandbox Studio ↗
+                            </button>
+                            <button onclick="nextArenaQuestion()" id="arenaNextBtn" class="px-6 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                                Next Question →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase Completion Card (Shown when last question in phase is answered) -->
+                <div id="arenaCompletionCard" class="premium-card p-8 text-center space-y-4 border-emerald-300 bg-gradient-to-b from-white to-emerald-50/30 hidden">
+                    <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-3xl shadow-sm">
+                        🎉
+                    </div>
+                    <h3 id="arenaCompletionTitle" class="text-xl font-extrabold text-slate-900">Phase Completed!</h3>
+                    <p id="arenaCompletionSubtitle" class="text-xs text-slate-600 max-w-md mx-auto leading-relaxed"></p>
+                    <div class="flex items-center justify-center gap-4 text-xs font-bold">
+                        <div class="px-4 py-2 bg-white rounded-xl border border-slate-200">
+                            <span class="text-slate-400">Total Score:</span>
+                            <span id="arenaFinalScore" class="font-mono text-emerald-600 text-sm ml-1"></span>
+                        </div>
+                        <div class="px-4 py-2 bg-white rounded-xl border border-slate-200">
+                            <span class="text-slate-400">Best Streak:</span>
+                            <span id="arenaFinalStreak" class="font-mono text-amber-600 text-sm ml-1"></span>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex items-center justify-center gap-3">
+                        <button onclick="restartCurrentPhaseQuiz()" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                            ↺ Replay Phase
+                        </button>
+                        <button id="arenaAdvancePhaseBtn" onclick="advanceToNextPhase()" class="px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5">
+                            <span>Advance to Next Phase</span> <span>→</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 

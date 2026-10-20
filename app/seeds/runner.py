@@ -7,7 +7,31 @@ from app.services.mindmap_service import MINDMAP_DATA
 
 logger = logging.getLogger(__name__)
 
+def ensure_schema_columns(db: Session):
+    """Safely adds phase and MCQ columns to interview_questions table if missing."""
+    from sqlalchemy import text
+    try:
+        # Check SQLite or MySQL columns
+        cols = [row[1] for row in db.execute(text("PRAGMA table_info(interview_questions);")).fetchall()]
+        if cols:
+            if "phase" not in cols:
+                db.execute(text("ALTER TABLE interview_questions ADD COLUMN phase VARCHAR(50) DEFAULT 'basic';"))
+            if "mcq_question" not in cols:
+                db.execute(text("ALTER TABLE interview_questions ADD COLUMN mcq_question TEXT;"))
+            if "mcq_options" not in cols:
+                db.execute(text("ALTER TABLE interview_questions ADD COLUMN mcq_options JSON;"))
+            if "mcq_correct_index" not in cols:
+                db.execute(text("ALTER TABLE interview_questions ADD COLUMN mcq_correct_index INTEGER DEFAULT 0;"))
+            if "mcq_explanation" not in cols:
+                db.execute(text("ALTER TABLE interview_questions ADD COLUMN mcq_explanation TEXT;"))
+            db.commit()
+    except Exception as e:
+        logger.warning(f"Schema column check: {e}")
+
 def seed_database(db: Session):
+    # Ensure any newly added schema columns exist in database
+    ensure_schema_columns(db)
+
     # 1. Sync Questions by slug (creates new ones & updates existing ones with latest easy-to-understand explanations)
     existing_questions = {q.slug: q for q in db.query(InterviewQuestion).all()}
     new_questions = 0

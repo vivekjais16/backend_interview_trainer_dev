@@ -33,6 +33,11 @@ class QuestionBase(BaseModel):
     cross_questions: List[str] = []
     common_traps: List[str] = []
     best_practices: List[str] = []
+    phase: Optional[str] = "basic"
+    mcq_question: Optional[str] = None
+    mcq_options: List[str] = []
+    mcq_correct_index: Optional[int] = 0
+    mcq_explanation: Optional[str] = None
 
 class QuestionCreate(QuestionBase):
     pass
@@ -52,6 +57,8 @@ class QuestionSummary(BaseModel):
     has_sql_sandbox: bool
     has_redis_sandbox: bool = False
     has_nosql_sandbox: bool = False
+    phase: Optional[str] = "basic"
+    has_mcq: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -61,3 +68,25 @@ class QuestionDetail(QuestionBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class MCQVerifyRequest(BaseModel):
+    question_id: int
+    selected_index: int
+
+class MCQVerifyResponse(BaseModel):
+    is_correct: bool
+    correct_index: int
+    explanation: str
+    question_id: int
+
+class MCQQuizItem(BaseModel):
+    id: int
+    title: str
+    slug: str
+    category: str
+    difficulty: str
+    phase: str
+    company_tags: List[str] = []
+    mcq_question: str
+    mcq_options: List[str]
+
