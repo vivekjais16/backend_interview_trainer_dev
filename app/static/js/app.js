@@ -136,15 +136,15 @@ async function loadQuestions() {
         }
 
         listEl.innerHTML = questions.map((q, idx) => `
-            <div onclick="selectQuestion(${q.id})" id="q-card-${q.id}" class="p-4 hover:bg-indigo-50/50 cursor-pointer transition flex flex-col gap-1.5 ${idx === 0 ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}">
+            <div onclick="selectQuestion(${q.id})" id="q-card-${q.id}" class="p-3.5 hover:bg-indigo-50/40 cursor-pointer transition flex flex-col gap-1.5 ${idx === 0 ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
-                    <span class="text-[11px] text-slate-500 font-mono font-medium">${q.min_exp_years}-${q.max_exp_years} YOE</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
+                    <span class="text-[10px] text-slate-400 font-mono font-medium">${q.min_exp_years}-${q.max_exp_years} YOE</span>
                 </div>
                 <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-relaxed">${q.title}</h4>
-                <div class="flex flex-wrap gap-1 mt-1">
-                    <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-200/80 font-semibold">${formatCategory(q.category)}</span>
-                    ${(q.company_tags || []).slice(0, 2).map(tag => `<span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">${tag}</span>`).join('')}
+                <div class="flex flex-wrap gap-1 mt-0.5">
+                    <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/80 font-medium font-mono">${formatCategory(q.category)}</span>
+                    ${(q.company_tags || []).slice(0, 3).map(tag => `<span class="company-tag">${tag}</span>`).join('')}
                 </div>
             </div>
         `).join('');
@@ -182,13 +182,13 @@ function renderQuestionDetail(q) {
     document.getElementById("qTitle").innerText = q.title;
     document.getElementById("qScenario").innerHTML = formatMarkdown(q.scenario_text);
     
-    // Badges
+    // Clean Badges & Enterprise Company Chips
     const badgeContainer = document.getElementById("qBadges");
     badgeContainer.innerHTML = `
-        <span class="px-3 py-1 text-xs rounded-full font-bold ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
-        <span class="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold font-mono">${formatCategory(q.category)}</span>
-        <span class="px-3 py-1 text-xs rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-semibold font-mono">Frequency: ${q.frequency_score}%</span>
-        ${(q.company_tags || []).map(t => `<span class="px-2.5 py-1 text-xs bg-slate-100 text-slate-700 rounded-lg border border-slate-200 font-medium">🏢 ${t}</span>`).join('')}
+        <span class="px-2.5 py-1 text-xs rounded-full font-bold ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
+        <span class="px-2.5 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold font-mono">${formatCategory(q.category)}</span>
+        <span class="px-2.5 py-1 text-xs rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-semibold font-mono">Ask Frequency: ${q.frequency_score}%</span>
+        ${(q.company_tags || []).map(t => `<span class="company-tag">${t}</span>`).join('')}
     `;
 
     // Theory & Gotchas
@@ -199,12 +199,12 @@ function renderQuestionDetail(q) {
         document.getElementById("qTheoryCard").classList.add("hidden");
     }
 
-    // Common Traps
+    // Common Traps without amateurish emojis
     const trapsList = document.getElementById("qTrapsList");
     if (trapsList && q.common_traps) {
         trapsList.innerHTML = q.common_traps.map(trap => `
-            <li class="text-xs text-amber-800 leading-relaxed flex items-start gap-2">
-                <span class="text-amber-500 font-bold shrink-0">⚠️</span>
+            <li class="text-xs text-amber-900 leading-relaxed flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0"></span>
                 <span>${trap}</span>
             </li>
         `).join('');
@@ -227,7 +227,7 @@ function renderQuestionDetail(q) {
     } else {
         switchSandboxTab("python");
         document.getElementById("pythonCodeInput").value = q.starter_code || "# Write your Python solution here\n";
-        document.getElementById("pyOutputTerminal").innerText = "// Click 'Run Python (Ctrl+Enter)' to test execution";
+        document.getElementById("pyOutputTerminal").innerText = "// Click 'Run Python' to test execution";
     }
 
     // Prepopulate SQL if question supports it
@@ -449,15 +449,35 @@ async function submitToAIInterviewer() {
         const turn = await res.json();
 
         aiCard.classList.remove("hidden");
-        document.getElementById("aiScoreValue").innerText = `${turn.score} / 10`;
+        let verdict = "HIRE";
+        let verdictClass = "bg-emerald-50 text-emerald-700 border-emerald-300";
+        if (turn.score >= 8.5) {
+            verdict = "STRONG HIRE";
+            verdictClass = "bg-emerald-50 text-emerald-700 border-emerald-300";
+        } else if (turn.score >= 7.0) {
+            verdict = "HIRE";
+            verdictClass = "bg-blue-50 text-blue-700 border-blue-300";
+        } else if (turn.score >= 5.0) {
+            verdict = "LEANING HIRE";
+            verdictClass = "bg-amber-50 text-amber-700 border-amber-300";
+        } else {
+            verdict = "NEEDS REVISION";
+            verdictClass = "bg-rose-50 text-rose-700 border-rose-300";
+        }
+
+        const scoreEl = document.getElementById("aiScoreValue");
+        scoreEl.className = `text-xs font-mono font-bold px-3 py-1 rounded-full border ${verdictClass}`;
+        scoreEl.innerText = `${verdict} • ${turn.score} / 10`;
+
         document.getElementById("aiFeedbackContent").innerHTML = formatMarkdown(turn.feedback);
 
         const crossQContainer = document.getElementById("aiCrossQuestions");
         if (turn.cross_questions_asked && turn.cross_questions_asked.length > 0) {
             crossQContainer.innerHTML = `
-                <div class="mt-4 p-5 bg-indigo-50/80 border border-indigo-200 rounded-xl">
-                    <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                        <span>🎯</span> Follow-Up MNC Cross-Questions from Bar Raiser:
+                <div class="mt-4 p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl">
+                    <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                        <span>MNC Senior Staff Follow-Up Cross-Questions:</span>
                     </h5>
                     <div class="space-y-2">
                         ${turn.cross_questions_asked.map((cq, i) => `
@@ -476,7 +496,7 @@ async function submitToAIInterviewer() {
         alert(`AI Evaluation Failed: ${err.message}`);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>🎙️</span> Submit Answer & Code to AI Bar Raiser`;
+        submitBtn.innerHTML = `<span>🎙️</span> Submit for Bar Raiser Review`;
     }
 }
 
@@ -613,10 +633,10 @@ function selectRoadmapStage(domain, mindmapSlug, element) {
 
     // Highlight the clicked flowchart step
     document.querySelectorAll(".stage-step-btn").forEach(s => {
-        s.className = "stage-step-btn px-3 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-1.5";
+        s.className = "stage-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 font-medium transition flex items-center gap-2";
     });
     if (element) {
-        element.className = "stage-step-btn px-3 py-1 rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-xs font-bold transition flex items-center gap-1.5";
+        element.className = "stage-step-btn roadmap-step-active px-3 py-1.5 rounded-lg border border-indigo-600 bg-indigo-600 text-white shadow-xs font-bold transition flex items-center gap-2";
     }
 
     // Reset domain chips
@@ -636,8 +656,8 @@ function selectRoadmapStage(domain, mindmapSlug, element) {
         renderMindmap(mindmapSlug);
     }
 
-    const title = domain ? domain.replace(/_/g, " ").toUpperCase() : "ALL";
-    showToast(`🗺️ Loaded Learning Path Stage: ${title}`);
+    const title = domain ? domain.replace(/_/g, " ").toUpperCase() : "ALL TOPICS";
+    showToast(`Track Milestone Active: ${title}`);
 }
 
 // ----------------------------------------------------

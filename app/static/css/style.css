@@ -1,50 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
     --bg-page: #f8fafc;
-    --bg-card: #ffffff;
-    --bg-card-subtle: #f1f5f9;
+    --bg-surface: #ffffff;
+    --bg-subtle: #f1f5f9;
     --border-subtle: #e2e8f0;
     --border-strong: #cbd5e1;
-    --text-heading: #0f172a;
-    --text-body: #334155;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
     --text-muted: #64748b;
     --brand-primary: #4f46e5;
-    --brand-primary-light: #eef2ff;
-    --brand-success: #059669;
-    --brand-success-light: #ecfdf5;
-    --brand-warning: #d97706;
-    --brand-warning-light: #fffbeb;
-    --brand-danger: #dc2626;
-    --brand-danger-light: #fef2f2;
-}
-
-/* Dark Mode Overrides (Optional Toggle) */
-.dark {
-    --bg-page: #0f172a;
-    --bg-card: #1e293b;
-    --bg-card-subtle: #0f172a;
-    --border-subtle: #334155;
-    --border-strong: #475569;
-    --text-heading: #f8fafc;
-    --text-body: #cbd5e1;
-    --text-muted: #94a3b8;
-    --brand-primary: #6366f1;
-    --brand-primary-light: #1e1b4b;
+    --brand-primary-hover: #4338ca;
+    --brand-accent: #6366f1;
+    --ide-bg: #0d1117;
+    --ide-header: #161b22;
+    --ide-border: #30363d;
+    --ide-text: #e6edf3;
 }
 
 * {
     box-sizing: border-box;
     font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 code, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace !important;
+    font-family: 'JetBrains Mono', 'Fira Code', Menlo, monospace !important;
 }
 
 body {
     background-color: var(--bg-page);
-    color: var(--text-body);
+    color: var(--text-primary);
 }
 
 /* Custom Scrollbars */
@@ -63,34 +50,101 @@ body {
     background: #94a3b8;
 }
 
-/* Premium Card & Jupyter Cell */
+/* Premium Card & Containers */
 .premium-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    border: 1px solid rgba(226, 232, 240, 0.9);
     border-radius: 16px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .premium-card:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
 }
 
-/* Code Editor Window */
-.code-editor-shell {
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
+/* Professional IDE Window Shell */
+.ide-window {
+    background: var(--ide-bg);
+    border: 1px solid var(--ide-border);
+    border-radius: 14px;
     overflow: hidden;
-    background: #ffffff;
-    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 0 8px 10px -6px rgba(15, 23, 42, 0.2);
+    display: flex;
+    flex-direction: column;
 }
 
-/* Terminal & Execution Console (Clean High-Contrast Terminal) */
-.terminal-console {
-    background: #0f172a;
-    color: #e2e8f0;
-    border-radius: 12px;
+.ide-header {
+    background: var(--ide-header);
+    border-bottom: 1px solid var(--ide-border);
+    padding: 9px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ide-mac-dots {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.ide-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+}
+.ide-dot-red { background: #ff5f56; border: 1px solid #e0443e; }
+.ide-dot-yellow { background: #ffbd2e; border: 1px solid #dea123; }
+.ide-dot-green { background: #27c93f; border: 1px solid #1aab29; }
+
+.ide-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
     font-family: 'JetBrains Mono', monospace;
-    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.15);
+    font-weight: 500;
+    color: #8b949e;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+.ide-tab.active {
+    color: #f0f6fc;
+    background: rgba(110, 118, 129, 0.2);
+}
+
+.ide-editor-area {
+    display: flex;
+    background: var(--ide-bg);
+    position: relative;
+}
+
+.ide-textarea {
+    width: 100%;
+    background: transparent;
+    color: #e6edf3;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 12.5px;
+    line-height: 1.65;
+    padding: 14px 16px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    tab-size: 4;
+}
+.ide-textarea::placeholder {
+    color: #484f58;
+}
+
+/* Sleek Terminal Output Console */
+.ide-console {
+    background: #090d13;
+    border-top: 1px solid var(--ide-border);
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 /* Experience Badges */
@@ -115,31 +169,56 @@ body {
     border: 1px solid #fecdd3;
 }
 
+/* Company Tags */
+.company-tag {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s ease;
+}
+.company-tag:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
 /* Clean SQL Result Table */
 .sql-table {
     border-collapse: collapse;
     width: 100%;
-    font-size: 0.825rem;
+    font-size: 0.8rem;
 }
 .sql-table th {
-    background: #f8fafc;
-    color: #475569;
+    background: #161b22;
+    color: #8b949e;
     font-weight: 600;
     text-align: left;
-    padding: 10px 14px;
-    border-bottom: 1px solid #e2e8f0;
-    letter-spacing: 0.025em;
+    padding: 8px 14px;
+    border-bottom: 1px solid #30363d;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    font-size: 0.725rem;
+    font-size: 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
 }
 .sql-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #1e293b;
+    padding: 9px 14px;
+    border-bottom: 1px solid #21262d;
+    color: #e6edf3;
     font-family: 'JetBrains Mono', monospace;
 }
 .sql-table tr:hover td {
-    background: #f8fafc;
+    background: rgba(110, 118, 129, 0.1);
+}
+
+/* Stepper Connector Bar */
+.roadmap-step-active {
+    background: #4f46e5 !important;
+    color: #ffffff !important;
+    border-color: #4f46e5 !important;
+    box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.4) !important;
 }
 
 /* Mermaid Mind Map Container */
@@ -147,13 +226,15 @@ body {
     background: #ffffff;
     border-radius: 12px;
     padding: 1.5rem;
+    background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
+    background-size: 20px 20px;
 }
 .mermaid-container svg {
     max-width: 100% !important;
     height: auto !important;
 }
 
-/* Smooth Accordion */
+/* Accordions */
 details > summary {
     list-style: none;
 }
