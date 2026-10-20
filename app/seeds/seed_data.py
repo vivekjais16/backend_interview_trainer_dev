@@ -2016,3 +2016,15 @@ SEED_QUESTIONS = [
                               '        ',
         'title': 'Redis Distributed Lock with Auto-Renewal (Watchdog Pattern)'}
 ]
+
+# Integrate 1,000 comprehensive technical questions across 10 core domains
+try:
+    from app.seeds.question_bank import CATALOG_QUESTIONS
+    _seen_slugs = {q["slug"] for q in SEED_QUESTIONS}
+    for _cq in CATALOG_QUESTIONS:
+        if _cq["slug"] not in _seen_slugs:
+            _seen_slugs.add(_cq["slug"])
+            SEED_QUESTIONS.append(_cq)
+except ImportError:
+    pass
+

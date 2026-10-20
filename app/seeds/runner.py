@@ -34,21 +34,25 @@ def seed_database(db: Session):
 
     # 1. Sync Questions by slug (creates new ones & updates existing ones with latest easy-to-understand explanations)
     existing_questions = {q.slug: q for q in db.query(InterviewQuestion).all()}
-    new_questions = 0
+    new_questions = []
     updated_questions = 0
     for q_data in SEED_QUESTIONS:
         slug = q_data["slug"]
         if slug not in existing_questions:
-            question = InterviewQuestion(**q_data)
-            db.add(question)
-            new_questions += 1
+            new_questions.append(InterviewQuestion(**q_data))
         else:
             q = existing_questions[slug]
+            has_diff = False
             for key, val in q_data.items():
-                setattr(q, key, val)
-            updated_questions += 1
+                if getattr(q, key) != val:
+                    setattr(q, key, val)
+                    has_diff = True
+            if has_diff:
+                updated_questions += 1
+    if new_questions:
+        db.bulk_save_objects(new_questions)
     db.commit()
-    logger.info(f"Questions sync: {new_questions} created, {updated_questions} updated with enhanced explanations.")
+    logger.info(f"Questions sync: {len(new_questions)} created, {updated_questions} updated with enhanced explanations.")
 
     # 2. Sync Mindmaps by slug
     existing_m_slugs = {m.slug for m in db.query(MindmapTopic.slug).all()}
