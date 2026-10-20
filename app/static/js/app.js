@@ -413,12 +413,57 @@ async function runPythonCode() {
 
         terminal.innerText = out;
         terminal.className = result.success ? "text-emerald-400 font-mono text-xs whitespace-pre-wrap" : "text-rose-400 font-mono text-xs whitespace-pre-wrap";
+
+        // Render Big-O Complexity Inspector Card
+        const compCard = document.getElementById("pyComplexityCard");
+        const timeBadge = document.getElementById("pyTimeBadge");
+        const spaceBadge = document.getElementById("pySpaceBadge");
+        const suggContainer = document.getElementById("pyComplexitySuggestions");
+
+        if (compCard && result.complexity_analysis) {
+            const comp = result.complexity_analysis;
+            compCard.classList.remove("hidden");
+
+            const tComp = comp.time_complexity || "O(N)";
+            const sComp = comp.space_complexity || "O(1)";
+            
+            timeBadge.innerText = `⏱️ Time: ${tComp}`;
+            if (tComp.includes("Quadratic") || tComp.includes("Cubic") || tComp.includes("Exponential")) {
+                timeBadge.className = "text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-800 border border-rose-300";
+            } else {
+                timeBadge.className = "text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300";
+            }
+
+            spaceBadge.innerText = `💾 Space: ${sComp}`;
+            if (sComp.includes("Linear") || sComp.includes("Quadratic")) {
+                spaceBadge.className = "text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-800 border border-amber-300";
+            } else {
+                spaceBadge.className = "text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-blue-100 text-blue-800 border border-blue-300";
+            }
+
+            let suggHtml = "";
+            if (comp.time_bottlenecks && comp.time_bottlenecks.length > 0) {
+                suggHtml += `<div class="p-2.5 bg-rose-50/70 border border-rose-200 rounded-lg text-rose-900 text-xs font-medium space-y-1">
+                    <span class="font-bold">⚠️ Performance Bottleneck:</span>
+                    <ul class="list-disc pl-4 space-y-0.5 text-[11px]">${comp.time_bottlenecks.map(b => `<li>${b}</li>`).join('')}</ul>
+                </div>`;
+            }
+
+            if (comp.suggestions && comp.suggestions.length > 0) {
+                suggHtml += `<div class="p-2.5 bg-indigo-50/70 border border-indigo-200 rounded-lg text-indigo-950 text-xs font-medium space-y-1">
+                    <span class="font-bold">💡 Big-O Optimization Advice:</span>
+                    <ul class="list-disc pl-4 space-y-0.5 text-[11px]">${comp.suggestions.map(s => `<li>${s}</li>`).join('')}</ul>
+                </div>`;
+            }
+
+            suggContainer.innerHTML = suggHtml || "<p class='text-emerald-700 font-semibold'>✅ Code operates at optimal Big-O bounds.</p>";
+        }
     } catch (err) {
         terminal.innerText = `Network/Execution Error: ${err.message}`;
         terminal.className = "text-rose-400 font-mono text-xs";
     } finally {
         runBtn.disabled = false;
-        runBtn.innerHTML = `<span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-emerald-800/60 px-1.5 py-0.5 rounded text-white font-mono">Ctrl+Enter</kbd>`;
+        runBtn.innerHTML = `<span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-emerald-800/60 px-1.5 py-0.5 rounded text-white font-mono">⌘Enter</kbd>`;
     }
 }
 

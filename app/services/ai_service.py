@@ -151,13 +151,42 @@ class AIService:
                 f"Walk me through your observability strategy: What metrics would trigger PagerDuty alerts for P99 latency degradation?"
             ]
 
+        # Big-O Time & Space Complexity Audit
+        complexity_block = ""
+        if candidate_code and len(candidate_code.strip()) > 5:
+            try:
+                from app.services.python_runner import analyze_code_complexity
+                c_info = analyze_code_complexity(candidate_code)
+                time_c = c_info.get("time_complexity", "O(N)")
+                space_c = c_info.get("space_complexity", "O(1)")
+                opt_time = c_info.get("optimal_time", "O(N)")
+                opt_space = c_info.get("optimal_space", "O(1)")
+                suggs = c_info.get("suggestions", [])
+
+                if "Quadratic" in time_c or "Cubic" in time_c or "Exponential" in time_c:
+                    base_score -= 0.8
+                    improvements.append(f"Algorithm exhibits high time complexity ({time_c}). Consider refactoring to {opt_time}.")
+                else:
+                    strengths.append(f"Demonstrated clean algorithmic runtime complexity ({time_c}).")
+
+                sugg_text = "\n".join(f"  - {s}" for s in suggs) if suggs else "  - Algorithm operates at optimal Big-O bounds."
+                complexity_block = f"""
+#### ⏱️ Big-O Time & Space Complexity Audit:
+- **Detected Runtime**: `{time_c}` *(Target: `{opt_time}`)*
+- **Detected Memory**: `{space_c}` *(Target: `{opt_space}`)*
+- **Optimization Suggestions**:
+{sugg_text}
+"""
+            except Exception as e:
+                logger.warning(f"Error auditing code complexity: {e}")
+
         feedback_md = f"""### 🎯 MNC Bar Raiser Review ({target_company} Technical Round)
 
 **Evaluation Verdict**: **{final_score:.1f} / 10.0** — *{"Strong Hire — Demonstrates Deep Technical Mastery" if final_score >= 8.5 else "Hire — Solid Fundamentals & Clear Explanations" if final_score >= 7.0 else "Leaning Hire — Good Start, Needs Deeper Failure State Exploration"}*
 
 #### 💡 In Plain English (The Core Takeaway):
 At companies like {target_company}, high-scale systems prioritize **predictable P99 latency**, **zero data loss**, and **clean failure isolation**. The best candidates clearly articulate *why* a particular data structure or architectural pattern was chosen over naive alternatives.
-
+{complexity_block}
 #### ✅ What You Did Well:
 {"".join(f"- {s}\\n" for s in (strengths or ["Addressed the primary problem statement with technical clarity."]))}
 

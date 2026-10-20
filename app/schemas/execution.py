@@ -13,6 +13,7 @@ class PythonRunResponse(BaseModel):
     execution_time_ms: float
     success: bool
     test_results: Optional[List[Dict[str, Any]]] = None
+    complexity_analysis: Optional[Dict[str, Any]] = None
 
 class SQLRunRequest(BaseModel):
     query: str = Field(..., description="SQL query to execute")
