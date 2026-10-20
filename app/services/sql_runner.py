@@ -235,13 +235,30 @@ def init_hr_schema(conn: sqlite3.Connection):
 
 def run_sql_query(query: str, schema_name: str = "ecommerce", include_explain: bool = True, max_rows: int = 100) -> Dict[str, Any]:
     """
-    Executes a SQL query in an isolated in-memory or template database with realistic MNC data.
-    Runs EXPLAIN QUERY PLAN to evaluate indexing, query cost, and execution efficiency.
+    Executes a SQL query in an isolated in-memory database with realistic MNC data.
+    Strictly isolated with zero filesystem access, keyword filters, and execution limits.
     """
-    # Guard against destructive commands
-    forbidden_sql = ["ATTACH", "DETACH", "PRAGMA", "LOAD_EXTENSION"]
+    # Guard against payload size attacks
+    if len(query) > 5000:
+        return {
+            "columns": [],
+            "rows": [],
+            "row_count": 0,
+            "execution_time_ms": 0.0,
+            "success": False,
+            "error": "Query exceeds maximum allowed length of 5,000 characters."
+        }
+
+    # Guard against destructive or escape commands
+    forbidden_sql = [
+        "ATTACH", "DETACH", "PRAGMA", "LOAD_EXTENSION", "VACUUM",
+        "SAVEPOINT", "RELEASE", "TRANSACTION", "ROLLBACK TO",
+        "WRITABLE_SCHEMA", "SQLITE_MASTER", "SQLITE_SCHEMA",
+        "ALTER TABLE", "DROP DATABASE"
+    ]
+    query_upper = query.upper()
     for keyword in forbidden_sql:
-        if keyword in query.upper():
+        if keyword in query_upper:
             return {
                 "columns": [],
                 "rows": [],
@@ -252,6 +269,15 @@ def run_sql_query(query: str, schema_name: str = "ecommerce", include_explain: b
             }
 
     conn = sqlite3.connect(":memory:")
+    # Prevent infinite recursive CTE loops by registering instruction progress handler
+    step_count = [0]
+    def _progress_handler():
+        step_count[0] += 1
+        if step_count[0] > 100000:  # Abort if query takes more than 100k VM instructions
+            return 1
+        return 0
+
+    conn.set_progress_handler(_progress_handler, 1000)
     try:
         # Load appropriate schema
         if schema_name == "fintech":

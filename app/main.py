@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +8,12 @@ from fastapi.responses import HTMLResponse
 
 from app.core.config import settings
 from app.core.database import init_db, SessionLocal, is_fallback_sqlite
+from app.core.security import (
+    SecurityHeadersMiddleware,
+    RateLimitMiddleware,
+    PayloadLimitMiddleware,
+    secure_db_file_permissions
+)
 from app.seeds.runner import seed_database
 from app.api.v1.router import api_v1_router
 
@@ -28,6 +34,9 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
     
+    # Secure SQLite database file permissions (0600) to prevent OS-level tampering
+    secure_db_file_permissions("./interview_trainer.db")
+
     db_mode = "SQLite (Local Fallback)" if is_fallback_sqlite else "MySQL (Production)"
     logger.info(f"AI Interview Trainer platform started successfully with {db_mode}.")
     yield
@@ -37,16 +46,25 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     description="Interactive Jupyter-style AI Backend Interview Trainer with Python Interpreter, SQL Compiler, Mindmaps & Adaptive MNC Grilling.",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan
 )
 
-# CORS Middleware
+# 1. Payload Size Limiter (Blocks buffer-overflow / memory-exhaustion attacks > 512KB)
+app.add_middleware(PayloadLimitMiddleware)
+
+# 2. Rate Limiting Middleware (Guards sandboxes against brute-force & denial of service)
+app.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)
+
+# 3. Security Headers Middleware (X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# 4. CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"] if settings.DEBUG else ["http://localhost:8000"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 

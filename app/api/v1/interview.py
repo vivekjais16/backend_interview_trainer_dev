@@ -51,15 +51,20 @@ async def submit_interview_turn(payload: TurnCreate, db: Session = Depends(get_d
     for pt in previous_turns:
         prev_cross_q.extend(pt.cross_questions_asked or [])
 
+    # Sanitize and cap submission size to defend database against storage bloat
+    clean_resp = (payload.candidate_response or "")[:50000]
+    clean_code = (payload.candidate_code or "")[:50000]
+    clean_sql = (payload.candidate_sql or "")[:20000]
+
     # AI Evaluation & Deep Cross-Questioning
     eval_result = await ai_service.evaluate_candidate_turn(
         question_title=q_title,
         scenario_text=q_scenario,
         experience_level=session.experience_level,
         target_company=session.target_company,
-        candidate_response=payload.candidate_response,
-        candidate_code=payload.candidate_code,
-        candidate_sql=payload.candidate_sql,
+        candidate_response=clean_resp,
+        candidate_code=clean_code,
+        candidate_sql=clean_sql,
         previous_cross_questions=prev_cross_q
     )
 
@@ -68,9 +73,9 @@ async def submit_interview_turn(payload: TurnCreate, db: Session = Depends(get_d
         turn_number=turn_num,
         question_id=payload.question_id,
         interviewer_prompt=f"MNC Interview Round for {session.target_company} ({session.experience_level.upper()} Track)",
-        candidate_response=payload.candidate_response,
-        candidate_code=payload.candidate_code,
-        candidate_sql=payload.candidate_sql,
+        candidate_response=clean_resp,
+        candidate_code=clean_code,
+        candidate_sql=clean_sql,
         score=eval_result["score"],
         feedback=eval_result["feedback"],
         cross_questions_asked=eval_result["cross_questions"],
