@@ -10,6 +10,20 @@ class TurnCreate(BaseModel):
     candidate_code: Optional[str] = None
     candidate_sql: Optional[str] = None
 
+class CopilotQueryRequest(BaseModel):
+    session_id: Optional[int] = None
+    question_id: int
+    prompt_type: str = "custom" # "eli5", "hint", "complexity", "debug", "cross_question", "custom"
+    user_prompt: Optional[str] = None
+    candidate_code: Optional[str] = None
+    candidate_sql: Optional[str] = None
+
+class CopilotQueryResponse(BaseModel):
+    prompt_type: str
+    reply: str
+    action_chips: List[str] = []
+
+
 class TurnResponse(BaseModel):
     id: int
     session_id: int

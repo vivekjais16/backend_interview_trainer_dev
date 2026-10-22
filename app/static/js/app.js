@@ -9,6 +9,18 @@ let currentAppMode = "studio"; // "studio", "mcq", or "concepts"
 let currentMostAskedFilter = false;
 let allMasterConcepts = [];
 let currentConceptCategory = "";
+let currentIbTab = "problem"; // "problem", "editorial", "copilot"
+let activeSandboxTab = "python"; // "python", "sql", "redis", "nosql"
+
+function escapeHtml(text) {
+    if (!text) return "";
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
 // MCQ Speed Arena State
 let arenaQuestions = [];
@@ -192,12 +204,40 @@ function setupEventListeners() {
         }
     });
 
+    // Candidate Response Submit Shortcut (Cmd+Enter sends prompt to Copilot)
+    document.getElementById("candidateResponseInput")?.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            sendCandidateCustomPrompt();
+        }
+    });
+
+    // Tab key indentation support for IDE editors
+    function enableTabIndentation(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("keydown", function(e) {
+            if (e.key === "Tab") {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 4;
+            }
+        });
+    }
+    enableTabIndentation("pythonCodeInput");
+    enableTabIndentation("sqlQueryInput");
+    enableTabIndentation("redisCommandInput");
+    enableTabIndentation("nosqlQueryInput");
+
     // SQL Schema Change notification
     document.getElementById("sqlSchemaSelect")?.addEventListener("change", (e) => {
         const val = e.target.value;
         showToast(`Active SQL Schema: ${val.toUpperCase()}`);
     });
 }
+
 
 function filterByDomain(domain, btnElement) {
     currentDomainFilter = domain;
@@ -474,7 +514,35 @@ function renderQuestionDetail(q) {
     document.getElementById("aiEvaluationCard").classList.add("hidden");
     document.getElementById("candidateResponseInput").value = "";
     document.getElementById("pyComplexityCard")?.classList.add("hidden");
+
+    // Reset to Problem Spec tab on question change
+    switchIbTab("problem");
+
+    // Set phase tag if present
+    const phaseTag = document.getElementById("qPhaseTag");
+    if (phaseTag) {
+        const p = (q.phase || "basic").toUpperCase();
+        phaseTag.innerText = `PHASE: ${p}`;
+        phaseTag.className = `text-[10px] font-mono px-2 py-0.5 rounded-full font-bold ${getPhaseClass(q.phase)}`;
+    }
+
+    // Initialize clean AI Copilot chat stream with welcome prompt for this question
+    const stream = document.getElementById("copilotChatStream");
+    if (stream) {
+        stream.innerHTML = `
+            <div class="copilot-msg-ai">
+                <div class="flex items-center gap-1.5 font-bold text-indigo-900 text-xs mb-1">
+                    <span>🤖</span>
+                    <span>Senior Staff AI Copilot</span>
+                </div>
+                <p class="leading-relaxed text-slate-700">
+                    Ready for <strong>${escapeHtml(q.title)}</strong>! Write code in the IDE on the right, click any quick prompt chip above, or submit your solution for a comprehensive MNC interview evaluation.
+                </p>
+            </div>
+        `;
+    }
 }
+
 
 async function runPythonCode() {
     const code = document.getElementById("pythonCodeInput").value;
@@ -506,8 +574,17 @@ async function runPythonCode() {
         terminal.innerText = out;
         terminal.className = result.success ? "text-emerald-400 font-mono text-xs whitespace-pre-wrap" : "text-rose-400 font-mono text-xs whitespace-pre-wrap";
 
+        // Update IDE status bar
+        const statusPill = document.getElementById("ideStatusPill");
+        const statusText = document.getElementById("ideStatusText");
+        if (statusPill && statusText) {
+            statusPill.className = result.success ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-rose-500";
+            statusText.innerText = result.success ? `Python • Executed in ${result.execution_time_ms} ms` : `Execution Failed`;
+        }
+
         // Render Big-O Complexity Inspector Card
         const compCard = document.getElementById("pyComplexityCard");
+
         const timeBadge = document.getElementById("pyTimeBadge");
         const spaceBadge = document.getElementById("pySpaceBadge");
         const suggContainer = document.getElementById("pyComplexitySuggestions");
@@ -623,11 +700,24 @@ async function runSQLCode() {
         }
 
         container.innerHTML = html;
+
+        const statusPill = document.getElementById("ideStatusPill");
+        const statusText = document.getElementById("ideStatusText");
+        if (statusPill && statusText) {
+            statusPill.className = "w-2 h-2 rounded-full bg-blue-500";
+            statusText.innerText = `PostgreSQL • ${result.row_count} rows in ${result.execution_time_ms} ms`;
+        }
     } catch (err) {
         container.innerHTML = `<div class="p-4 text-xs font-mono text-rose-600">Error: ${err.message}</div>`;
+        const statusPill = document.getElementById("ideStatusPill");
+        const statusText = document.getElementById("ideStatusText");
+        if (statusPill && statusText) {
+            statusPill.className = "w-2 h-2 rounded-full bg-rose-500";
+            statusText.innerText = `SQL Execution Error`;
+        }
     } finally {
         runBtn.disabled = false;
-        runBtn.innerHTML = `<span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-blue-800/60 px-1.5 py-0.5 rounded text-white font-mono">Ctrl+Enter</kbd>`;
+        runBtn.innerHTML = `<span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-blue-800/60 px-1.5 py-0.5 rounded text-white font-mono">⌘Enter</kbd>`;
     }
 }
 
@@ -657,6 +747,13 @@ async function runRedisCode() {
         out += `Execution Time: ${result.execution_time_ms} ms`;
         terminal.innerText = out;
         terminal.className = "text-rose-300 font-mono text-xs whitespace-pre-wrap";
+
+        const statusPill = document.getElementById("ideStatusPill");
+        const statusText = document.getElementById("ideStatusText");
+        if (statusPill && statusText) {
+            statusPill.className = "w-2 h-2 rounded-full bg-rose-500";
+            statusText.innerText = `Redis • Executed in ${result.execution_time_ms} ms`;
+        }
     } catch (err) {
         terminal.innerText = `Redis Error: ${err.message}`;
     } finally {
@@ -684,6 +781,12 @@ async function runNoSQLCode() {
         if (!result.success) {
             terminal.innerText = `Error: ${result.error}`;
             terminal.className = "text-rose-400 font-mono text-xs whitespace-pre-wrap";
+            const statusPill = document.getElementById("ideStatusPill");
+            const statusText = document.getElementById("ideStatusText");
+            if (statusPill && statusText) {
+                statusPill.className = "w-2 h-2 rounded-full bg-rose-500";
+                statusText.innerText = `MongoDB Query Error`;
+            }
             return;
         }
 
@@ -691,6 +794,13 @@ async function runNoSQLCode() {
         out += JSON.stringify(result.documents, null, 2);
         terminal.innerText = out;
         terminal.className = "text-emerald-300 font-mono text-xs whitespace-pre-wrap";
+
+        const statusPill = document.getElementById("ideStatusPill");
+        const statusText = document.getElementById("ideStatusText");
+        if (statusPill && statusText) {
+            statusPill.className = "w-2 h-2 rounded-full bg-emerald-500";
+            statusText.innerText = `MongoDB • ${result.document_count} docs in ${result.execution_time_ms} ms`;
+        }
     } catch (err) {
         terminal.innerText = `NoSQL Error: ${err.message}`;
     } finally {
@@ -699,20 +809,53 @@ async function runNoSQLCode() {
     }
 }
 
+
 async function submitToAIInterviewer() {
-    const candidateAnswer = document.getElementById("candidateResponseInput").value;
+    const candidateAnswer = document.getElementById("candidateResponseInput")?.value || "";
     const pyCode = document.getElementById("pythonCodeInput")?.value || "";
     const sqlCode = document.getElementById("sqlQueryInput")?.value || "";
     const submitBtn = document.getElementById("submitAiBtn");
     const aiCard = document.getElementById("aiEvaluationCard");
+    const stream = document.getElementById("copilotChatStream");
 
     if (!candidateAnswer.trim() && !pyCode.trim() && !sqlCode.trim()) {
-        alert("Please write an architectural explanation or code solution before submitting for review!");
+        showToast("Please write an architectural explanation or code solution before submitting for review!");
         return;
     }
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = `<span class="animate-spin inline-block mr-1">🤖</span> AI Bar Raiser Evaluating...`;
+    switchIbTab("copilot");
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="animate-spin inline-block mr-1">🤖</span> Evaluating Solution...`;
+    }
+
+    // Append candidate submission to chat stream
+    if (stream) {
+        const userDiv = document.createElement("div");
+        userDiv.className = "copilot-msg-user";
+        let subText = "";
+        if (candidateAnswer.trim()) {
+            subText += `<p class="mb-1">${escapeHtml(candidateAnswer.trim())}</p>`;
+        }
+        if (pyCode.trim()) {
+            subText += `<pre class="bg-black/40 p-2 rounded text-[10px] text-emerald-300 font-mono overflow-x-auto"><code>${escapeHtml(pyCode.trim())}</code></pre>`;
+        }
+        userDiv.innerHTML = `<span class="font-bold text-indigo-300">Solution Submission:</span><div class="mt-1">${subText}</div>`;
+        stream.appendChild(userDiv);
+
+        const typingDiv = document.createElement("div");
+        typingDiv.id = "copilotTypingIndicator";
+        typingDiv.className = "copilot-typing";
+        typingDiv.innerHTML = `
+            <div class="copilot-dot"></div>
+            <div class="copilot-dot"></div>
+            <div class="copilot-dot"></div>
+            <span>Senior Staff Bar Raiser is grading your submission...</span>
+        `;
+        stream.appendChild(typingDiv);
+        stream.scrollTop = stream.scrollHeight;
+    }
 
     try {
         const res = await fetch("/api/v1/interview/turns", {
@@ -728,7 +871,9 @@ async function submitToAIInterviewer() {
         });
         const turn = await res.json();
 
-        aiCard.classList.remove("hidden");
+        const typingEl = document.getElementById("copilotTypingIndicator");
+        if (typingEl) typingEl.remove();
+
         let verdict = "HIRE";
         let verdictClass = "bg-emerald-50 text-emerald-700 border-emerald-300";
         if (turn.score >= 8.5) {
@@ -745,41 +890,102 @@ async function submitToAIInterviewer() {
             verdictClass = "bg-rose-50 text-rose-700 border-rose-300";
         }
 
-        const scoreEl = document.getElementById("aiScoreValue");
-        scoreEl.className = `text-xs font-mono font-bold px-3 py-1 rounded-full border ${verdictClass}`;
-        scoreEl.innerText = `${verdict} • ${turn.score} / 10`;
+        // Update evaluation scorecard card
+        if (aiCard) {
+            aiCard.classList.remove("hidden");
+            const scoreEl = document.getElementById("aiScoreValue");
+            if (scoreEl) {
+                scoreEl.className = `text-xs font-mono font-bold px-3 py-1 rounded-full border ${verdictClass}`;
+                scoreEl.innerText = `${verdict} • ${turn.score} / 10`;
+            }
 
-        document.getElementById("aiFeedbackContent").innerHTML = formatMarkdown(turn.feedback);
+            const feedbackEl = document.getElementById("aiFeedbackContent");
+            if (feedbackEl) feedbackEl.innerHTML = formatMarkdown(turn.feedback);
 
-        const crossQContainer = document.getElementById("aiCrossQuestions");
-        if (turn.cross_questions_asked && turn.cross_questions_asked.length > 0) {
-            window.lastCrossQuestions = turn.cross_questions_asked;
-            crossQContainer.innerHTML = `
-                <div class="mt-4 p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl">
-                    <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2.5 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
-                        <span>MNC Senior Staff Follow-Up Cross-Questions:</span>
-                    </h5>
-                    <div class="space-y-2">
-                        ${turn.cross_questions_asked.map((cq, i) => `
-                            <div class="p-3 bg-white border border-indigo-100 rounded-xl text-xs text-slate-800 flex items-start justify-between gap-3 shadow-2xs">
-                                <div><span class="font-bold text-indigo-600">Q${i+1}:</span> ${cq}</div>
-                                <button onclick="injectCrossQuestionByIndex(${i})" class="text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg shrink-0 transition">Address This</button>
-                            </div>
-                        `).join('')}
+            const crossQContainer = document.getElementById("aiCrossQuestions");
+            if (crossQContainer && turn.cross_questions_asked && turn.cross_questions_asked.length > 0) {
+                window.lastCrossQuestions = turn.cross_questions_asked;
+                crossQContainer.innerHTML = `
+                    <div class="mt-4 p-4 bg-indigo-50/60 border border-indigo-200/80 rounded-xl">
+                        <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                            <span>MNC Senior Staff Follow-Up Cross-Questions:</span>
+                        </h5>
+                        <div class="space-y-1.5">
+                            ${turn.cross_questions_asked.map((cq, i) => `
+                                <div class="p-2.5 bg-white border border-indigo-100 rounded-xl text-xs text-slate-800 flex items-start justify-between gap-2 shadow-2xs">
+                                    <div><span class="font-bold text-indigo-600">Q${i+1}:</span> ${cq}</div>
+                                    <button onclick="injectCrossQuestionByIndex(${i})" class="text-[10px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg shrink-0 transition">Address This</button>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }
 
-        aiCard.scrollIntoView({ behavior: 'smooth' });
+        // Append rich assessment directly into Copilot chat stream
+        if (stream) {
+            const aiDiv = document.createElement("div");
+            aiDiv.className = "copilot-msg-ai";
+            let crossQHtml = "";
+            if (turn.cross_questions_asked && turn.cross_questions_asked.length > 0) {
+                crossQHtml = `
+                    <div class="mt-3 pt-2.5 border-t border-slate-200">
+                        <div class="font-bold text-indigo-950 text-xs mb-1.5 flex items-center gap-1.5">
+                            <span>🔥</span>
+                            <span>Staff Principal Follow-Up Challenges:</span>
+                        </div>
+                        <div class="space-y-1.5">
+                            ${turn.cross_questions_asked.map((cq, i) => `
+                                <div class="p-2 bg-white border border-indigo-100 rounded-lg flex items-center justify-between gap-2">
+                                    <span class="text-slate-800 text-[11px]"><span class="font-bold text-indigo-600">Q${i+1}:</span> ${cq}</span>
+                                    <button onclick="injectCrossQuestionByIndex(${i})" class="text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-0.5 rounded transition shrink-0">Address</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            aiDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-indigo-100">
+                    <div class="flex items-center gap-1.5 font-bold text-indigo-900 text-xs">
+                        <span>🎯</span>
+                        <span>Senior Staff Bar Raiser Assessment</span>
+                    </div>
+                    <span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${verdictClass}">
+                        ${verdict} • ${turn.score} / 10
+                    </span>
+                </div>
+                <div class="text-slate-800 leading-relaxed font-normal">${formatMarkdown(turn.feedback)}</div>
+                ${crossQHtml}
+            `;
+            stream.appendChild(aiDiv);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        // Update IDE status indicators
+        const statusPill = document.getElementById("ideStatusPill");
+        const statusText = document.getElementById("ideStatusText");
+        if (statusPill && statusText) {
+            statusPill.className = "w-2 h-2 rounded-full bg-emerald-500";
+            statusText.innerText = `Evaluated • ${verdict} (${turn.score}/10)`;
+        }
+
+        showToast(`AI Bar Raiser: ${verdict} (${turn.score}/10)`);
     } catch (err) {
-        alert(`AI Evaluation Failed: ${err.message}`);
+        const typingEl = document.getElementById("copilotTypingIndicator");
+        if (typingEl) typingEl.remove();
+        showToast(`AI Evaluation Failed: ${err.message}`);
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>🎙️</span> Submit for Bar Raiser Review`;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<span>🎙️</span> Submit for Bar Raiser Review`;
+        }
     }
 }
+
 
 function injectCrossQuestionByIndex(idx) {
     if (!window.lastCrossQuestions || !window.lastCrossQuestions[idx]) return;
@@ -1501,7 +1707,263 @@ function switchSidebarTab(tab) {
     }
 }
 
+function switchIbTab(tab) {
+    currentIbTab = tab;
+    const btnProblem = document.getElementById("ibTabProblemBtn");
+    const btnEditorial = document.getElementById("ibTabEditorialBtn");
+    const btnCopilot = document.getElementById("ibTabCopilotBtn");
+
+    const contentProblem = document.getElementById("ibTabProblemContent");
+    const contentEditorial = document.getElementById("ibTabEditorialContent");
+    const contentCopilot = document.getElementById("ibTabCopilotContent");
+
+    [btnProblem, btnEditorial, btnCopilot].forEach(btn => {
+        if (btn) btn.classList.remove("active");
+    });
+
+    if (contentProblem) contentProblem.classList.add("hidden");
+    if (contentEditorial) contentEditorial.classList.add("hidden");
+    if (contentCopilot) contentCopilot.classList.add("hidden");
+
+    if (tab === "problem") {
+        if (btnProblem) btnProblem.classList.add("active");
+        if (contentProblem) contentProblem.classList.remove("hidden");
+    } else if (tab === "editorial") {
+        if (btnEditorial) btnEditorial.classList.add("active");
+        if (contentEditorial) contentEditorial.classList.remove("hidden");
+        const walkCard = document.getElementById("solutionWalkthroughCard");
+        if (walkCard) walkCard.classList.remove("hidden");
+    } else if (tab === "copilot") {
+        if (btnCopilot) btnCopilot.classList.add("active");
+        if (contentCopilot) contentCopilot.classList.remove("hidden");
+        const stream = document.getElementById("copilotChatStream");
+        if (stream) stream.scrollTop = stream.scrollHeight;
+    }
+}
+
+async function requestCopilotPrompt(promptType) {
+    if (!currentQuestion) {
+        showToast("Please select a question first!");
+        return;
+    }
+
+    switchIbTab("copilot");
+
+    const stream = document.getElementById("copilotChatStream");
+    const pyCode = document.getElementById("pythonCodeInput")?.value || "";
+    const sqlCode = document.getElementById("sqlQueryInput")?.value || "";
+
+    const promptLabels = {
+        "eli5": "💬 Explain this to me like I'm 5 (ELI5)",
+        "hint": "💡 Give me an architectural blueprint hint",
+        "complexity": "⏱️ Audit Big-O time and space complexity of my code",
+        "debug": "🐞 Review my code for edge cases, common traps, and race conditions",
+        "cross_question": "🔥 Grill me with an Amazon/Google Staff Principal cross-question"
+    };
+
+    const userLabel = promptLabels[promptType] || `Prompt: ${promptType}`;
+
+    if (stream) {
+        const userDiv = document.createElement("div");
+        userDiv.className = "copilot-msg-user";
+        userDiv.innerHTML = `<span class="font-bold text-indigo-300">Candidate:</span> ${userLabel}`;
+        stream.appendChild(userDiv);
+
+        const typingDiv = document.createElement("div");
+        typingDiv.id = "copilotTypingIndicator";
+        typingDiv.className = "copilot-typing";
+        typingDiv.innerHTML = `
+            <div class="copilot-dot"></div>
+            <div class="copilot-dot"></div>
+            <div class="copilot-dot"></div>
+            <span>Senior Staff AI Copilot is analyzing...</span>
+        `;
+        stream.appendChild(typingDiv);
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    try {
+        const res = await fetch("/api/v1/interview/copilot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                session_id: activeSessionId,
+                question_id: currentQuestion.id,
+                prompt_type: promptType,
+                candidate_code: pyCode,
+                candidate_sql: sqlCode
+            })
+        });
+
+        const data = await res.json();
+        const typingEl = document.getElementById("copilotTypingIndicator");
+        if (typingEl) typingEl.remove();
+
+        if (stream) {
+            const aiDiv = document.createElement("div");
+            aiDiv.className = "copilot-msg-ai";
+            let chipsHtml = "";
+            if (data.action_chips && data.action_chips.length > 0) {
+                chipsHtml = `
+                    <div class="flex flex-wrap gap-1 mt-3 pt-2 border-t border-slate-200">
+                        ${data.action_chips.map(chip => `
+                            <button onclick="handleCopilotActionChip('${chip.replace(/'/g, "\\'")}')" class="copilot-chip text-[10px]">
+                                ${chip}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            aiDiv.innerHTML = `
+                <div class="flex items-center gap-1.5 font-bold text-indigo-900 text-xs mb-1.5">
+                    <span>🤖</span>
+                    <span>Senior Staff AI Copilot</span>
+                </div>
+                <div class="text-slate-800 leading-relaxed font-normal">${formatMarkdown(data.reply)}</div>
+                ${chipsHtml}
+            `;
+            stream.appendChild(aiDiv);
+            stream.scrollTop = stream.scrollHeight;
+        }
+    } catch (err) {
+        const typingEl = document.getElementById("copilotTypingIndicator");
+        if (typingEl) typingEl.remove();
+        if (stream) {
+            const errDiv = document.createElement("div");
+            errDiv.className = "copilot-msg-ai text-rose-600";
+            errDiv.innerText = `Error querying AI Copilot: ${err.message}`;
+            stream.appendChild(errDiv);
+        }
+    }
+}
+
+async function sendCandidateCustomPrompt() {
+    if (!currentQuestion) {
+        showToast("Please select a question first!");
+        return;
+    }
+
+    const input = document.getElementById("candidateResponseInput");
+    const promptText = (input?.value || "").trim();
+    if (!promptText) {
+        showToast("Please type a question or thought for the Copilot!");
+        return;
+    }
+
+    switchIbTab("copilot");
+
+    const stream = document.getElementById("copilotChatStream");
+    const pyCode = document.getElementById("pythonCodeInput")?.value || "";
+    const sqlCode = document.getElementById("sqlQueryInput")?.value || "";
+
+    if (stream) {
+        const userDiv = document.createElement("div");
+        userDiv.className = "copilot-msg-user";
+        userDiv.innerHTML = `<span class="font-bold text-indigo-300">Candidate:</span> ${escapeHtml(promptText)}`;
+        stream.appendChild(userDiv);
+
+        const typingDiv = document.createElement("div");
+        typingDiv.id = "copilotTypingIndicator";
+        typingDiv.className = "copilot-typing";
+        typingDiv.innerHTML = `
+            <div class="copilot-dot"></div>
+            <div class="copilot-dot"></div>
+            <div class="copilot-dot"></div>
+            <span>AI Copilot is reviewing...</span>
+        `;
+        stream.appendChild(typingDiv);
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    try {
+        const res = await fetch("/api/v1/interview/copilot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                session_id: activeSessionId,
+                question_id: currentQuestion.id,
+                prompt_type: "custom",
+                user_prompt: promptText,
+                candidate_code: pyCode,
+                candidate_sql: sqlCode
+            })
+        });
+
+        const data = await res.json();
+        const typingEl = document.getElementById("copilotTypingIndicator");
+        if (typingEl) typingEl.remove();
+
+        if (stream) {
+            const aiDiv = document.createElement("div");
+            aiDiv.className = "copilot-msg-ai";
+            aiDiv.innerHTML = `
+                <div class="flex items-center gap-1.5 font-bold text-indigo-900 text-xs mb-1.5">
+                    <span>🤖</span>
+                    <span>Senior Staff AI Copilot</span>
+                </div>
+                <div class="text-slate-800 leading-relaxed font-normal">${formatMarkdown(data.reply)}</div>
+            `;
+            stream.appendChild(aiDiv);
+            stream.scrollTop = stream.scrollHeight;
+        }
+    } catch (err) {
+        const typingEl = document.getElementById("copilotTypingIndicator");
+        if (typingEl) typingEl.remove();
+        if (stream) {
+            const errDiv = document.createElement("div");
+            errDiv.className = "copilot-msg-ai text-rose-600";
+            errDiv.innerText = `Error querying AI Copilot: ${err.message}`;
+            stream.appendChild(errDiv);
+        }
+    }
+}
+
+function handleCopilotActionChip(chipText) {
+    if (chipText.includes("ELI5") || chipText.includes("Explain")) {
+        requestCopilotPrompt("eli5");
+    } else if (chipText.includes("hint") || chipText.includes("Hint")) {
+        requestCopilotPrompt("hint");
+    } else if (chipText.includes("Big-O") || chipText.includes("Complexity")) {
+        requestCopilotPrompt("complexity");
+    } else if (chipText.includes("Trap") || chipText.includes("Traps") || chipText.includes("debug")) {
+        requestCopilotPrompt("debug");
+    } else if (chipText.includes("cross") || chipText.includes("Grill") || chipText.includes("follow-up")) {
+        requestCopilotPrompt("cross_question");
+    } else {
+        const input = document.getElementById("candidateResponseInput");
+        if (input) {
+            input.value = `Addressing: ${chipText}\n`;
+            input.focus();
+        }
+    }
+}
+
+function runActiveSandbox() {
+    if (activeSandboxTab === "python") {
+        runPythonCode();
+    } else if (activeSandboxTab === "sql") {
+        runSQLCode();
+    } else if (activeSandboxTab === "redis") {
+        runRedisCode();
+    } else if (activeSandboxTab === "nosql") {
+        runNoSQLCode();
+    }
+}
+
+function copyActiveCode() {
+    if (activeSandboxTab === "python") {
+        copyToClipboard('pythonCodeInput', 'Python code copied!');
+    } else if (activeSandboxTab === "sql") {
+        copyToClipboard('sqlQueryInput', 'SQL query copied!');
+    } else if (activeSandboxTab === "redis") {
+        copyToClipboard('redisCommandInput', 'Redis commands copied!');
+    } else if (activeSandboxTab === "nosql") {
+        copyToClipboard('nosqlQueryInput', 'MongoDB query copied!');
+    }
+}
+
 function switchSandboxTab(tab) {
+    activeSandboxTab = tab;
     const pySection = document.getElementById("pythonCellSection");
     const sqlSection = document.getElementById("sqlCellSection");
     const redisSection = document.getElementById("redisCellSection");
@@ -1512,8 +1974,10 @@ function switchSandboxTab(tab) {
     const btnRedis = document.getElementById("tabRedisBtn");
     const btnNosql = document.getElementById("tabNosqlBtn");
 
+    const inactiveClass = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5 font-medium";
+
     [btnPy, btnSql, btnRedis, btnNosql].forEach(btn => {
-        if (btn) btn.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium";
+        if (btn) btn.className = inactiveClass;
     });
 
     if (pySection) pySection.classList.add("hidden");
@@ -1523,18 +1987,19 @@ function switchSandboxTab(tab) {
 
     if (tab === "python") {
         if (pySection) pySection.classList.remove("hidden");
-        if (btnPy) btnPy.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+        if (btnPy) btnPy.className = "px-3 py-1.5 rounded-lg bg-[#1e293b] text-emerald-400 shadow-2xs font-bold transition flex items-center gap-1.5 border border-emerald-500/20";
     } else if (tab === "sql") {
         if (sqlSection) sqlSection.classList.remove("hidden");
-        if (btnSql) btnSql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+        if (btnSql) btnSql.className = "px-3 py-1.5 rounded-lg bg-[#1e293b] text-blue-400 shadow-2xs font-bold transition flex items-center gap-1.5 border border-blue-500/20";
     } else if (tab === "redis") {
         if (redisSection) redisSection.classList.remove("hidden");
-        if (btnRedis) btnRedis.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+        if (btnRedis) btnRedis.className = "px-3 py-1.5 rounded-lg bg-[#1e293b] text-rose-400 shadow-2xs font-bold transition flex items-center gap-1.5 border border-rose-500/20";
     } else if (tab === "nosql") {
         if (nosqlSection) nosqlSection.classList.remove("hidden");
-        if (btnNosql) btnNosql.className = "px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5";
+        if (btnNosql) btnNosql.className = "px-3 py-1.5 rounded-lg bg-[#1e293b] text-emerald-400 shadow-2xs font-bold transition flex items-center gap-1.5 border border-emerald-500/20";
     }
 }
+
 
 // ----------------------------------------------------
 // ----------------------------------------------------

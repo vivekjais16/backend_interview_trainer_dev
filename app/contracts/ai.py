@@ -18,3 +18,21 @@ class AIEvaluationContract(ABC):
     ) -> Dict[str, Any]:
         """Evaluates candidate response and generates score, feedback, and cross-questions."""
         pass
+
+    async def query_copilot(
+        self,
+        question: Any,
+        prompt_type: str,
+        user_prompt: Optional[str] = None,
+        candidate_code: Optional[str] = None,
+        candidate_sql: Optional[str] = None,
+        experience_level: str = "mid",
+        target_company: str = "Top Tech MNC"
+    ) -> Dict[str, Any]:
+        """Provides AI Copilot interactive pair programming and coaching."""
+        return {
+            "prompt_type": prompt_type,
+            "reply": "Copilot guidance unavailable.",
+            "action_chips": []
+        }
+

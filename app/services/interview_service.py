@@ -134,5 +134,38 @@ class InterviewSessionDomainService(InterviewSessionContract):
 
         return turn
 
+    async def query_copilot(
+        self,
+        question_id: int,
+        prompt_type: str,
+        user_prompt: Optional[str],
+        candidate_code: Optional[str],
+        candidate_sql: Optional[str],
+        session_id: Optional[int],
+        db: Session
+    ) -> Dict[str, Any]:
+        question = db.query(InterviewQuestion).filter(InterviewQuestion.id == question_id).first()
+        if not question:
+            raise HTTPException(status_code=404, detail="Question not found")
+
+        exp_level = "mid"
+        target_company = "Top Tech MNC"
+        if session_id:
+            session = self.get_session(session_id, db)
+            if session:
+                exp_level = session.experience_level
+                target_company = session.target_company or "Top Tech MNC"
+
+        return await self._ai_evaluator.query_copilot(
+            question=question,
+            prompt_type=prompt_type,
+            user_prompt=user_prompt,
+            candidate_code=candidate_code,
+            candidate_sql=candidate_sql,
+            experience_level=exp_level,
+            target_company=target_company
+        )
+
 # Default singleton instance
 interview_service = InterviewSessionDomainService()
+

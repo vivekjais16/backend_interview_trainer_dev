@@ -291,4 +291,175 @@ Candidate: {resp} | Code: {code} | SQL: {sql} | Scenario: {scenario}
             })
             return json.loads(res.json()["response"])
 
+    async def query_copilot(
+        self,
+        question: Any,
+        prompt_type: str,
+        user_prompt: Optional[str] = None,
+        candidate_code: Optional[str] = None,
+        candidate_sql: Optional[str] = None,
+        experience_level: str = "mid",
+        target_company: str = "Top Tech MNC"
+    ) -> Dict[str, Any]:
+        """
+        AI Copilot Pair Programmer & Senior Staff Coach.
+        Answers queries (ELI5, architectural hint, Big-O audit, debugging traps, cross-questions, custom technical questions).
+        """
+        import random
+        p_type = (prompt_type or "custom").lower().strip()
+        
+        # 1. ELI5: Explain Simply
+        if p_type == "eli5":
+            analogy = "Think of this problem like an airport security checkpoint or high-speed electronic toll booth: rather than inspecting every passenger from scratch in O(N^2) time, we cache verified states in O(1) time."
+            cat = getattr(question, 'category', '') or ''
+            if "sql" in cat.lower() or "database" in cat.lower():
+                analogy = "Think of this like an organized library: instead of reading every page of every book sequentially (Full Table Scan), we check the alphabetical index card catalog (B+ Tree) to locate the exact shelf in milliseconds."
+            elif "cache" in cat.lower() or "redis" in cat.lower():
+                analogy = "Think of this like keeping your most frequently used tools on your desk within arm's reach (RAM Cache) rather than walking to the basement storage warehouse (Hard Disk / Main DB) every single time."
+
+            q_title = getattr(question, 'title', 'Backend Architecture')
+            q_scen = getattr(question, 'scenario_text', 'Analyze optimal performance.')
+            reply = f"""### 💡 Explain Like I'm 5 (ELI5 Breakdown)
+
+**Problem:** {q_title}
+
+#### 🎯 Simple Intuition & Analogy
+{analogy}
+
+#### 🔑 What the Problem Actually Asks:
+{q_scen}
+
+#### ⚡ The Core Technical Insight:
+- **Don't Overcomplicate:** Avoid deep nested loops or redundant remote round-trips.
+- **State & Memory:** Track intermediate results using dictionaries/hash-maps or indexed lookups.
+- **Edge Boundaries:** Be prepared for empty payloads, duplicate keys, or network disconnects.
+
+#### 🛠️ Quick Step-by-Step Strategy:
+1. **Understand Input/Output:** Validate types and boundary ranges.
+2. **Select Data Structure:** Prefer `dict`/`set` for O(1) membership over `list` (O(N)).
+3. **Iterate Once (O(N)):** Compute solution linearly and return optimal result.
+"""
+            chips = ["💡 Give me a hint", "⏱ Analyze my code's Big-O", "🔥 Grill me with a follow-up"]
+            return {"prompt_type": p_type, "reply": reply, "action_chips": chips}
+
+        # 2. HINT: Architectural Blueprint Hint
+        if p_type == "hint":
+            bps = getattr(question, 'best_practices', None) or []
+            bp = bps[0] if bps else "Maintain a single-pass invariant and avoid repeated calculations."
+            q_title = getattr(question, 'title', 'Backend Architecture')
+            reply = f"""### 💡 Architectural Blueprint Hint
+
+**Target Problem:** {q_title}
+
+#### 🧭 Guiding Engineering Direction:
+- **Data Structure Choice:** Look at your access pattern. If you need frequent lookups or uniqueness checks, use a `set` or `dict`. If you need FIFO or Sliding Window, use `collections.deque`.
+- **System Invariant:** {bp}
+- **High Concurrency Note:** Avoid holding locks during external network calls or database writes to prevent connection pool exhaustion.
+
+*(Try drafting this logic in the IDE on the right, then run your test!)*
+"""
+            chips = ["💬 Explain Simply (ELI5)", "⏱ Audit Big-O Complexity", "🐞 Check for Traps"]
+            return {"prompt_type": p_type, "reply": reply, "action_chips": chips}
+
+        # 3. COMPLEXITY: Big-O Time & Space Audit
+        if p_type == "complexity":
+            from app.services.python_runner import analyze_code_complexity
+            code_to_check = candidate_code or ""
+            if len(code_to_check.strip()) > 10:
+                c_info = analyze_code_complexity(code_to_check)
+                t_comp = c_info.get("time_complexity", "O(N)")
+                s_comp = c_info.get("space_complexity", "O(1)")
+                opt_t = c_info.get("optimal_time", "O(N)")
+                opt_s = c_info.get("optimal_space", "O(1)")
+                suggs = c_info.get("suggestions", [])
+                sugg_text = "\n".join(f"- {s}" for s in suggs) if suggs else "- Clean code operating within optimal asymptotic boundaries!"
+
+                reply = f"""### ⏱️ AST Big-O Complexity Profiling
+
+- **Detected Runtime Complexity:** `{t_comp}` *(Target: `{opt_t}`)*
+- **Detected Space Complexity:** `{s_comp}` *(Target: `{opt_s}`)*
+
+#### 🔍 Bottleneck Analysis & Recommendations:
+{sugg_text}
+
+#### 💡 Staff Principal Optimization Rule:
+Whenever you have `if x in list_var:` inside a `for` loop, you create hidden `O(N * M)` quadratic runtime. Convert `list_var` to a `set` beforehand for instant `O(1)` hash lookup!
+"""
+            else:
+                q_title = getattr(question, 'title', 'Backend Architecture')
+                reply = f"""### ⏱️ Expected Big-O Complexity Benchmark
+
+**Problem:** {q_title}
+
+- **Target Time Complexity:** `O(N)` or `O(N log N)` depending on sorting requirements.
+- **Target Space Complexity:** `O(1)` auxiliary memory, or `O(N)` if indexing is required.
+
+*(Paste or write your Python code in the IDE on the right and click 'Audit Big-O' again to run a real-time AST complexity audit on your exact implementation!)*
+"""
+            chips = ["🐞 Check for Traps", "💡 Architectural Hint", "🔥 Cross-Question"]
+            return {"prompt_type": p_type, "reply": reply, "action_chips": chips}
+
+        # 4. DEBUG / TRAPS: Check for common pitfalls
+        if p_type == "debug":
+            traps = getattr(question, 'common_traps', None) or [
+                "Unbounded memory growth when accumulating large sequences.",
+                "Event loop blockage caused by synchronous I/O operations.",
+                "Missing transaction isolation or unhandled rollback on database errors."
+            ]
+            traps_md = "\n".join(f"- **Trap {i+1}:** {t}" for i, t in enumerate(traps))
+            q_title = getattr(question, 'title', 'Backend Architecture')
+            reply = f"""### 🐞 Common Traps & Edge Case Review
+
+**Known Pitfalls for {q_title}:**
+{traps_md}
+
+#### 🛡️ Defensive Engineering Checklist:
+- **Empty & Null Cases:** Does your code handle `None`, empty strings, or empty lists gracefully without crashing?
+- **Concurrency & Race Conditions:** If two requests execute this at the exact same millisecond, could there be a dirty read or lost update?
+- **Resource Leaks:** Are all connections, sockets, and cursors cleanly closed with context managers?
+"""
+            chips = ["⏱ Audit Big-O Complexity", "💬 Explain Simply (ELI5)", "🎙️ Submit for Review"]
+            return {"prompt_type": p_type, "reply": reply, "action_chips": chips}
+
+        # 5. CROSS_QUESTION: Follow-up challenge
+        if p_type == "cross_question":
+            from app.seeds.seed_data import DEFAULT_CROSS_QUESTIONS
+            cq_list = getattr(question, 'cross_questions', None) or DEFAULT_CROSS_QUESTIONS
+            selected_cq = random.choice(cq_list) if cq_list else "How would you handle a sudden 10x traffic spike on this endpoint?"
+            reply = f"""### 🔥 MNC Senior Staff Follow-Up Challenge
+
+> **"{selected_cq}"**
+
+#### 💭 How to Frame Your Answer:
+1. **Identify the Core Trade-Off:** (e.g., Latency vs Data Consistency, CPU vs Memory).
+2. **Propose Architecture:** (e.g., Redis distributed lock, optimistic locking version tag, message queue backpressure).
+3. **Monitoring & Metrics:** Mention how P99 latency or dead-letter queue metrics would alert you.
+
+*(Type your architectural answer in the editor below and click 'Submit for Bar Raiser Review'!)*
+"""
+            chips = ["Address this cross-question", "💡 Architectural Hint", "⏱ Audit Big-O"]
+            return {"prompt_type": p_type, "reply": reply, "action_chips": chips}
+
+        # 6. CUSTOM: General prompt / query
+        user_text = (user_prompt or "").strip()
+        if not user_text:
+            user_text = "How can I approach this problem with optimal design?"
+
+        q_title = getattr(question, 'title', 'Backend Architecture')
+        theory = getattr(question, 'theory_explanation', '') or ''
+        reply = f"""### 🤖 AI Senior Staff Copilot Advice
+
+**Regarding:** *"{user_text}"*
+
+#### 🧠 Analysis for {q_title}:
+- In production at {target_company}, backends must balance throughput, latency, and fault tolerance.
+- **Key Consideration:** {theory[:300] if theory else "Ensure non-blocking operations and clean decoupling between data access and business logic."}...
+
+#### 🚀 Recommended Next Step:
+Test your implementation in the right-hand IDE. You can test code execution with `Run Code` or profile algorithmic runtime with `Audit Big-O`.
+"""
+        chips = ["💬 Explain Simply (ELI5)", "💡 Architectural Hint", "⏱ Audit Big-O", "🔥 Cross-Question"]
+        return {"prompt_type": p_type, "reply": reply, "action_chips": chips}
+
 ai_service = AIService()
+

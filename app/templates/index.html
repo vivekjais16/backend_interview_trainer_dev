@@ -266,428 +266,511 @@
                 </div>
             </div>
 
-            <!-- CELL 1: Scenario & Theory Card -->
-            <div class="premium-card p-6">
-                <div class="flex items-start justify-between gap-4">
-                    <div>
-                        <div class="flex items-center gap-2 mb-2 font-mono text-xs text-indigo-600 font-bold">
-                            <span class="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200/80 font-mono text-[11px]">SPEC</span>
-                            <span>MNC Production Architecture Scenario</span>
-                        </div>
-                        <h2 id="qTitle" class="text-xl font-extrabold text-slate-900 tracking-tight">Select an Interview Question</h2>
-                    </div>
-                    <div id="qBadges" class="flex flex-wrap gap-2 justify-end">
-                        <!-- Badges injected -->
-                    </div>
-                </div>
-
-                <!-- Scenario Description -->
-                <div class="mt-4 p-5 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed font-normal" id="qScenario">
-                    Select a question from the left sidebar or the Learning Path roadmap at the top to begin your adaptive MNC technical interview preparation.
-                </div>
-
-                <!-- Theory & Common Traps Accordion -->
-                <div id="qTheoryCard" class="mt-4 border-t border-slate-200 pt-4 hidden">
-                    <details class="group">
-                        <summary class="cursor-pointer text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center justify-between p-2 rounded-lg hover:bg-indigo-50 transition">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                </svg>
-                                <span>Deep Architectural Theory & System Internals</span>
-                            </span>
-                            <span class="group-open:rotate-180 transition-transform text-indigo-500">▼</span>
-                        </summary>
-                        <div id="qTheoryText" class="mt-3 text-xs text-slate-700 leading-relaxed bg-indigo-50/40 p-5 rounded-xl border border-indigo-100">
-                            <!-- Theory content -->
-                        </div>
-                    </details>
-                </div>
-
-                <div class="mt-2">
-                    <details class="group">
-                        <summary class="cursor-pointer text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between p-2 rounded-lg hover:bg-amber-50 transition">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <span>Common Traps & High-Concurrency Gotchas</span>
-                            </span>
-                            <span class="group-open:rotate-180 transition-transform text-amber-500">▼</span>
-                        </summary>
-                        <ul id="qTrapsList" class="mt-2 space-y-2 bg-amber-50/40 p-5 rounded-xl border border-amber-200/60">
-                            <!-- Traps -->
-                        </ul>
-                    </details>
-                </div>
-
-                <!-- Easy-to-Understand Solution Walkthrough Card -->
-                <div id="solutionWalkthroughCard" class="mt-3 p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-3 hidden">
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>💡 Step-by-Step Easy Answer & Solution Breakdown</span>
-                        </h4>
-                        <button onclick="document.getElementById('solutionWalkthroughCard').classList.add('hidden')" class="text-[11px] text-emerald-700 hover:text-emerald-900 font-semibold transition">
-                            ✕ Hide
-                        </button>
-                    </div>
-                    <div id="solutionWalkthroughText" class="text-xs text-slate-800 leading-relaxed space-y-2 font-normal">
-                        <!-- Rendered dynamically -->
-                    </div>
-                </div>
-
-                <!-- Interactive Concept MCQ Quick Check Card -->
-                <div id="qMcqCard" class="mt-4 p-5 bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/50 border border-indigo-200/90 rounded-xl space-y-3.5 shadow-2xs hidden">
-                    <div class="flex items-center justify-between border-b border-indigo-100 pb-2.5">
-                        <div class="flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-2xs">MCQ</span>
-                            <span class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Concept Knowledge Check</span>
-                            <span id="qMcqPhaseBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold">Phase 1: Basic</span>
-                        </div>
-                        <button id="qMcqResetBtn" onclick="resetCurrentMcq()" class="text-[11px] text-slate-500 hover:text-indigo-600 font-medium transition flex items-center gap-1">
-                            <span>↺</span> Reset Check
-                        </button>
-                    </div>
+            <!-- INTERVIEWBIT DUAL-PANE SPLIT WORKSPACE WITH EMBEDDED LLM COPILOT -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                
+                <!-- LEFT PANE: Problem Spec, Editorial & AI Copilot Tabs (5 cols on lg) -->
+                <div class="lg:col-span-5 flex flex-col space-y-3.5">
                     
-                    <p id="qMcqPrompt" class="text-xs font-bold text-slate-900 leading-relaxed"></p>
-
-                    <!-- 4 Option Buttons (A, B, C, D) -->
-                    <div id="qMcqOptionsContainer" class="grid grid-cols-1 gap-2 pt-1">
-                        <!-- Rendered dynamically -->
-                    </div>
-
-                    <!-- Explanation reveal on answer -->
-                    <div id="qMcqExplanationBox" class="mt-3 p-4 bg-white border border-slate-200 rounded-xl text-xs space-y-1.5 hidden shadow-xs">
-                        <div id="qMcqFeedbackBanner" class="font-bold flex items-center gap-2 text-xs"></div>
-                        <p id="qMcqExplanationText" class="text-slate-700 leading-relaxed font-normal"></p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CELL 2: Unified Interactive Sandbox Workspace with IDE Windows -->
-            <div class="premium-card p-6 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-mono text-emerald-700 font-bold px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">IDE</span>
-                        <h3 class="text-sm font-bold text-slate-900">
-                            Interactive Sandbox Compiler & Interpreter
-                        </h3>
-                    </div>
-
-                    <!-- Sandbox Switcher Tabs -->
-                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                        <button id="tabPyBtn" onclick="switchSandboxTab('python')" class="px-3 py-1 rounded-lg bg-white text-slate-900 shadow-2xs font-bold transition flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Python</span>
-                        </button>
-                        <button id="tabSqlBtn" onclick="switchSandboxTab('sql')" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium">
-                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            <span>SQL Engine</span>
-                        </button>
-                        <button id="tabRedisBtn" onclick="switchSandboxTab('redis')" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium">
-                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                            <span>Redis CLI</span>
-                        </button>
-                        <button id="tabNosqlBtn" onclick="switchSandboxTab('nosql')" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5 font-medium">
-                            <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                            <span>MongoDB</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 1. PYTHON SANDBOX -->
-                <div id="pythonCellSection" class="space-y-3">
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="text-slate-500 font-medium font-mono text-[11px]">Sandboxed Python 3.12 AST with Watchdog Protection</span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="copyToClipboard('pythonCodeInput', 'Python code copied!')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 transition" title="Copy code">
-                                📋 Copy
+                    <!-- InterviewBit Modern Tab Navigation Bar -->
+                    <div class="flex items-center justify-between bg-white border border-slate-200/90 rounded-2xl p-1.5 shadow-2xs">
+                        <div class="flex items-center gap-1 text-xs">
+                            <button id="ibTabProblemBtn" onclick="switchIbTab('problem')" class="ib-tab-btn active font-bold">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Problem Spec</span>
                             </button>
-                            <button onclick="revealSolution()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                💡 Solution
+                            <button id="ibTabEditorialBtn" onclick="switchIbTab('editorial')" class="ib-tab-btn">
+                                <span>💡</span>
+                                <span>Editorial</span>
                             </button>
-                            <button onclick="resetStarterCode()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                ↺ Reset
-                            </button>
-                            <button id="runPythonBtn" onclick="runPythonCode()" class="text-xs bg-emerald-600 hover:bg-emerald-700 font-bold text-white px-4 py-1.5 rounded-lg shadow-sm shadow-emerald-600/30 transition flex items-center gap-1.5">
-                                <span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-emerald-800/60 px-1.5 py-0.5 rounded text-white font-mono">⌘Enter</kbd>
+                            <button id="ibTabCopilotBtn" onclick="switchIbTab('copilot')" class="ib-tab-btn">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="font-bold text-indigo-700">AI Copilot</span>
+                                <span class="text-[9px] font-mono uppercase bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded font-extrabold">LLM</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Sleek IDE Window -->
-                    <div class="ide-window">
-                        <div class="ide-header">
-                            <div class="flex items-center gap-3">
-                                <div class="ide-mac-dots">
-                                    <div class="ide-dot ide-dot-red"></div>
-                                    <div class="ide-dot ide-dot-yellow"></div>
-                                    <div class="ide-dot ide-dot-green"></div>
-                                </div>
-                                <div class="ide-tab active">
-                                    <span>solution.py</span>
+                    <!-- TAB 1: PROBLEM SPECIFICATION & REAL-WORLD SCENARIO -->
+                    <div id="ibTabProblemContent" class="space-y-4">
+                        <div class="premium-card p-5 space-y-3.5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1.5 font-mono text-xs text-indigo-600 font-bold">
+                                        <span class="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200/80 font-mono text-[10px]">SPEC</span>
+                                        <span>MNC Production Architecture Scenario</span>
+                                    </div>
+                                    <h2 id="qTitle" class="text-lg font-extrabold text-slate-900 tracking-tight leading-snug">Select an Interview Question</h2>
                                 </div>
                             </div>
-                            <span class="text-[10px] text-slate-400 font-mono">UTF-8 • Python 3.12</span>
-                        </div>
-                        <div class="ide-editor-area">
-                            <textarea id="pythonCodeInput" rows="10" 
-                                      class="ide-textarea" 
-                                      spellcheck="false" placeholder="# Write your Python solution here..."></textarea>
-                        </div>
-                        <div class="ide-console">
-                            <div class="text-[10px] text-slate-400 mb-1 font-mono flex items-center justify-between">
-                                <span>TERMINAL STDOUT / EXECUTION TRACE:</span>
-                                <button onclick="document.getElementById('pyOutputTerminal').innerText = '// Console cleared'; showToast('Console cleared');" class="text-[10px] text-slate-400 hover:text-slate-200 underline">
-                                    🧹 Clear
+
+                            <div id="qBadges" class="flex flex-wrap gap-1.5">
+                                <!-- Badges injected -->
+                            </div>
+
+                            <!-- Scenario Description -->
+                            <div class="p-4 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed font-normal" id="qScenario">
+                                Select a question from the left sidebar or the Learning Path roadmap at the top to begin your adaptive MNC technical interview preparation.
+                            </div>
+
+                            <!-- Expected Constraints & Complexity Box -->
+                            <div class="p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2 font-mono text-[11px] text-slate-700">
+                                    <span class="font-bold text-indigo-900">Target Bounds:</span>
+                                    <span class="px-2 py-0.5 rounded bg-white border border-indigo-200 text-indigo-700 font-bold">⏱️ O(N)</span>
+                                    <span class="px-2 py-0.5 rounded bg-white border border-indigo-200 text-indigo-700 font-bold">💾 O(1)</span>
+                                </div>
+                                <button onclick="requestCopilotPrompt('hint')" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-1 transition">
+                                    <span>💡 Need a hint?</span>
                                 </button>
                             </div>
-                            <pre id="pyOutputTerminal" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed">// Click 'Run Python' to test code</pre>
-                        </div>
-                    </div>
 
-                    <!-- Big-O Time & Space Complexity Inspector Card -->
-                    <div id="pyComplexityCard" class="p-4 rounded-xl border border-indigo-200/90 bg-gradient-to-r from-indigo-50/70 via-white to-blue-50/50 space-y-2.5 shadow-2xs hidden">
-                        <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
-                                <span class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Big-O Complexity & Resource Profiler</span>
+                            <!-- Theory & Common Traps Accordion -->
+                            <div id="qTheoryCard" class="border-t border-slate-200 pt-3 hidden">
+                                <details class="group">
+                                    <summary class="cursor-pointer text-xs font-bold text-indigo-700 uppercase tracking-wider flex items-center justify-between p-2 rounded-lg hover:bg-indigo-50 transition">
+                                        <span class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                            </svg>
+                                            <span>Deep Architectural Theory & System Internals</span>
+                                        </span>
+                                        <span class="group-open:rotate-180 transition-transform text-indigo-500">▼</span>
+                                    </summary>
+                                    <div id="qTheoryText" class="mt-2 text-xs text-slate-700 leading-relaxed bg-indigo-50/40 p-4 rounded-xl border border-indigo-100">
+                                        <!-- Theory content -->
+                                    </div>
+                                </details>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <span id="pyTimeBadge" class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300">⏱️ Time: O(N)</span>
-                                <span id="pySpaceBadge" class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-lg bg-blue-100 text-blue-800 border border-blue-300">💾 Space: O(1)</span>
+
+                            <div class="mt-1">
+                                <details class="group">
+                                    <summary class="cursor-pointer text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center justify-between p-2 rounded-lg hover:bg-amber-50 transition">
+                                        <span class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>Common Traps & Concurrency Gotchas</span>
+                                        </span>
+                                        <span class="group-open:rotate-180 transition-transform text-amber-500">▼</span>
+                                    </summary>
+                                    <ul id="qTrapsList" class="mt-2 space-y-2 bg-amber-50/40 p-4 rounded-xl border border-amber-200/60">
+                                        <!-- Traps -->
+                                    </ul>
+                                </details>
                             </div>
-                        </div>
 
-                        <!-- Bottlenecks & Suggestions -->
-                        <div id="pyComplexitySuggestions" class="text-xs space-y-1.5 text-slate-700 leading-relaxed font-normal">
-                            <!-- Injected dynamically -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. SQL COMPILER -->
-                <div id="sqlCellSection" class="space-y-3 hidden">
-                    <div class="flex items-center justify-between text-xs">
-                        <div class="flex items-center gap-2 text-slate-600">
-                            <span class="font-semibold text-[11px]">Database Schema:</span>
-                            <select id="sqlSchemaSelect" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:border-indigo-500 shadow-2xs">
-                                <option value="ecommerce">E-Commerce & Orders</option>
-                                <option value="fintech">FinTech & Ledger</option>
-                                <option value="hr_tech">HR & Employee Analytics</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="copyToClipboard('sqlQueryInput', 'SQL query copied!')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 transition">
-                                📋 Copy
-                            </button>
-                            <button onclick="revealSolution()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                💡 Solution
-                            </button>
-                            <button onclick="resetStarterCode()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                ↺ Reset
-                            </button>
-                            <button id="runSqlBtn" onclick="runSQLCode()" class="text-xs bg-blue-600 hover:bg-blue-700 font-bold text-white px-4 py-1.5 rounded-lg shadow-sm shadow-blue-600/30 transition flex items-center gap-1.5">
-                                <span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-blue-800/60 px-1.5 py-0.5 rounded text-white font-mono">⌘Enter</kbd>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="ide-window">
-                        <div class="ide-header">
-                            <div class="flex items-center gap-3">
-                                <div class="ide-mac-dots">
-                                    <div class="ide-dot ide-dot-red"></div>
-                                    <div class="ide-dot ide-dot-yellow"></div>
-                                    <div class="ide-dot ide-dot-green"></div>
+                            <!-- Interactive Concept MCQ Quick Check Card -->
+                            <div id="qMcqCard" class="mt-2 p-4 bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/50 border border-indigo-200/90 rounded-xl space-y-3 shadow-2xs hidden">
+                                <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-5 h-5 rounded bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px] shadow-2xs">MCQ</span>
+                                        <span class="text-xs font-bold text-indigo-950 uppercase tracking-wider">Concept Knowledge Check</span>
+                                        <span id="qMcqPhaseBadge" class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 font-semibold">Phase 1: Basic</span>
+                                    </div>
+                                    <button id="qMcqResetBtn" onclick="resetCurrentMcq()" class="text-[11px] text-slate-500 hover:text-indigo-600 font-medium transition flex items-center gap-1">
+                                        <span>↺</span> Reset Check
+                                    </button>
                                 </div>
-                                <div class="ide-tab active">
-                                    <span>query.sql</span>
+                                <p id="qMcqPrompt" class="text-xs font-bold text-slate-900 leading-relaxed"></p>
+                                <div id="qMcqOptionsContainer" class="grid grid-cols-1 gap-1.5 pt-1">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                                <div id="qMcqExplanationBox" class="mt-2.5 p-3.5 bg-white border border-slate-200 rounded-xl text-xs space-y-1 hidden shadow-xs">
+                                    <div id="qMcqFeedbackBanner" class="font-bold flex items-center gap-2 text-xs"></div>
+                                    <p id="qMcqExplanationText" class="text-slate-700 leading-relaxed font-normal"></p>
                                 </div>
                             </div>
-                            <span class="text-[10px] text-slate-400 font-mono">SQL Engine with EXPLAIN Plan</span>
-                        </div>
-                        <div class="ide-editor-area">
-                            <textarea id="sqlQueryInput" rows="7" 
-                                      class="ide-textarea" 
-                                      spellcheck="false" placeholder="-- Write your SQL query here..."></textarea>
                         </div>
                     </div>
 
-                    <div id="sqlOutputContainer" class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-2xs">
-                        <div class="text-xs text-slate-500 font-mono p-4">Click 'Execute SQL' to run query with execution plan.</div>
-                    </div>
-                </div>
-
-                <!-- 3. REDIS SANDBOX -->
-                <div id="redisCellSection" class="space-y-3 hidden">
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="text-slate-500 font-medium font-mono text-[11px]">In-Memory Redis 7.2 CLI (Strings, Hashes, Lists, ZSETs)</span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="copyToClipboard('redisCommandInput', 'Redis commands copied!')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 transition">
-                                📋 Copy
-                            </button>
-                            <button onclick="revealSolution()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                💡 Sample Commands
-                            </button>
-                            <button onclick="resetStarterCode()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                ↺ Reset
-                            </button>
-                            <button id="runRedisBtn" onclick="runRedisCode()" class="text-xs bg-rose-600 hover:bg-rose-700 font-bold text-white px-4 py-1.5 rounded-lg shadow-sm shadow-rose-600/30 transition flex items-center gap-1.5">
-                                <span>▶</span> Execute Redis CLI
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="ide-window">
-                        <div class="ide-header">
-                            <div class="flex items-center gap-3">
-                                <div class="ide-mac-dots">
-                                    <div class="ide-dot ide-dot-red"></div>
-                                    <div class="ide-dot ide-dot-yellow"></div>
-                                    <div class="ide-dot ide-dot-green"></div>
+                    <!-- TAB 2: EDITORIAL & SOLUTION WALKTHROUGH -->
+                    <div id="ibTabEditorialContent" class="space-y-4 hidden">
+                        <div class="premium-card p-5 space-y-4">
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">💡</span>
+                                    <h3 class="text-sm font-bold text-slate-900">Step-by-Step Editorial & Walkthrough</h3>
                                 </div>
-                                <div class="ide-tab active">
-                                    <span>redis-cli</span>
+                                <span class="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-bold">Verified Solution</span>
+                            </div>
+
+                            <!-- Easy-to-Understand Solution Walkthrough Card -->
+                            <div id="solutionWalkthroughCard" class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span>Model Solution & Architectural Breakdown</span>
+                                    </h4>
+                                </div>
+                                <div id="solutionWalkthroughText" class="text-xs text-slate-800 leading-relaxed space-y-3 font-normal">
+                                    <!-- Rendered dynamically -->
                                 </div>
                             </div>
-                            <span class="text-[10px] text-slate-400 font-mono">In-Memory Redis Server</span>
                         </div>
-                        <div class="ide-editor-area">
-                            <textarea id="redisCommandInput" rows="7" 
-                                      class="ide-textarea" 
-                                      spellcheck="false" placeholder="SET user:101 'Alex'\nGET user:101"></textarea>
+                    </div>
+
+                    <!-- TAB 3: AI COPILOT & BAR RAISER (LLM INTERVIEWER) -->
+                    <div id="ibTabCopilotContent" class="space-y-4 hidden">
+                        <div class="premium-card p-5 space-y-4 border-indigo-200/90 bg-gradient-to-b from-white via-white to-indigo-50/20">
+                            <!-- Copilot Header -->
+                            <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                                        🤖
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xs font-extrabold text-slate-900">AI Senior Staff Copilot & Bar Raiser</h3>
+                                        <div class="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            <span>Pair-Programmer & Interviewer Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <button onclick="giveArchitecturalHint()" class="text-[11px] bg-white hover:bg-slate-100 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-lg font-semibold transition flex items-center gap-1 shadow-2xs">
+                                        <span>💡</span> Hint
+                                    </button>
+                                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">
+                                        Calibrated
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Quick Action Prompt Chips -->
+                            <div class="space-y-1.5">
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quick Copilot Prompts:</div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button onclick="requestCopilotPrompt('eli5')" class="copilot-chip">
+                                        <span>💬</span> Explain Simply (ELI5)
+                                    </button>
+                                    <button onclick="requestCopilotPrompt('hint')" class="copilot-chip">
+                                        <span>💡</span> Architectural Hint
+                                    </button>
+                                    <button onclick="requestCopilotPrompt('complexity')" class="copilot-chip">
+                                        <span>⏱️</span> Audit Big-O
+                                    </button>
+                                    <button onclick="requestCopilotPrompt('debug')" class="copilot-chip">
+                                        <span>🐞</span> Check Traps
+                                    </button>
+                                    <button onclick="requestCopilotPrompt('cross_question')" class="copilot-chip">
+                                        <span>🔥</span> MNC Cross-Question
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Conversational Chat Stream -->
+                            <div id="copilotChatStream" class="space-y-3 max-h-[340px] overflow-y-auto pr-1 text-xs">
+                                <!-- Initial Welcome Message from Copilot -->
+                                <div class="copilot-msg-ai">
+                                    <div class="flex items-center gap-1.5 font-bold text-indigo-900 text-xs mb-1">
+                                        <span>🤖</span>
+                                        <span>Senior Staff AI Copilot</span>
+                                    </div>
+                                    <p class="leading-relaxed text-slate-700">
+                                        Welcome! I am your AI Bar Raiser and Pair-Programming Copilot. 
+                                        Write code in the IDE on the right, ask me for hints, or submit your solution for a comprehensive MNC interview evaluation.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Candidate Answer & Reasoning Box -->
+                            <div class="space-y-2 pt-2 border-t border-slate-200">
+                                <div class="flex items-center justify-between text-xs">
+                                    <label class="font-bold text-slate-700 text-[11px] flex items-center gap-1.5">
+                                        <span>✍️</span>
+                                        <span>Candidate Reasoning / Copilot Prompt:</span>
+                                    </label>
+                                    <button onclick="clearCandidateAnswer()" class="text-[11px] text-slate-400 hover:text-slate-700 underline">
+                                        ↺ Clear
+                                    </button>
+                                </div>
+                                <div class="border border-slate-300 rounded-xl overflow-hidden bg-white shadow-2xs focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition">
+                                    <textarea id="candidateResponseInput" rows="4" 
+                                              class="w-full bg-white text-slate-900 text-xs p-3.5 focus:outline-none resize-y leading-relaxed font-sans placeholder-slate-400" 
+                                              placeholder="Detail your technical solution: architectural components, concurrency/locking mechanics, Big-O analysis, and fault tolerance measures..."></textarea>
+                                </div>
+                                <div class="flex items-center justify-between gap-2 pt-1">
+                                    <button onclick="sendCandidateCustomPrompt()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                        <span>💬</span> Ask Copilot
+                                    </button>
+                                    <button id="submitAiBtn" onclick="submitToAIInterviewer()" class="text-xs bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 font-bold text-white px-5 py-2 rounded-xl shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5">
+                                        <span>🎙️</span> Submit for Bar Raiser Review
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- AI Evaluation Scorecard Card (Hidden initially) -->
+                            <div id="aiEvaluationCard" class="p-5 bg-white border border-indigo-200 rounded-2xl shadow-sm space-y-3.5 hidden">
+                                <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">🎯</span>
+                                        <h4 class="text-xs font-bold text-slate-900">Executive Bar Raiser Review</h4>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-slate-500 font-medium">Score:</span>
+                                        <span id="aiScoreValue" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300">
+                                            8.5 / 10
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div id="aiFeedbackContent" class="text-xs text-slate-700 leading-relaxed space-y-2">
+                                    <!-- AI Feedback markdown -->
+                                </div>
+
+                                <!-- Follow up cross questions -->
+                                <div id="aiCrossQuestions">
+                                    <!-- Cross questions -->
+                                </div>
+                            </div>
                         </div>
-                        <div class="ide-console">
-                            <div class="text-[10px] text-slate-400 mb-1 font-mono flex items-center justify-between">
-                                <span>REDIS OUTPUT TRACE:</span>
-                                <button onclick="document.getElementById('redisOutputTerminal').innerText = '// Output cleared'; showToast('Redis output cleared');" class="text-[10px] text-slate-400 hover:text-slate-200 underline">
-                                    🧹 Clear
+                    </div>
+
+                </div> <!-- End Left Column -->
+
+                <!-- RIGHT PANE: Multi-Language Sandboxed IDE & Terminal Console (7 cols on lg) -->
+                <div class="lg:col-span-7 flex flex-col space-y-3 sticky top-4">
+                    
+                    <div class="premium-card p-5 space-y-3 bg-[#090d16] border-slate-800 text-slate-200 shadow-xl">
+                        
+                        <!-- IDE Header Bar: Sandbox Tabs + Tools -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                            <!-- Sandbox Language Switcher Tabs -->
+                            <div class="flex items-center gap-1 bg-[#141c2e] p-1 rounded-xl text-xs font-semibold border border-slate-800">
+                                <button id="tabPyBtn" onclick="switchSandboxTab('python')" class="px-3 py-1.5 rounded-lg bg-[#1e293b] text-emerald-400 shadow-2xs font-bold transition flex items-center gap-1.5 border border-emerald-500/20">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Python 3.12</span>
+                                </button>
+                                <button id="tabSqlBtn" onclick="switchSandboxTab('sql')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    <span>PostgreSQL</span>
+                                </button>
+                                <button id="tabRedisBtn" onclick="switchSandboxTab('redis')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                    <span>Redis 7.2</span>
+                                </button>
+                                <button id="tabNosqlBtn" onclick="switchSandboxTab('nosql')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5 font-medium">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                    <span>MongoDB</span>
                                 </button>
                             </div>
-                            <pre id="redisOutputTerminal" class="text-rose-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">// Click 'Execute Redis CLI' to run commands</pre>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- 4. NOSQL MONGODB SANDBOX -->
-                <div id="nosqlCellSection" class="space-y-3 hidden">
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="text-slate-500 font-medium font-mono text-[11px]">MongoDB 7.0 Aggregation Pipeline ($match, $group, $unwind)</span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="copyToClipboard('nosqlQueryInput', 'MongoDB query copied!')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 transition">
-                                📋 Copy
-                            </button>
-                            <button onclick="revealSolution()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                💡 Sample Pipeline
-                            </button>
-                            <button onclick="resetStarterCode()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg border border-slate-200 transition">
-                                ↺ Reset
-                            </button>
-                            <button id="runNosqlBtn" onclick="runNoSQLCode()" class="text-xs bg-emerald-600 hover:bg-emerald-700 font-bold text-white px-4 py-1.5 rounded-lg shadow-sm shadow-emerald-600/30 transition flex items-center gap-1.5">
-                                <span>▶</span> Run Mongo Query
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="ide-window">
-                        <div class="ide-header">
-                            <div class="flex items-center gap-3">
-                                <div class="ide-mac-dots">
-                                    <div class="ide-dot ide-dot-red"></div>
-                                    <div class="ide-dot ide-dot-yellow"></div>
-                                    <div class="ide-dot ide-dot-green"></div>
-                                </div>
-                                <div class="ide-tab active">
-                                    <span>aggregation.js</span>
-                                </div>
-                            </div>
-                            <span class="text-[10px] text-slate-400 font-mono">NoSQL Document Store</span>
-                        </div>
-                        <div class="ide-editor-area">
-                            <textarea id="nosqlQueryInput" rows="7" 
-                                      class="ide-textarea" 
-                                      spellcheck="false" placeholder="db.orders.aggregate([ { '$match': { 'status': 'DELIVERED' } } ])"></textarea>
-                        </div>
-                        <div class="ide-console max-h-64 overflow-y-auto">
-                            <div class="text-[10px] text-slate-400 mb-1 font-mono flex items-center justify-between">
-                                <span>MATCHED DOCUMENTS:</span>
-                                <button onclick="document.getElementById('nosqlOutputTerminal').innerText = '// Output cleared'; showToast('Mongo output cleared');" class="text-[10px] text-slate-400 hover:text-slate-200 underline">
-                                    🧹 Clear
+                            <!-- IDE Quick Action Buttons -->
+                            <div class="flex items-center gap-1.5 text-xs">
+                                <button onclick="revealSolution()" class="text-xs bg-[#141c2e] hover:bg-[#1e293b] text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 transition" title="Load Solution Template">
+                                    💡 Solution
+                                </button>
+                                <button onclick="copyActiveCode()" class="text-xs bg-[#141c2e] hover:bg-[#1e293b] text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 transition" title="Copy Active Code">
+                                    📋 Copy
+                                </button>
+                                <button onclick="resetStarterCode()" class="text-xs bg-[#141c2e] hover:bg-[#1e293b] text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 transition" title="Reset starter code">
+                                    ↺ Reset
                                 </button>
                             </div>
-                            <pre id="nosqlOutputTerminal" class="text-emerald-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">// Click 'Run Mongo Query' to execute</pre>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- CELL 3: AI Bar Raiser Interviewer & Evaluation -->
-            <div class="premium-card p-6 space-y-4 border-indigo-200/80 bg-gradient-to-b from-white via-white to-indigo-50/20">
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-mono text-purple-700 font-bold px-2 py-0.5 rounded bg-purple-50 border border-purple-200">BAR RAISER</span>
-                        <h3 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
-                            AI Senior Staff Bar Raiser Assessment
-                        </h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="giveArchitecturalHint()" class="text-xs bg-white hover:bg-slate-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-lg font-semibold transition flex items-center gap-1 shadow-2xs">
-                            <span>💡</span> Answering Blueprint Hint
-                        </button>
-                        <span class="text-xs px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
-                            Calibrated to Track
-                        </span>
-                    </div>
-                </div>
+                        <!-- 1. PYTHON SANDBOX -->
+                        <div id="pythonCellSection" class="space-y-3">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-400 font-mono text-[11px]">Sandboxed Python 3.12 AST with Watchdog Protection</span>
+                                <button id="runPythonBtn" onclick="runPythonCode()" class="text-xs bg-emerald-600 hover:bg-emerald-700 font-bold text-white px-3.5 py-1 rounded-lg shadow-sm shadow-emerald-600/30 transition flex items-center gap-1.5">
+                                    <span>▶</span> Run Python <kbd class="ml-1 text-[10px] bg-emerald-800/60 px-1 py-0.2 rounded text-white font-mono">⌘Enter</kbd>
+                                </button>
+                            </div>
 
-                <p class="text-xs text-slate-600 leading-relaxed">
-                    Explain your architectural reasoning, locking strategy, distributed consistency, and edge-case resilience. 
-                    The AI Bar Raiser analyzes your response and code, generates an executive scorecard, and challenges you with <strong>rigorous follow-up cross-questions</strong>.
-                </p>
+                            <!-- Sleek IDE Window -->
+                            <div class="ide-window">
+                                <div class="ide-header">
+                                    <div class="flex items-center gap-3">
+                                        <div class="ide-mac-dots">
+                                            <div class="ide-dot ide-dot-red"></div>
+                                            <div class="ide-dot ide-dot-yellow"></div>
+                                            <div class="ide-dot ide-dot-green"></div>
+                                        </div>
+                                        <div class="ide-tab active">
+                                            <span>solution.py</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-mono">UTF-8 • Python 3.12</span>
+                                </div>
+                                <div class="ide-editor-area">
+                                    <textarea id="pythonCodeInput" rows="12" 
+                                              class="ide-textarea" 
+                                              spellcheck="false" placeholder="# Write your Python solution here..."></textarea>
+                                </div>
+                                <div class="ide-console">
+                                    <div class="text-[10px] text-slate-400 mb-1 font-mono flex items-center justify-between">
+                                        <span>TERMINAL STDOUT / EXECUTION TRACE:</span>
+                                        <button onclick="document.getElementById('pyOutputTerminal').innerText = '// Console cleared'; showToast('Console cleared');" class="text-[10px] text-slate-400 hover:text-slate-200 underline">
+                                            🧹 Clear
+                                        </button>
+                                    </div>
+                                    <pre id="pyOutputTerminal" class="text-emerald-400 font-mono text-xs whitespace-pre-wrap leading-relaxed">// Click 'Run Python' to test code</pre>
+                                </div>
+                            </div>
 
-                <!-- Clean Structured Answer Editor -->
-                <div class="border border-slate-300 rounded-xl overflow-hidden bg-white shadow-2xs focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition">
-                    <textarea id="candidateResponseInput" rows="6" 
-                              class="w-full bg-white text-slate-900 text-xs p-4 focus:outline-none resize-y leading-relaxed font-sans placeholder-slate-400" 
-                              placeholder="Detail your technical solution: architectural components, concurrency/locking mechanics, Big-O analysis, and fault tolerance measures..."></textarea>
-                </div>
-
-                <div class="flex items-center justify-between">
-                    <button onclick="clearCandidateAnswer()" class="text-xs text-slate-500 hover:text-slate-800 underline transition font-medium">
-                        ↺ Clear Draft
-                    </button>
-                    <button id="submitAiBtn" onclick="submitToAIInterviewer()" class="text-xs bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 font-bold text-white px-6 py-2.5 rounded-xl shadow-md shadow-indigo-600/20 transition flex items-center gap-2">
-                        <span>🎙️</span> Submit for Bar Raiser Review
-                    </button>
-                </div>
-
-                <!-- AI Evaluation Card (Hidden initially) -->
-                <div id="aiEvaluationCard" class="mt-6 p-6 bg-white border border-indigo-200 rounded-2xl shadow-sm space-y-4 hidden">
-                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg">🎯</span>
-                            <h4 class="text-sm font-bold text-slate-900">Executive Bar Raiser Review</h4>
+                            <!-- Big-O Time & Space Complexity Inspector Card -->
+                            <div id="pyComplexityCard" class="p-3.5 rounded-xl border border-indigo-500/30 bg-[#0f172a] space-y-2 text-slate-200 hidden">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                                        <span class="text-xs font-bold text-indigo-300 uppercase tracking-wider">Big-O Complexity & Resource Profiler</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span id="pyTimeBadge" class="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-600">⏱️ Time: O(N)</span>
+                                        <span id="pySpaceBadge" class="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-blue-950 text-blue-300 border border-blue-600">💾 Space: O(1)</span>
+                                    </div>
+                                </div>
+                                <div id="pyComplexitySuggestions" class="text-xs space-y-1 text-slate-300 leading-relaxed font-normal">
+                                    <!-- Injected dynamically -->
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-slate-500 font-medium">Score:</span>
-                            <span id="aiScoreValue" class="text-sm font-mono font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300">
-                                8.5 / 10
-                            </span>
+
+                        <!-- 2. SQL COMPILER -->
+                        <div id="sqlCellSection" class="space-y-3 hidden">
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2 text-slate-300">
+                                    <span class="font-semibold text-[11px]">Database Schema:</span>
+                                    <select id="sqlSchemaSelect" class="bg-[#141c2e] border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 font-medium focus:outline-none focus:border-indigo-500">
+                                        <option value="ecommerce">E-Commerce & Orders</option>
+                                        <option value="fintech">FinTech & Ledger</option>
+                                        <option value="hr_tech">HR & Employee Analytics</option>
+                                    </select>
+                                </div>
+                                <button id="runSqlBtn" onclick="runSQLCode()" class="text-xs bg-blue-600 hover:bg-blue-700 font-bold text-white px-3.5 py-1 rounded-lg shadow-sm shadow-blue-600/30 transition flex items-center gap-1.5">
+                                    <span>▶</span> Execute SQL <kbd class="ml-1 text-[10px] bg-blue-800/60 px-1 py-0.2 rounded text-white font-mono">⌘Enter</kbd>
+                                </button>
+                            </div>
+
+                            <div class="ide-window">
+                                <div class="ide-header">
+                                    <div class="flex items-center gap-3">
+                                        <div class="ide-mac-dots">
+                                            <div class="ide-dot ide-dot-red"></div>
+                                            <div class="ide-dot ide-dot-yellow"></div>
+                                            <div class="ide-dot ide-dot-green"></div>
+                                        </div>
+                                        <div class="ide-tab active">
+                                            <span>query.sql</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-mono">PostgreSQL with EXPLAIN Plan</span>
+                                </div>
+                                <div class="ide-editor-area">
+                                    <textarea id="sqlQueryInput" rows="10" 
+                                              class="ide-textarea" 
+                                              spellcheck="false" placeholder="-- Write your SQL query here..."></textarea>
+                                </div>
+                            </div>
+
+                            <div id="sqlOutputContainer" class="border border-slate-800 rounded-xl overflow-hidden bg-[#0f172a]">
+                                <div class="text-xs text-slate-400 font-mono p-4">Click 'Execute SQL' to run query with execution plan.</div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="aiFeedbackContent" class="text-xs text-slate-700 leading-relaxed space-y-2">
-                        <!-- AI Feedback markdown -->
-                    </div>
+                        <!-- 3. REDIS SANDBOX -->
+                        <div id="redisCellSection" class="space-y-3 hidden">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-400 font-medium font-mono text-[11px]">In-Memory Redis 7.2 CLI (Strings, Hashes, Lists, ZSETs)</span>
+                                <button id="runRedisBtn" onclick="runRedisCode()" class="text-xs bg-rose-600 hover:bg-rose-700 font-bold text-white px-3.5 py-1 rounded-lg shadow-sm shadow-rose-600/30 transition flex items-center gap-1.5">
+                                    <span>▶</span> Execute Redis CLI
+                                </button>
+                            </div>
 
-                    <!-- Follow up cross questions -->
-                    <div id="aiCrossQuestions">
-                        <!-- Cross questions -->
+                            <div class="ide-window">
+                                <div class="ide-header">
+                                    <div class="flex items-center gap-3">
+                                        <div class="ide-mac-dots">
+                                            <div class="ide-dot ide-dot-red"></div>
+                                            <div class="ide-dot ide-dot-yellow"></div>
+                                            <div class="ide-dot ide-dot-green"></div>
+                                        </div>
+                                        <div class="ide-tab active">
+                                            <span>redis-cli</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-mono">In-Memory Redis Server</span>
+                                </div>
+                                <div class="ide-editor-area">
+                                    <textarea id="redisCommandInput" rows="9" 
+                                              class="ide-textarea" 
+                                              spellcheck="false" placeholder="SET user:101 'Alex'\nGET user:101"></textarea>
+                                </div>
+                                <div class="ide-console">
+                                    <div class="text-[10px] text-slate-400 mb-1 font-mono flex items-center justify-between">
+                                        <span>REDIS OUTPUT TRACE:</span>
+                                        <button onclick="document.getElementById('redisOutputTerminal').innerText = '// Output cleared'; showToast('Redis output cleared');" class="text-[10px] text-slate-400 hover:text-slate-200 underline">
+                                            🧹 Clear
+                                        </button>
+                                    </div>
+                                    <pre id="redisOutputTerminal" class="text-rose-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">// Click 'Execute Redis CLI' to run commands</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. NOSQL MONGODB SANDBOX -->
+                        <div id="nosqlCellSection" class="space-y-3 hidden">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-400 font-medium font-mono text-[11px]">MongoDB 7.0 Aggregation Pipeline ($match, $group, $unwind)</span>
+                                <button id="runNosqlBtn" onclick="runNoSQLCode()" class="text-xs bg-emerald-600 hover:bg-emerald-700 font-bold text-white px-3.5 py-1 rounded-lg shadow-sm shadow-emerald-600/30 transition flex items-center gap-1.5">
+                                    <span>▶</span> Run Mongo Query
+                                </button>
+                            </div>
+
+                            <div class="ide-window">
+                                <div class="ide-header">
+                                    <div class="flex items-center gap-3">
+                                        <div class="ide-mac-dots">
+                                            <div class="ide-dot ide-dot-red"></div>
+                                            <div class="ide-dot ide-dot-yellow"></div>
+                                            <div class="ide-dot ide-dot-green"></div>
+                                        </div>
+                                        <div class="ide-tab active">
+                                            <span>aggregation.js</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] text-slate-400 font-mono">NoSQL Document Store</span>
+                                </div>
+                                <div class="ide-editor-area">
+                                    <textarea id="nosqlQueryInput" rows="9" 
+                                              class="ide-textarea" 
+                                              spellcheck="false" placeholder="db.orders.aggregate([ { '$match': { 'status': 'DELIVERED' } } ])"></textarea>
+                                </div>
+                                <div class="ide-console max-h-60 overflow-y-auto">
+                                    <div class="text-[10px] text-slate-400 mb-1 font-mono flex items-center justify-between">
+                                        <span>MATCHED DOCUMENTS:</span>
+                                        <button onclick="document.getElementById('nosqlOutputTerminal').innerText = '// Output cleared'; showToast('Mongo output cleared');" class="text-[10px] text-slate-400 hover:text-slate-200 underline">
+                                            🧹 Clear
+                                        </button>
+                                    </div>
+                                    <pre id="nosqlOutputTerminal" class="text-emerald-300 font-mono text-xs whitespace-pre-wrap leading-relaxed">// Click 'Run Mongo Query' to execute</pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sticky Bottom Action Toolbar (InterviewBit Style) -->
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                            <div class="flex items-center gap-2 text-xs text-slate-400 font-mono">
+                                <span id="ideStatusPill" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span id="ideStatusText">Ready</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <button id="ideRunActiveBtn" onclick="runActiveSandbox()" class="text-xs bg-emerald-600 hover:bg-emerald-700 font-bold text-white px-4 py-2 rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5">
+                                    <span>▶</span> Run Code <kbd class="ml-1 text-[10px] bg-emerald-900/60 px-1.5 py-0.5 rounded text-white font-mono">⌘Enter</kbd>
+                                </button>
+                                <button onclick="submitToAIInterviewer()" class="text-xs bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 font-bold text-white px-5 py-2 rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
+                                    <span>🚀</span> Submit to AI Bar Raiser
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
-            </div>
+                </div> <!-- End Right Column -->
+
+            </div> <!-- End Split Layout -->
+
             </div> <!-- End studioWorkspace -->
 
             <!-- DEDICATED INTERACTIVE MCQ QUIZ ARENA WORKSPACE -->

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.container import get_interview_service
 from app.contracts.interview import InterviewSessionContract
-from app.schemas.session import SessionCreate, SessionResponse, TurnCreate, TurnResponse
+from app.schemas.session import SessionCreate, SessionResponse, TurnCreate, TurnResponse, CopilotQueryRequest, CopilotQueryResponse
 
 router = APIRouter(prefix="/interview", tags=["AI Mock Interview"])
 
@@ -50,3 +50,21 @@ async def submit_interview_turn(
         candidate_sql=payload.candidate_sql,
         db=db
     )
+
+@router.post("/copilot", response_model=CopilotQueryResponse)
+async def query_ai_copilot(
+    payload: CopilotQueryRequest,
+    db: Session = Depends(get_db),
+    interview_svc: InterviewSessionContract = Depends(get_interview_service)
+):
+    """Interactive AI Copilot providing ELI5 explanations, architectural hints, complexity profiling, and coaching."""
+    return await interview_svc.query_copilot(
+        question_id=payload.question_id,
+        prompt_type=payload.prompt_type,
+        user_prompt=payload.user_prompt,
+        candidate_code=payload.candidate_code,
+        candidate_sql=payload.candidate_sql,
+        session_id=payload.session_id,
+        db=db
+    )
+

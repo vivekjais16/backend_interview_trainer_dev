@@ -34,3 +34,18 @@ class InterviewSessionContract(ABC):
     ) -> Any:
         """Coordinates turn evaluation, AI grading, and turn persistence."""
         pass
+
+    @abstractmethod
+    async def query_copilot(
+        self,
+        question_id: int,
+        prompt_type: str,
+        user_prompt: Optional[str],
+        candidate_code: Optional[str],
+        candidate_sql: Optional[str],
+        session_id: Optional[int],
+        db: Session
+    ) -> Dict[str, Any]:
+        """Provides AI Copilot interactive pair-programming and coaching."""
+        pass
+

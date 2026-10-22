@@ -83,6 +83,28 @@ def test_api_interview_session_and_turn(client):
     assert len(turn_data["cross_questions_asked"]) > 0
     assert "feedback" in turn_data
 
+def test_api_interview_copilot(client):
+    # Test Copilot ELI5
+    res_eli5 = client.post("/api/v1/interview/copilot", json={
+        "question_id": 1,
+        "prompt_type": "eli5"
+    })
+    assert res_eli5.status_code == 200
+    data_eli5 = res_eli5.json()
+    assert "reply" in data_eli5
+    assert len(data_eli5["action_chips"]) > 0
+
+    # Test Copilot Complexity
+    res_comp = client.post("/api/v1/interview/copilot", json={
+        "question_id": 1,
+        "prompt_type": "complexity",
+        "candidate_code": "def solve(arr):\n    return [x*2 for x in arr]"
+    })
+    assert res_comp.status_code == 200
+    data_comp = res_comp.json()
+    assert "reply" in data_comp
+    assert "Complexity" in data_comp["reply"] or "O(" in data_comp["reply"]
+
 def test_api_phases(client):
     res = client.get("/api/v1/questions/phases")
     assert res.status_code == 200
