@@ -36,3 +36,20 @@ class AIEvaluationContract(ABC):
             "action_chips": []
         }
 
+    async def ask_llm(
+        self,
+        question: str,
+        code_context: Optional[str] = None,
+        mode: str = "comprehensive",
+        target_company: str = "Top Tech MNC",
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ) -> Dict[str, Any]:
+        """Processes any user custom problem or question using LLM or first-principles AI synthesis."""
+        return {
+            "answer": "AI answer",
+            "provider": "mock",
+            "mode": mode,
+            "action_chips": [],
+            "suggested_followups": []
+        }
+

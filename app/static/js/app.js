@@ -450,7 +450,8 @@ function switchAppTab(tab) {
         'interview': 'paneInterview',
         'questions': 'paneQuestions',
         'analytics': 'paneAnalytics',
-        'profile': 'paneProfile'
+        'profile': 'paneProfile',
+        'llm': 'paneLlm'
     };
 
     Object.entries(paneMap).forEach(([k, id]) => {
@@ -468,7 +469,8 @@ function switchAppTab(tab) {
         'interview': 'navTabInterview',
         'questions': 'navTabQuestions',
         'analytics': 'navTabAnalytics',
-        'profile': 'navTabProfile'
+        'profile': 'navTabProfile',
+        'llm': 'navTabLlm'
     };
 
     const activeBtnClass = "tab-nav-btn group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all bg-gradient-to-r from-indigo-600/30 to-violet-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm";
@@ -500,6 +502,8 @@ function switchAppTab(tab) {
         renderAnalyticsTab();
     } else if (tab === 'profile') {
         loadUserRecommendationsAndHistory();
+    } else if (tab === 'llm') {
+        initLlmChatView();
     }
 
     if (window.lucide) {
@@ -2384,6 +2388,452 @@ function launchQuestionInMock(slugOrId) {
     }
 }
 
+// --- INTERACTIVE LLM COPILOT (GEMINI / CHATGPT) ---
+let llmChatMessages = [];
+let activeLlmMode = 'comprehensive';
+let isLlmSending = false;
+
+const LLM_STARTER_PRESETS = [
+    {
+        title: "Distributed Systems Consensus",
+        prompt: "Explain Raft Leader Election Split-Vote handling and fencing tokens under network partitions.",
+        icon: "network",
+        mode: "comprehensive"
+    },
+    {
+        title: "High-Throughput Rate Limiting",
+        prompt: "Write an Async Redis Token Bucket Rate Limiter with Lua script to prevent race conditions at 100k QPS.",
+        icon: "cpu",
+        mode: "code_solution"
+    },
+    {
+        title: "Python Concurrency Traps",
+        prompt: "Why does an asyncio event loop block when calling a CPU-bound worker, and how to properly offload it with ProcessPoolExecutor?",
+        icon: "terminal",
+        mode: "debug_edge_cases"
+    },
+    {
+        title: "Distributed Idempotency Engine",
+        prompt: "Design a Distributed Idempotency Key Engine for Stripe-scale payments with MySQL and Redis distributed locks.",
+        icon: "layers",
+        mode: "system_design"
+    }
+];
+
+function initLlmChatView() {
+    renderLlmChatStream();
+    setupLlmInputKeybindings();
+}
+
+function setupLlmInputKeybindings() {
+    const input = document.getElementById("llmPromptInput");
+    if (!input || input.dataset.bound) return;
+    input.dataset.bound = "true";
+
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendLlmMessage();
+        }
+    });
+}
+
+function setLlmMode(mode, btn) {
+    activeLlmMode = mode;
+    const badge = document.getElementById("llmActiveModeBadge");
+    if (badge) badge.textContent = `Mode: ${mode.replace('_', ' ')}`;
+
+    // Update button styling
+    const btns = document.querySelectorAll(".llm-mode-btn");
+    btns.forEach(b => {
+        b.className = "llm-mode-btn rounded-lg px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition";
+    });
+    if (btn) {
+        btn.className = "llm-mode-btn rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition";
+    }
+}
+
+function toggleLlmCodeAttachment() {
+    const drawer = document.getElementById("llmCodeAttachmentDrawer");
+    const btn = document.getElementById("btnToggleCodeAttach");
+    if (!drawer) return;
+
+    if (drawer.classList.contains("hidden")) {
+        drawer.classList.remove("hidden");
+        if (btn) btn.classList.add("text-cyan-400", "border-cyan-500/40");
+        document.getElementById("llmCodeContextInput")?.focus();
+    } else {
+        drawer.classList.add("hidden");
+        if (btn) btn.classList.remove("text-cyan-400", "border-cyan-500/40");
+    }
+}
+
+function clearLlmChat() {
+    llmChatMessages = [];
+    renderLlmChatStream();
+    showToast("Chat cleared. Ready for a new topic.");
+}
+
+function loadLlmPreset(idx) {
+    const preset = LLM_STARTER_PRESETS[idx];
+    if (!preset) return;
+    
+    // Set mode
+    activeLlmMode = preset.mode;
+    const badge = document.getElementById("llmActiveModeBadge");
+    if (badge) badge.textContent = `Mode: ${preset.mode.replace('_', ' ')}`;
+    
+    // Find matching mode button
+    const modeBtns = document.querySelectorAll(".llm-mode-btn");
+    modeBtns.forEach(btn => {
+        if (btn.getAttribute("onclick")?.includes(preset.mode)) {
+            btn.className = "llm-mode-btn rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition";
+        } else {
+            btn.className = "llm-mode-btn rounded-lg px-2.5 py-1 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition";
+        }
+    });
+
+    sendLlmMessage(preset.prompt);
+}
+
+function formatMarkdownForDisplay(text) {
+    if (!text) return "";
+    let html = escapeHtml(text);
+
+    // Code blocks: ```language ... ```
+    html = html.replace(/```([a-zA-Z0-9_\-\+]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const cleanLang = lang || 'code';
+        const cleanCode = code.trim();
+        const codeId = 'code_' + Math.random().toString(36).substring(2, 9);
+        return `
+            <div class="my-3 rounded-xl border border-zinc-800 bg-zinc-950/95 overflow-hidden shadow-lg">
+                <div class="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-mono text-zinc-400">
+                    <span class="text-cyan-400 font-semibold">${cleanLang.toUpperCase()}</span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="copyCodeFromBlock('${codeId}')" class="hover:text-zinc-200 text-xs flex items-center gap-1 transition">
+                            <i data-lucide="copy" class="h-3 w-3"></i> Copy
+                        </button>
+                        <button onclick="sendLlmCodeToIde('${codeId}')" class="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1 transition">
+                            <i data-lucide="terminal" class="h-3 w-3"></i> Test in IDE
+                        </button>
+                    </div>
+                </div>
+                <pre class="p-3.5 overflow-x-auto text-xs font-mono text-zinc-200 leading-relaxed"><code id="${codeId}">${cleanCode}</code></pre>
+            </div>
+        `;
+    });
+
+    // Inline code: `code`
+    html = html.replace(/`([^`]+)`/g, '<code class="rounded bg-zinc-800/80 px-1.5 py-0.5 font-mono text-[11px] text-cyan-300 border border-zinc-700/50">$1</code>');
+
+    // Headings
+    html = html.replace(/^### (.*$)/gim, '<h3 class="text-sm font-bold text-white mt-4 mb-2 flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="text-base font-bold text-white mt-5 mb-2.5 border-b border-zinc-800/80 pb-1">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="text-lg font-extrabold text-white mt-6 mb-3">$1</h1>');
+
+    // Bold & italic
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-zinc-100">$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-zinc-300">$1</em>');
+
+    // Bullet points
+    html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-zinc-300 text-xs py-0.5">$1</li>');
+    html = html.replace(/^\s*\*\s+(.*$)/gim, '<li class="ml-4 list-disc text-zinc-300 text-xs py-0.5">$1</li>');
+
+    // Numbered lists
+    html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="ml-4 list-decimal text-zinc-300 text-xs py-0.5 font-medium">$2</li>');
+
+    // Paragraph breaks
+    html = html.replace(/\n\n/g, '<div class="h-2.5"></div>');
+
+    return html;
+}
+
+function copyCodeFromBlock(codeId) {
+    const el = document.getElementById(codeId);
+    if (!el) return;
+    navigator.clipboard.writeText(el.textContent || "")
+        .then(() => showToast("Code copied to clipboard!"))
+        .catch(() => showToast("Copied!"));
+}
+
+function sendLlmCodeToIde(codeId) {
+    const el = document.getElementById(codeId);
+    if (!el) return;
+    const code = el.textContent || "";
+    const ideTextarea = document.getElementById("ideCodeTextarea");
+    if (ideTextarea) {
+        ideTextarea.value = code;
+        switchAppTab('interview');
+        showToast("Code injected into Mock Interview IDE!");
+    }
+}
+
+function renderLlmChatStream() {
+    const stream = document.getElementById("llmChatStream");
+    if (!stream) return;
+
+    if (llmChatMessages.length === 0) {
+        // Welcome Hero & Starter Prompt Cards
+        stream.innerHTML = `
+            <div class="mx-auto max-w-3xl space-y-8 py-6">
+                <!-- Hero Header -->
+                <div class="text-center space-y-3">
+                    <div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-500/20 mb-2">
+                        <i data-lucide="sparkles" class="h-7 w-7"></i>
+                    </div>
+                    <h1 class="text-2xl font-black tracking-tight text-white sm:text-3xl">
+                        Staff AI Engineering Copilot
+                    </h1>
+                    <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto leading-relaxed">
+                        Powered by Google Gemini 1.5 & OpenAI GPT-4o. Paste any interview question, broken production code, distributed architecture challenge, or ask for a bar-raiser technical grill.
+                    </p>
+                </div>
+
+                <!-- 4 Quick-Starter Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                    ${LLM_STARTER_PRESETS.map((p, idx) => `
+                        <div onclick="loadLlmPreset(${idx})" class="group cursor-pointer rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition-all hover:border-cyan-500/40 hover:bg-zinc-900/90 hover:shadow-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="rounded-md bg-indigo-500/10 px-2 py-0.5 text-[10px] font-mono font-semibold text-indigo-400 border border-indigo-500/20">
+                                    ${p.title}
+                                </span>
+                                <i data-lucide="${p.icon}" class="h-4 w-4 text-zinc-500 group-hover:text-cyan-400 transition-colors"></i>
+                            </div>
+                            <p class="text-xs text-zinc-300 leading-relaxed font-medium group-hover:text-white transition-colors">
+                                "${escapeHtml(p.prompt)}"
+                            </p>
+                            <div class="mt-3 flex items-center gap-1.5 text-[11px] text-cyan-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span>Synthesize Answer</span>
+                                <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Feature highlights footer -->
+                <div class="flex flex-wrap items-center justify-center gap-6 pt-4 text-xs text-zinc-500">
+                    <span class="flex items-center gap-1.5"><i data-lucide="check" class="h-3.5 w-3.5 text-emerald-400"></i> First-Principles Reasoning</span>
+                    <span class="flex items-center gap-1.5"><i data-lucide="check" class="h-3.5 w-3.5 text-emerald-400"></i> Zero-Copy & Concurrency Code</span>
+                    <span class="flex items-center gap-1.5"><i data-lucide="check" class="h-3.5 w-3.5 text-emerald-400"></i> Interactive Follow-Up Chips</span>
+                </div>
+            </div>
+        `;
+    } else {
+        stream.innerHTML = llmChatMessages.map(msg => {
+            const isUser = (msg.role === 'user');
+            
+            if (isUser) {
+                return `
+                    <div class="flex gap-3 max-w-[85%] ml-auto flex-row-reverse">
+                        <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-xs shadow-md">
+                            ${currentUser ? currentUser.full_name.substring(0, 2).toUpperCase() : 'ME'}
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="rounded-2xl bg-indigo-600 p-4 text-xs text-white shadow-md leading-relaxed">
+                                <p class="whitespace-pre-line">${escapeHtml(msg.content)}</p>
+                                ${msg.codeContext ? `
+                                    <div class="mt-2.5 rounded-lg bg-zinc-950/80 p-2.5 border border-indigo-400/30 text-zinc-300 font-mono text-[11px] overflow-x-auto">
+                                        <div class="text-[9px] uppercase font-bold text-indigo-300 mb-1">Attached Code Context:</div>
+                                        <pre><code>${escapeHtml(msg.codeContext)}</code></pre>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="text-right text-[10px] text-zinc-500 font-mono">${msg.timestamp}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // AI Response Bubble
+                return `
+                    <div class="flex gap-3.5 max-w-[92%]">
+                        <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 text-white text-xs shadow-md">
+                            <i data-lucide="bot" class="h-4 w-4"></i>
+                        </div>
+                        <div class="space-y-3 flex-1 overflow-hidden">
+                            <div class="rounded-2xl border border-zinc-800 bg-zinc-900/90 p-5 text-xs text-zinc-200 shadow-xl backdrop-blur-md space-y-4">
+                                
+                                <!-- Header info -->
+                                <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="rounded bg-cyan-500/10 px-2 py-0.5 text-[10px] font-mono font-bold text-cyan-400 border border-cyan-500/30">
+                                            ${escapeHtml(msg.model || 'Gemini 1.5 Pro')}
+                                        </span>
+                                        <span class="text-[11px] text-zinc-400 font-mono">
+                                            Mode: ${escapeHtml(msg.mode || 'comprehensive')}
+                                        </span>
+                                    </div>
+                                    <span class="text-[10px] text-zinc-500 font-mono">${msg.timestamp}</span>
+                                </div>
+
+                                <!-- Markdown Answer Body -->
+                                <div class="prose prose-invert max-w-none text-xs leading-relaxed">
+                                    ${formatMarkdownForDisplay(msg.content)}
+                                </div>
+
+                                <!-- Key Architectural Invariants if present -->
+                                ${msg.keyInvariants && msg.keyInvariants.length > 0 ? `
+                                    <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3.5 space-y-2">
+                                        <div class="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+                                            <i data-lucide="shield-check" class="h-4 w-4"></i>
+                                            <span>Key Architectural Invariants</span>
+                                        </div>
+                                        <ul class="space-y-1">
+                                            ${msg.keyInvariants.map(inv => `
+                                                <li class="flex items-start gap-2 text-[11px] text-emerald-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></span>
+                                                    <span>${escapeHtml(inv)}</span>
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+
+                                <!-- Distractor Traps if present -->
+                                ${msg.distractorTraps && msg.distractorTraps.length > 0 ? `
+                                    <div class="rounded-xl border border-rose-500/30 bg-rose-950/20 p-3.5 space-y-2">
+                                        <div class="flex items-center gap-1.5 text-xs font-bold text-rose-400">
+                                            <i data-lucide="alert-triangle" class="h-4 w-4"></i>
+                                            <span>Staff Interview Gotchas & Traps</span>
+                                        </div>
+                                        <ul class="space-y-1">
+                                            ${msg.distractorTraps.map(trap => `
+                                                <li class="flex items-start gap-2 text-[11px] text-rose-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-rose-400 mt-1.5 shrink-0"></span>
+                                                    <span>${escapeHtml(trap)}</span>
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+
+                                <!-- Follow-Up Interactive Chips -->
+                                ${msg.followUpQuestions && msg.followUpQuestions.length > 0 ? `
+                                    <div class="border-t border-zinc-800/80 pt-3 space-y-2">
+                                        <span class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Explore Follow-Ups:</span>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${msg.followUpQuestions.map(q => `
+                                                <button onclick="sendLlmMessage('${escapeHtml(q).replace(/'/g, "\\'")}')" class="rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-1.5 text-[11px] text-zinc-300 hover:text-white hover:border-cyan-500/50 hover:bg-zinc-800 transition shadow-sm text-left">
+                                                    💬 ${escapeHtml(q)}
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
+    }
+
+    stream.scrollTop = stream.scrollHeight;
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+async function sendLlmMessage(customPrompt = null) {
+    if (isLlmSending) return;
+
+    const input = document.getElementById("llmPromptInput");
+    const codeInput = document.getElementById("llmCodeContextInput");
+
+    const promptText = (customPrompt || input?.value || "").trim();
+    const codeContext = (codeInput?.value || "").trim();
+
+    if (!promptText) return;
+
+    if (!customPrompt && input) {
+        input.value = "";
+    }
+
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Add user message
+    llmChatMessages.push({
+        id: Date.now(),
+        role: 'user',
+        content: promptText,
+        codeContext: codeContext,
+        timestamp: now
+    });
+
+    renderLlmChatStream();
+
+    // Show typing loader
+    isLlmSending = true;
+    const loader = document.getElementById("llmTypingLoader");
+    const sendBtn = document.getElementById("llmSendBtn");
+    if (loader) loader.classList.remove("hidden");
+    if (sendBtn) sendBtn.disabled = true;
+
+    const headers = { "Content-Type": "application/json" };
+    if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+    }
+
+    try {
+        const res = await fetch("/api/v1/llm/ask", {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({
+                prompt: promptText,
+                code_context: codeContext || null,
+                mode: activeLlmMode
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            llmChatMessages.push({
+                id: Date.now() + 1,
+                role: 'assistant',
+                model: data.model_used,
+                mode: data.mode,
+                content: data.answer_markdown,
+                keyInvariants: data.key_invariants || [],
+                distractorTraps: data.distractor_traps || [],
+                followUpQuestions: data.follow_up_questions || [],
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            // Clear code input drawer if it was sent
+            if (codeInput) codeInput.value = "";
+            const drawer = document.getElementById("llmCodeAttachmentDrawer");
+            if (drawer && !drawer.classList.contains("hidden")) {
+                toggleLlmCodeAttachment();
+            }
+        } else {
+            const err = await res.json().catch(() => ({}));
+            llmChatMessages.push({
+                id: Date.now() + 1,
+                role: 'assistant',
+                model: 'Diagnostic Engine',
+                mode: activeLlmMode,
+                content: `### ⚠️ Notice\n\n${err.detail || "Unable to reach LLM inference endpoint. Please try again or switch query mode."}`,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+        }
+    } catch (e) {
+        llmChatMessages.push({
+            id: Date.now() + 1,
+            role: 'assistant',
+            model: 'Offline Copilot',
+            mode: activeLlmMode,
+            content: `### ⚠️ Connection Error\n\nCould not communicate with the backend LLM engine. Please ensure the backend server is running.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+    } finally {
+        isLlmSending = false;
+        if (loader) loader.classList.add("hidden");
+        if (sendBtn) sendBtn.disabled = false;
+        renderLlmChatStream();
+        if (input) input.focus();
+    }
+}
+
 // --- WINDOW EXPORTS (100% OPERATIONAL BUTTON HANDLERS) ---
 window.switchAppTab = switchAppTab;
 window.toggleSessionTimer = toggleSessionTimer;
@@ -2430,4 +2880,13 @@ window.handleUpdateProfileSubmit = handleUpdateProfileSubmit;
 window.logoutUser = logoutUser;
 window.loadUserRecommendationsAndHistory = loadUserRecommendationsAndHistory;
 window.launchQuestionInMock = launchQuestionInMock;
+window.initLlmChatView = initLlmChatView;
+window.setLlmMode = setLlmMode;
+window.toggleLlmCodeAttachment = toggleLlmCodeAttachment;
+window.clearLlmChat = clearLlmChat;
+window.loadLlmPreset = loadLlmPreset;
+window.sendLlmMessage = sendLlmMessage;
+window.copyCodeFromBlock = copyCodeFromBlock;
+window.sendLlmCodeToIde = sendLlmCodeToIde;
+
 
