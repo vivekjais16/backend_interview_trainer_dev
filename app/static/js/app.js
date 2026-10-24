@@ -763,7 +763,20 @@ function renderMcqs() {
             (q.explanation?.corePrinciple || "").toLowerCase().includes(kw);
 
         const matchDomain = (domainFilter === "All") || (q.topic.toLowerCase().includes(domainFilter.toLowerCase()));
-        const matchDiff = (diffFilter === "all") || (q.difficulty.toLowerCase().includes(diffFilter));
+        
+        const qDiff = (q.difficulty || '').toLowerCase();
+        let matchDiff = (diffFilter === "all");
+        if (!matchDiff) {
+            if (diffFilter === "staff" || diffFilter === "advanced" || diffFilter === "principal") {
+                matchDiff = qDiff.includes("staff") || qDiff.includes("advanced") || qDiff.includes("principal") || qDiff.includes("senior") || qDiff.includes("hard");
+            } else if (diffFilter === "intermediate" || diffFilter === "mid") {
+                matchDiff = qDiff.includes("intermediate") || qDiff.includes("mid") || qDiff.includes("medium");
+            } else if (diffFilter === "basic" || diffFilter === "junior") {
+                matchDiff = qDiff.includes("basic") || qDiff.includes("junior") || qDiff.includes("easy");
+            } else {
+                matchDiff = qDiff.includes(diffFilter);
+            }
+        }
 
         return matchKw && matchDomain && matchDiff;
     });
@@ -796,11 +809,19 @@ function renderMcqs() {
         const showFeedback = (mcqMode === 'practice') ? hasAnswered : isTestSubmitted;
         const isDrawerOpen = (activeMcqDrawerId === q.id);
 
+        const isCardSearchMatched = kw && (
+            q.question.toLowerCase().includes(kw) ||
+            (q.keywords || []).some(k => k.toLowerCase().includes(kw)) ||
+            (q.options || []).some(o => o.text.toLowerCase().includes(kw))
+        );
+
         let borderCardClass = 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700';
         if (showFeedback && isCorrect) {
             borderCardClass = 'border-emerald-500/40 bg-zinc-900/60 shadow-lg shadow-emerald-500/5';
         } else if (showFeedback && !isCorrect) {
             borderCardClass = 'border-rose-500/40 bg-zinc-900/60 shadow-lg shadow-rose-500/5';
+        } else if (isCardSearchMatched) {
+            borderCardClass = 'border-indigo-500/50 bg-zinc-900/60 shadow-md shadow-indigo-500/10 ring-1 ring-indigo-500/30';
         }
 
         const optionsHtml = (q.options || []).map(opt => {
@@ -842,9 +863,16 @@ function renderMcqs() {
             `;
         }).join('');
 
-        const keywordPillsHtml = (q.keywords || []).slice(0, 3).map(kw => `
-            <span class="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[10px] text-zinc-400 font-mono border border-zinc-700/50">#${kw}</span>
-        `).join('');
+        const keywordPillsHtml = (q.keywords || []).slice(0, 4).map(k => {
+            const isMatch = kw && k.toLowerCase().includes(kw);
+            return `
+                <span class="rounded px-1.5 py-0.5 text-[10px] font-mono border transition-all ${
+                    isMatch
+                        ? 'bg-indigo-500/25 text-indigo-200 border-indigo-400 font-bold shadow-xs'
+                        : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/50'
+                }">#${k}</span>
+            `;
+        }).join('');
 
         const explanationHtml = isDrawerOpen ? `
             <div class="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/90 p-4 animate-in space-y-4">
