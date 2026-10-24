@@ -360,7 +360,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'raft',
         mindmapLabel: 'Raft & Paxos Protocol',
         difficulty: 'Staff',
-        keywords: ['consensus', 'split-brain', 'raft', 'quorum', 'network partition', 'leader election'],
+        keywords: ['consensus', 'split-brain', 'raft', 'quorum', 'network partition', 'leader election', 'accenture', 'cognizant'],
+        companyTags: ['Accenture', 'Cognizant', 'HCL', 'Capgemini'],
         question: 'In a 5-node Raft consensus cluster partitioned into two subnets {N1, N2} and {N3, N4, N5}, which statement describes the behavior when clients write to both partitions simultaneously?',
         options: [
             { id: 'A', text: 'Both partitions accept and commit writes independently to optimize availability.' },
@@ -385,7 +386,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'stampede',
         mindmapLabel: 'Cache Invalidation & Thundering Herd',
         difficulty: 'Intermediate',
-        keywords: ['cache stampede', 'thundering herd', 'xfetch', 'probabilistic early expiration', 'redis'],
+        keywords: ['cache stampede', 'thundering herd', 'xfetch', 'probabilistic early expiration', 'redis', 'hcl', 'ey'],
+        companyTags: ['HCL', 'EY', 'TCS', 'Infosys'],
         question: 'Which algorithm or strategy prevents "Cache Stampedes" (Thundering Herd) when a hot cache key expires under 100,000 concurrent QPS without introducing prolonged lock serialization?',
         options: [
             { id: 'A', text: 'Increase Redis replication factor to 5 replicas.' },
@@ -410,7 +412,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'consistent_hashing',
         mindmapLabel: 'Consistent Hashing & Virtual Nodes',
         difficulty: 'Staff',
-        keywords: ['consistent hashing', 'virtual nodes', 'vnodes', 'ring partition', 'dynamo', 'cassandra'],
+        keywords: ['consistent hashing', 'virtual nodes', 'vnodes', 'ring partition', 'dynamo', 'cassandra', 'capgemini', 'deloitte'],
+        companyTags: ['Capgemini', 'Deloitte', 'Wipro', 'Accenture'],
         question: 'In a distributed ring topology with Consistent Hashing, what primary architectural purpose do Virtual Nodes (V-Nodes) serve?',
         options: [
             { id: 'A', text: 'They enable synchronous two-phase commits across distant physical nodes.' },
@@ -435,7 +438,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'kafka',
         mindmapLabel: 'Kafka Internals & Consumer Groups',
         difficulty: 'Intermediate',
-        keywords: ['kafka', 'zero copy', 'page cache', 'sendfile', 'throughput', 'consumer groups'],
+        keywords: ['kafka', 'zero copy', 'page cache', 'sendfile', 'throughput', 'consumer groups', 'accenture', 'cognizant'],
+        companyTags: ['Accenture', 'Cognizant', 'EY', 'TCS'],
         question: 'Why does Apache Kafka deliver extraordinarily high sequential write and read throughput compared to traditional message queues?',
         options: [
             { id: 'A', text: 'It maintains all active partition logs exclusively in JVM heap memory without disk flushes.' },
@@ -460,7 +464,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'zookeeper',
         mindmapLabel: 'Distributed Locks (Zookeeper/etcd)',
         difficulty: 'Staff',
-        keywords: ['fencing token', 'distributed lock', 'gc pause', 'split-brain', 'lease'],
+        keywords: ['fencing token', 'distributed lock', 'gc pause', 'split-brain', 'lease', 'hcl', 'capgemini'],
+        companyTags: ['HCL', 'Capgemini', 'Deloitte', 'Cognizant'],
         question: 'A worker holds a distributed lock with a 30-second TTL. The worker encounters a 45-second Stop-The-World JVM garbage collection pause. How must downstream storage prevent data corruption when the resumed worker performs delayed writes?',
         options: [
             { id: 'A', text: 'Increase the distributed lock TTL to 20 minutes.' },
@@ -485,7 +490,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'genai_kvcache',
         mindmapLabel: 'LLM Inference & KV-Cache',
         difficulty: 'Staff',
-        keywords: ['gen ai', 'llm', 'kv-cache', 'pagedattention', 'vllm', 'inference', 'tokens'],
+        keywords: ['gen ai', 'llm', 'kv-cache', 'pagedattention', 'vllm', 'inference', 'tokens', 'accenture', 'ey'],
+        companyTags: ['Accenture', 'EY', 'Infosys', 'Wipro'],
         question: 'In high-throughput LLM serving systems (such as vLLM or TensorRT-LLM), why does naive contiguous memory allocation for KV-Cache cause up to 60-80% GPU VRAM waste?',
         options: [
             { id: 'A', text: 'Floating point rounding errors in softmax normalization.' },
@@ -510,7 +516,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'rag_hnsw',
         mindmapLabel: 'RAG & Vector Databases (HNSW)',
         difficulty: 'Staff',
-        keywords: ['rag', 'vector database', 'hnsw', 'ivfflat', 'cosine similarity', 'embeddings', 'milvus', 'pinecone'],
+        keywords: ['rag', 'vector database', 'hnsw', 'ivfflat', 'cosine similarity', 'embeddings', 'milvus', 'pinecone', 'hcl', 'capgemini'],
+        companyTags: ['HCL', 'Capgemini', 'Deloitte', 'Cognizant'],
         question: 'When architecting an enterprise RAG retrieval pipeline querying 50 million 1536-dimensional embeddings with <15ms p99 latency, why is HNSW (Hierarchical Navigable Small World) preferred over IVFFlat?',
         options: [
             { id: 'A', text: 'HNSW requires zero RAM and executes completely from cold disk storage.' },
@@ -535,7 +542,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'ml_lora',
         mindmapLabel: 'Machine Learning & LoRA Fine-Tuning',
         difficulty: 'Advanced',
-        keywords: ['machine learning', 'mlops', 'lora', 'peft', 'fine-tuning', 'catastrophic forgetting', 'pytorch'],
+        keywords: ['machine learning', 'mlops', 'lora', 'peft', 'fine-tuning', 'catastrophic forgetting', 'pytorch', 'accenture', 'capgemini'],
+        companyTags: ['Accenture', 'Capgemini', 'TCS', 'Infosys'],
         question: 'How does Low-Rank Adaptation (LoRA) enable parameter-efficient fine-tuning of 70B parameter LLMs on consumer GPUs while preventing catastrophic forgetting?',
         options: [
             { id: 'A', text: 'By quantizing all activations into 1-bit integers and dropping attention weights.' },
@@ -560,7 +568,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'ds_feature_store',
         mindmapLabel: 'Data Science & Feature Stores',
         difficulty: 'Staff',
-        keywords: ['data science', 'feature store', 'feast', 'point-in-time', 'data leakage', 'training-serving skew'],
+        keywords: ['data science', 'feature store', 'feast', 'point-in-time', 'data leakage', 'training-serving skew', 'hcl', 'ey'],
+        companyTags: ['HCL', 'EY', 'Deloitte', 'Cognizant'],
         question: 'In production machine learning systems, what critical data science problem does "Point-in-Time Correctness" (Time-Travel Join) in Feature Stores solve?',
         options: [
             { id: 'A', text: 'It speeds up Pandas dataframe serialization into JSON.' },
@@ -585,7 +594,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'python_gil',
         mindmapLabel: 'Python Internals & Event Loop Starvation',
         difficulty: 'Advanced',
-        keywords: ['python', 'asyncio', 'event loop', 'gil', 'cpu bound', 'processpoolexecutor', 'threading'],
+        keywords: ['python', 'asyncio', 'event loop', 'gil', 'cpu bound', 'processpoolexecutor', 'threading', 'cognizant', 'accenture'],
+        companyTags: ['Cognizant', 'Accenture', 'Wipro', 'HCL'],
         question: 'Why does executing a synchronous CPU-bound computation (e.g., PBKDF2 hash or JSON parsing 100MB payload) inside an async def FastAPI endpoint stall ALL concurrent network requests?',
         options: [
             { id: 'A', text: 'Asyncio creates a new operating system process for each coroutine.' },
@@ -610,7 +620,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'sql_mvcc',
         mindmapLabel: 'PostgreSQL MVCC & HOT Updates',
         difficulty: 'Staff',
-        keywords: ['sql', 'postgres', 'mvcc', 'hot update', 'vacuum', 'b-tree index', 'bloat'],
+        keywords: ['sql', 'postgres', 'mvcc', 'hot update', 'vacuum', 'b-tree index', 'bloat', 'ey', 'capgemini'],
+        companyTags: ['EY', 'Capgemini', 'Infosys', 'TCS'],
         question: 'In PostgreSQL, why does an UPDATE statement on a column with a B-Tree index cause significantly more disk I/O and table bloat than an update on an unindexed column?',
         options: [
             { id: 'A', text: 'PostgreSQL locks the entire database table during indexed updates.' },
@@ -635,7 +646,8 @@ const INITIAL_MCQ_DATABASE = [
         mindmapNodeId: 'nosql_quorum',
         mindmapLabel: 'Cassandra Tunable Consistency & Quorums',
         difficulty: 'Staff',
-        keywords: ['nosql', 'cassandra', 'quorum', 'tunable consistency', 'cap theorem', 'dynamo'],
+        keywords: ['nosql', 'cassandra', 'quorum', 'tunable consistency', 'cap theorem', 'dynamo', 'hcl', 'deloitte'],
+        companyTags: ['HCL', 'Deloitte', 'Accenture', 'Cognizant'],
         question: 'In Apache Cassandra with a replication factor of N=5 across two datacenters, which read and write consistency levels guarantee Strong Consistency (linearizability) while insulating client operations against cross-region WAN network partitions?',
         options: [
             { id: 'A', text: 'Write: ANY, Read: ONE' },
@@ -939,7 +951,8 @@ async function fetchBackendMcqs() {
                     mindmapNodeId: item.mindmap_node || 'raft',
                     mindmapLabel: item.mindmap_topic || formatCategory(item.category),
                     difficulty: (item.difficulty || 'staff').charAt(0).toUpperCase() + (item.difficulty || 'staff').slice(1),
-                    keywords: [item.category.replace(/_/g, ' '), item.phase || 'staff', 'invariants'],
+                    keywords: [item.category.replace(/_/g, ' '), item.phase || 'staff', 'invariants', ...(item.company_tags || [])],
+                    companyTags: item.company_tags || [],
                     question: item.mcq_question || item.title,
                     options: (item.mcq_options || []).map((opt, oIdx) => ({
                         id: String.fromCharCode(65 + oIdx), // 'A', 'B', 'C', 'D'
@@ -1096,6 +1109,7 @@ function renderMcqs() {
             q.question.toLowerCase().includes(kw) ||
             q.topic.toLowerCase().includes(kw) ||
             (q.keywords || []).some(k => k.toLowerCase().includes(kw)) ||
+            (q.companyTags || []).some(c => c.toLowerCase().includes(kw)) ||
             (q.options || []).some(o => o.text.toLowerCase().includes(kw)) ||
             (q.explanation?.corePrinciple || "").toLowerCase().includes(kw);
 
@@ -1215,6 +1229,17 @@ function renderMcqs() {
             `;
         }).join('');
 
+        const companyTagsHtml = (q.companyTags || []).slice(0, 3).map(c => {
+            const isMatch = kw && c.toLowerCase().includes(kw);
+            return `
+                <span class="rounded px-1.5 py-0.5 text-[9px] font-mono border transition-all ${
+                    isMatch
+                        ? 'bg-emerald-500/25 text-emerald-200 border-emerald-400 font-bold shadow-xs'
+                        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                }">${escapeHtml(c)}</span>
+            `;
+        }).join('');
+
         const explanationHtml = isDrawerOpen ? `
             <div class="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/90 p-4 animate-in space-y-4">
                 <div>
@@ -1273,6 +1298,7 @@ function renderMcqs() {
                             ${q.difficulty}
                         </span>
                         ${keywordPillsHtml}
+                        ${companyTagsHtml}
                     </div>
                     <button onclick="handleJumpToMindmap('${q.mindmapNodeId}')" class="flex items-center gap-1 text-[11px] font-medium text-cyan-400 hover:text-cyan-300 transition" title="Locate concept on Mind Map">
                         <i data-lucide="network" class="h-3.5 w-3.5"></i>
@@ -2000,26 +2026,41 @@ function filterByTargetCompany(company, btnEl) {
     selectedTargetCompany = company;
 
     document.querySelectorAll(".company-target-btn").forEach(b => {
-        b.className = "company-target-btn px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 text-[11px] font-medium transition text-center";
+        b.className = "company-target-btn px-2 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 text-[11px] font-medium transition text-center truncate";
     });
     if (btnEl) {
-        btnEl.className = "company-target-btn active px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] transition text-center shadow-2xs";
+        btnEl.className = "company-target-btn active px-2 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] transition text-center shadow-2xs truncate";
     }
 
-    if (activeAppTab === 'mcq') {
-        const searchInput = document.getElementById("mcqSearchInput");
-        if (searchInput) {
-            searchInput.value = (company === 'All') ? '' : company;
-            filterMcqs();
-        }
-    } else if (activeAppTab === 'questions') {
-        const bankInput = document.getElementById("bankSearchInput");
-        if (bankInput) {
-            bankInput.value = (company === 'All') ? '' : company;
-            filterQuestionBank();
-        }
+    const selectEl = document.getElementById("companyTrackSelect");
+    if (selectEl && selectEl.value !== company) {
+        selectEl.value = company;
     }
-    showToast(company === 'All' ? "Showing all preparation questions" : `Filtered for ${company} Interview Track`);
+
+    const searchVal = (company === 'All') ? '' : company;
+
+    // Filter MCQ search
+    const mcqSearch = document.getElementById("mcqSearchInput");
+    if (mcqSearch) {
+        mcqSearch.value = searchVal;
+        filterMcqs();
+    }
+
+    // Filter Question bank
+    const bankSearch = document.getElementById("bankSearchInput");
+    if (bankSearch) {
+        bankSearch.value = searchVal;
+        filterQuestionBank();
+    }
+
+    // Filter Centralized Concepts
+    const conceptsSearch = document.getElementById("conceptsSearchInput");
+    if (conceptsSearch) {
+        conceptsSearch.value = searchVal;
+        filterCentralizedConcepts();
+    }
+
+    showToast(company === 'All' ? "Showing all preparation tracks" : `Filtered for ${company} Interview Track`);
 }
 
 function filterQuestionBank() {

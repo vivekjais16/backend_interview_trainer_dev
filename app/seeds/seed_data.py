@@ -2209,4 +2209,20 @@ for _aq in AI_ML_QUESTIONS:
         _seen_slugs.add(_aq["slug"])
         SEED_QUESTIONS.append(_aq)
 
+# Distribute Enterprise IT Service, Consulting & Global Systems Integrator MNCs
+# (HCL, Capgemini, EY, Accenture, Cognizant, TCS, Infosys, Wipro, Deloitte, PwC)
+ENTERPRISE_SERVICE_MNCS = [
+    'Accenture', 'Cognizant', 'Capgemini', 'HCL', 'EY',
+    'TCS', 'Infosys', 'Wipro', 'Deloitte', 'PwC'
+]
+
+for idx, q in enumerate(SEED_QUESTIONS):
+    tags = list(q.get('company_tags', []))
+    ent1 = ENTERPRISE_SERVICE_MNCS[idx % len(ENTERPRISE_SERVICE_MNCS)]
+    ent2 = ENTERPRISE_SERVICE_MNCS[(idx + 3) % len(ENTERPRISE_SERVICE_MNCS)]
+    for ent in (ent1, ent2):
+        if ent not in tags:
+            tags.append(ent)
+    q['company_tags'] = tags
+
 

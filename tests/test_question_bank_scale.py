@@ -66,6 +66,16 @@ def test_domain_coverage():
         assert domain.value in categories or domain in categories, f"Missing required domain: {domain}"
 
 
+def test_enterprise_service_companies_coverage():
+    """Verify enterprise service & consulting MNCs like HCL, Capgemini, EY, Accenture, Cognizant have extensive representation."""
+    from collections import Counter
+    c = Counter()
+    for q in SEED_QUESTIONS:
+        c.update(q.get("company_tags", []))
+    for target in ["Accenture", "Cognizant", "Capgemini", "HCL", "EY", "TCS", "Infosys", "Deloitte"]:
+        assert c[target] >= 100, f"Expected at least 100 questions for {target}, got {c[target]}"
+
+
 def test_most_asked_questions_api():
     """Verify /api/v1/questions/most-asked endpoint and most_asked filter flag."""
     from fastapi.testclient import TestClient
