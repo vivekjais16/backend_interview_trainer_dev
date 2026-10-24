@@ -192,26 +192,24 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Experience Badges */
-.badge-junior {
-    background: #ecfdf5;
-    color: #047857;
-    border: 1px solid #a7f3d0;
+/* High-Contrast InterviewBit / LeetCode Difficulty Badges */
+.badge-easy, .badge-junior {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+    font-weight: 700;
 }
-.badge-mid {
-    background: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
+.badge-medium, .badge-mid {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    font-weight: 700;
 }
-.badge-senior {
-    background: #faf5ff;
-    color: #6b21a8;
-    border: 1px solid #e9d5ff;
-}
-.badge-lead {
-    background: #fff1f2;
-    color: #be123c;
-    border: 1px solid #fecdd3;
+.badge-hard, .badge-senior, .badge-lead {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    font-weight: 700;
 }
 
 /* Company Tags */
@@ -410,4 +408,27 @@ details > summary::-webkit-details-marker {
     color: #ffffff;
     box-shadow: 0 1px 3px rgba(79, 70, 229, 0.25);
 }
+
+/* Sidebar & Terminal Dark Scrollbars */
+#questionSidebar::-webkit-scrollbar,
+#questionList::-webkit-scrollbar,
+.ide-console::-webkit-scrollbar,
+.ide-textarea::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+#questionSidebar::-webkit-scrollbar-thumb,
+#questionList::-webkit-scrollbar-thumb,
+.ide-console::-webkit-scrollbar-thumb,
+.ide-textarea::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 9999px;
+}
+#questionSidebar::-webkit-scrollbar-thumb:hover,
+#questionList::-webkit-scrollbar-thumb:hover,
+.ide-console::-webkit-scrollbar-thumb:hover,
+.ide-textarea::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
 

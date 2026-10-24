@@ -12,6 +12,11 @@ let currentConceptCategory = "";
 let currentIbTab = "problem"; // "problem", "editorial", "copilot"
 let activeSandboxTab = "python"; // "python", "sql", "redis", "nosql"
 
+// Catalog & Navigation State
+let allLoadedQuestions = [];
+let currentQuestionIndex = 0;
+let isSidebarOpen = true;
+
 function escapeHtml(text) {
     if (!text) return "";
     return text
@@ -20,6 +25,48 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Collapsible Sidebar & Quick Question Navigation
+function toggleSidebar() {
+    const sidebar = document.getElementById("questionSidebar");
+    const btn = document.getElementById("toggleSidebarBtn");
+    if (!sidebar) return;
+
+    isSidebarOpen = !isSidebarOpen;
+    if (isSidebarOpen) {
+        sidebar.classList.remove("hidden");
+        if (btn) {
+            btn.classList.add("bg-slate-800/80", "text-slate-200");
+            btn.classList.remove("text-slate-400");
+        }
+    } else {
+        sidebar.classList.add("hidden");
+        if (btn) {
+            btn.classList.remove("bg-slate-800/80", "text-slate-200");
+            btn.classList.add("text-slate-400");
+        }
+    }
+}
+
+function goToPrevQuestion() {
+    if (!allLoadedQuestions || !allLoadedQuestions.length) return;
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        selectQuestion(allLoadedQuestions[currentQuestionIndex].id);
+    } else {
+        showToast("First question reached");
+    }
+}
+
+function goToNextQuestion() {
+    if (!allLoadedQuestions || !allLoadedQuestions.length) return;
+    if (currentQuestionIndex < allLoadedQuestions.length - 1) {
+        currentQuestionIndex++;
+        selectQuestion(allLoadedQuestions[currentQuestionIndex].id);
+    } else {
+        showToast("Last question reached");
+    }
 }
 
 // MCQ Speed Arena State
@@ -34,9 +81,9 @@ let arenaAnsweredCurrent = false;
 
 function getPhaseClass(phase) {
     const p = (phase || '').toLowerCase();
-    if (p === 'basic') return 'bg-emerald-100 text-emerald-800 border border-emerald-300';
-    if (p === 'intermediate') return 'bg-blue-100 text-blue-800 border border-blue-300';
-    return 'bg-purple-100 text-purple-800 border border-purple-300';
+    if (p === 'basic') return 'bg-emerald-950/70 text-emerald-300 border border-emerald-600/40';
+    if (p === 'intermediate') return 'bg-blue-950/70 text-blue-300 border border-blue-600/40';
+    return 'bg-purple-950/70 text-purple-300 border border-purple-600/40';
 }
 
 function selectCareerPhase(phase, el) {
@@ -45,14 +92,14 @@ function selectCareerPhase(phase, el) {
 
     // Reset domain chip buttons to 'All'
     document.querySelectorAll("#domainChips button").forEach(b => {
-        b.className = "px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium transition";
+        b.className = "px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0 font-medium transition";
     });
     const allChip = document.querySelector("#domainChips button:nth-child(2)");
-    if (allChip) allChip.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
+    if (allChip) allChip.className = "px-2 py-0.5 rounded-md bg-indigo-600 text-white shrink-0 font-bold transition";
 
     // Update button styles in phase bar
     document.querySelectorAll(".phase-step-btn").forEach(btn => {
-        btn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-2";
+        btn.className = "phase-step-btn px-3 py-1 rounded-lg border border-transparent hover:border-slate-700 text-slate-400 hover:text-slate-200 font-medium transition flex items-center gap-1.5";
     });
     
     if (!el) {
@@ -62,13 +109,13 @@ function selectCareerPhase(phase, el) {
 
     if (el) {
         if (phase === 'basic') {
-            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-bold transition flex items-center gap-2 shadow-2xs";
+            el.className = "phase-step-btn px-3 py-1 rounded-lg border border-emerald-500/40 bg-emerald-950/40 text-emerald-300 font-bold transition flex items-center gap-1.5 shadow-2xs";
         } else if (phase === 'intermediate') {
-            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-800 font-bold transition flex items-center gap-2 shadow-2xs";
+            el.className = "phase-step-btn px-3 py-1 rounded-lg border border-blue-500/40 bg-blue-950/40 text-blue-300 font-bold transition flex items-center gap-1.5 shadow-2xs";
         } else if (phase === 'advanced') {
-            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-purple-300 bg-purple-50 text-purple-800 font-bold transition flex items-center gap-2 shadow-2xs";
+            el.className = "phase-step-btn px-3 py-1 rounded-lg border border-purple-500/40 bg-purple-950/40 text-purple-300 font-bold transition flex items-center gap-1.5 shadow-2xs";
         } else {
-            el.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+            el.className = "phase-step-btn px-3 py-1 rounded-lg border border-indigo-500/40 bg-indigo-950/40 text-indigo-300 font-bold transition flex items-center gap-1.5 shadow-2xs";
         }
     }
     
@@ -94,21 +141,21 @@ function switchAppMode(mode) {
     if (conceptsHubWorkspace) conceptsHubWorkspace.classList.add("hidden");
 
     // Reset button styles
-    const inactiveClass = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-semibold transition flex items-center gap-1.5";
+    const inactiveClass = "px-3 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold transition flex items-center gap-1.5";
     if (modeStudioBtn) modeStudioBtn.className = inactiveClass;
     if (modeMcqBtn) modeMcqBtn.className = inactiveClass;
     if (modeConceptBtn) modeConceptBtn.className = inactiveClass;
 
     if (mode === "studio") {
         if (studioWorkspace) studioWorkspace.classList.remove("hidden");
-        if (modeStudioBtn) modeStudioBtn.className = "px-3.5 py-1.5 rounded-lg bg-white text-indigo-700 font-bold shadow-2xs transition flex items-center gap-1.5";
+        if (modeStudioBtn) modeStudioBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
     } else if (mode === "mcq") {
         if (mcqArenaWorkspace) mcqArenaWorkspace.classList.remove("hidden");
-        if (modeMcqBtn) modeMcqBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
+        if (modeMcqBtn) modeMcqBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
         startMcqQuiz(currentPhaseFilter || arenaPhase);
     } else if (mode === "concepts") {
         if (conceptsHubWorkspace) conceptsHubWorkspace.classList.remove("hidden");
-        if (modeConceptBtn) modeConceptBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
+        if (modeConceptBtn) modeConceptBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-bold shadow-2xs transition flex items-center gap-1.5";
         loadConceptsHub();
     }
 }
@@ -119,12 +166,12 @@ function toggleMostAskedFilter(btn) {
     const chipMostAsked = document.getElementById("chipMostAsked");
 
     if (currentMostAskedFilter) {
-        if (mostAskedBtn) mostAskedBtn.className = "px-3.5 py-1.5 rounded-lg border border-amber-500 bg-amber-500 text-white font-bold shadow-md shadow-amber-500/20 transition flex items-center gap-1.5 ml-2";
-        if (chipMostAsked) chipMostAsked.className = "px-2.5 py-1 rounded-lg bg-amber-600 text-white font-bold shrink-0 shadow-2xs transition flex items-center gap-1";
+        if (mostAskedBtn) mostAskedBtn.className = "px-3 py-1 rounded-lg border border-amber-500 bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20 transition flex items-center gap-1.5";
+        if (chipMostAsked) chipMostAsked.className = "px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 font-bold shrink-0 shadow-2xs transition flex items-center gap-0.5";
         showToast("🔥 Filtered by Most Asked MNC Interview Questions");
     } else {
-        if (mostAskedBtn) mostAskedBtn.className = "px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold transition flex items-center gap-1.5 shadow-2xs ml-2";
-        if (chipMostAsked) chipMostAsked.className = "px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-800 shrink-0 font-bold transition flex items-center gap-1 shadow-2xs";
+        if (mostAskedBtn) mostAskedBtn.className = "px-3 py-1 rounded-lg border border-amber-500/40 bg-amber-950/30 hover:bg-amber-900/40 text-amber-300 font-bold transition flex items-center gap-1.5 shadow-2xs";
+        if (chipMostAsked) chipMostAsked.className = "px-2 py-0.5 rounded-md bg-amber-950/70 border border-amber-600/50 text-amber-300 shrink-0 font-bold transition flex items-center gap-0.5";
         showToast("Cleared Most Asked Filter — Showing All Questions");
     }
 
@@ -236,6 +283,25 @@ function setupEventListeners() {
         const val = e.target.value;
         showToast(`Active SQL Schema: ${val.toUpperCase()}`);
     });
+
+    // Global Keyboard Shortcuts (Alt+[ / Alt+] for Next/Prev question, Cmd+K / Ctrl+K for search)
+    window.addEventListener("keydown", (e) => {
+        if (e.altKey && (e.key === "[" || e.key === "ArrowLeft")) {
+            e.preventDefault();
+            goToPrevQuestion();
+        } else if (e.altKey && (e.key === "]" || e.key === "ArrowRight")) {
+            e.preventDefault();
+            goToNextQuestion();
+        } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault();
+            const searchInput = document.getElementById("questionSearchInput");
+            if (searchInput) {
+                if (!isSidebarOpen) toggleSidebar();
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+    });
 }
 
 
@@ -246,17 +312,17 @@ function filterByDomain(domain, btnElement) {
     if (domain) {
         currentPhaseFilter = "";
         document.querySelectorAll(".phase-step-btn").forEach(btn => {
-            btn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition flex items-center gap-2";
+            btn.className = "phase-step-btn px-3 py-1 rounded-lg border border-transparent hover:border-slate-700 text-slate-400 hover:text-slate-200 font-medium transition flex items-center gap-1.5";
         });
         const allPhaseBtn = document.getElementById("phaseBtnAll");
         if (allPhaseBtn) {
-            allPhaseBtn.className = "phase-step-btn px-3 py-1.5 rounded-lg border border-indigo-300 bg-indigo-50 text-indigo-800 font-bold transition flex items-center gap-1.5 shadow-2xs";
+            allPhaseBtn.className = "phase-step-btn px-3 py-1 rounded-lg border border-indigo-500/40 bg-indigo-950/40 text-indigo-300 font-bold transition flex items-center gap-1.5 shadow-2xs";
         }
     }
 
     // Update chip buttons
     document.querySelectorAll("#domainChips button").forEach(b => {
-        b.className = "px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 shrink-0 font-medium transition";
+        b.className = "px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 shrink-0 font-medium transition";
     });
     
     let target = btnElement;
@@ -265,10 +331,10 @@ function filterByDomain(domain, btnElement) {
     }
     if (!target) {
         const btns = Array.from(document.querySelectorAll("#domainChips button"));
-        target = btns.find(b => b.getAttribute("onclick")?.includes(`'${domain}'`)) || btns[0];
+        target = btns.find(b => b.getAttribute("onclick")?.includes(`'${domain}'`)) || btns[1];
     }
     if (target) {
-        target.className = "px-2.5 py-1 rounded-lg bg-indigo-600 text-white shrink-0 font-bold shadow-2xs transition";
+        target.className = "px-2 py-0.5 rounded-md bg-indigo-600 text-white shrink-0 font-bold transition";
     }
 
     loadQuestions();
@@ -315,32 +381,39 @@ async function loadQuestions() {
         const url = `/api/v1/questions` + (params.length ? `?${params.join("&")}` : "");
         const res = await fetch(url);
         const questions = await res.json();
+        allLoadedQuestions = questions || [];
+        currentQuestionIndex = 0;
+
+        const navCatalogCount = document.getElementById("navCatalogCount");
+        if (navCatalogCount) navCatalogCount.innerText = allLoadedQuestions.length;
 
         if (!questions.length) {
             listEl.innerHTML = `
-                <div class="p-8 text-center text-slate-500 text-xs space-y-2">
-                    <p class="font-semibold text-slate-700">No questions found for this filter.</p>
-                    <p>Try clicking <button onclick="selectCareerPhase('', document.getElementById('phaseBtnAll'))" class="text-indigo-600 font-bold underline">Show All Questions</button>.</p>
+                <div class="p-8 text-center text-slate-400 text-xs space-y-2">
+                    <p class="font-semibold text-slate-300">No questions found for this filter.</p>
+                    <p>Try clicking <button onclick="selectCareerPhase('', document.getElementById('phaseBtnAll'))" class="text-indigo-400 font-bold underline hover:text-indigo-300">Show All Questions</button>.</p>
                 </div>
             `;
+            const navPill = document.getElementById("navQuestionPill");
+            if (navPill) navPill.innerText = "0 / 0";
             return;
         }
 
         listEl.innerHTML = questions.map((q, idx) => `
-            <div onclick="selectQuestion(${q.id})" id="q-card-${q.id}" class="p-3.5 hover:bg-indigo-50/40 cursor-pointer transition flex flex-col gap-1.5 ${idx === 0 ? 'bg-indigo-50/70 border-l-4 border-l-indigo-600' : 'border-l-4 border-l-transparent'}">
+            <div onclick="selectQuestion(${q.id})" id="q-card-${q.id}" class="p-3 hover:bg-slate-800/60 cursor-pointer transition flex flex-col gap-1 border-b border-slate-800/60 ${idx === 0 ? 'bg-indigo-950/40 border-l-4 border-l-indigo-500' : 'border-l-4 border-l-transparent'}">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-1.5">
-                        <span class="text-[9px] font-mono px-2 py-0.5 rounded-full font-bold ${getPhaseClass(q.phase)}">${(q.phase || 'basic').toUpperCase()}</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
+                        <span class="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${getPhaseClass(q.phase)}">${(q.phase || 'basic').toUpperCase()}</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded ${getDifficultyClass(q.difficulty)}">${q.difficulty.toUpperCase()}</span>
                     </div>
                     <span class="text-[10px] text-slate-400 font-mono font-medium">${q.min_exp_years}-${q.max_exp_years} YOE</span>
                 </div>
-                <h4 class="text-xs font-bold text-slate-800 line-clamp-2 leading-relaxed">${q.title}</h4>
+                <h4 class="text-xs font-semibold text-slate-200 line-clamp-2 leading-relaxed">${q.title}</h4>
                 <div class="flex flex-wrap gap-1 mt-0.5 items-center">
-                    ${q.is_most_asked ? `<span class="text-[9px] bg-rose-50 text-rose-700 border border-rose-200 px-1.5 py-0.2 rounded font-mono font-bold flex items-center gap-0.5">🔥 Most Asked</span>` : ''}
-                    <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/80 font-medium font-mono">${formatCategory(q.category)}</span>
-                    ${(q.company_tags || []).slice(0, 3).map(tag => `<span class="company-tag">${tag}</span>`).join('')}
-                    ${q.has_mcq ? `<span class="text-[9px] bg-amber-50 text-amber-800 border border-amber-200 px-1 rounded font-mono font-bold">MCQ</span>` : ''}
+                    ${q.is_most_asked ? `<span class="text-[9px] bg-amber-950/80 text-amber-300 border border-amber-600/40 px-1.5 py-0.2 rounded font-mono font-bold flex items-center gap-0.5">🔥 Most Asked</span>` : ''}
+                    <span class="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 font-medium font-mono">${formatCategory(q.category)}</span>
+                    ${(q.company_tags || []).slice(0, 3).map(tag => `<span class="text-[9px] bg-slate-800/80 text-slate-400 border border-slate-700/60 px-1.5 py-0.2 rounded font-mono">${tag}</span>`).join('')}
+                    ${q.has_mcq ? `<span class="text-[9px] bg-amber-950/60 text-amber-300 border border-amber-500/30 px-1 rounded font-mono font-bold">MCQ</span>` : ''}
                 </div>
             </div>
         `).join('');
@@ -349,20 +422,29 @@ async function loadQuestions() {
             await selectQuestion(questions[0].id);
         }
     } catch (err) {
-        listEl.innerHTML = `<div class="p-4 text-rose-600 text-xs font-medium">Error loading questions: ${err.message}</div>`;
+        listEl.innerHTML = `<div class="p-4 text-rose-400 text-xs font-medium">Error loading questions: ${err.message}</div>`;
     }
 }
 
 async function selectQuestion(qId) {
     try {
+        const foundIdx = allLoadedQuestions.findIndex(q => q.id === qId);
+        if (foundIdx !== -1) {
+            currentQuestionIndex = foundIdx;
+        }
+        const navPill = document.getElementById("navQuestionPill");
+        if (navPill) {
+            navPill.innerText = `Q #${currentQuestionIndex + 1}`;
+        }
+
         // Highlight active card
         document.querySelectorAll("#questionList > div").forEach(card => {
-            card.classList.remove("bg-indigo-50/70", "border-l-indigo-600");
+            card.classList.remove("bg-indigo-950/40", "border-l-indigo-500");
             card.classList.add("border-l-transparent");
         });
         const activeCard = document.getElementById(`q-card-${qId}`);
         if (activeCard) {
-            activeCard.classList.add("bg-indigo-50/70", "border-l-indigo-600");
+            activeCard.classList.add("bg-indigo-950/40", "border-l-indigo-500");
             activeCard.classList.remove("border-l-transparent");
         }
 
@@ -1141,15 +1223,11 @@ async function loadSQLSchemas() {
 }
 
 function getDifficultyClass(difficulty) {
-    switch (String(difficulty).toLowerCase()) {
-        case 'basic':
-        case 'junior': return 'badge-junior';
-        case 'intermediate':
-        case 'mid': return 'badge-mid';
-        case 'advanced':
-        case 'senior': return 'badge-senior';
-        default: return 'badge-lead';
-    }
+    const d = String(difficulty || '').toLowerCase();
+    if (d === 'basic' || d === 'junior' || d === 'easy') return 'badge-easy';
+    if (d === 'intermediate' || d === 'mid' || d === 'medium') return 'badge-medium';
+    if (d === 'advanced' || d === 'senior' || d === 'hard') return 'badge-hard';
+    return 'badge-hard';
 }
 
 function formatCategory(cat) {
@@ -1693,14 +1771,17 @@ function switchSidebarTab(tab) {
     const mPanel = document.getElementById("sidebarMindmapPanel");
     const visual = document.getElementById("mindmapVisualSection");
 
+    const activeBtnClass = "flex-1 py-2.5 text-center border-b-2 border-indigo-500 text-indigo-400 font-bold transition flex items-center justify-center gap-1.5";
+    const inactiveBtnClass = "flex-1 py-2.5 text-center text-slate-400 hover:text-slate-200 font-medium transition flex items-center justify-center gap-1.5";
+
     if (tab === "questions") {
-        if (qBtn) qBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
-        if (mBtn) mBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
+        if (qBtn) qBtn.className = activeBtnClass;
+        if (mBtn) mBtn.className = inactiveBtnClass;
         if (qPanel) qPanel.classList.remove("hidden");
         if (mPanel) mPanel.classList.add("hidden");
     } else {
-        if (mBtn) mBtn.className = "flex-1 py-3 text-center border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold transition flex items-center justify-center gap-1.5";
-        if (qBtn) qBtn.className = "flex-1 py-3 text-center text-slate-500 hover:text-slate-800 font-medium transition flex items-center justify-center gap-1.5";
+        if (mBtn) mBtn.className = activeBtnClass;
+        if (qBtn) qBtn.className = inactiveBtnClass;
         if (mPanel) mPanel.classList.remove("hidden");
         if (qPanel) qPanel.classList.add("hidden");
         if (visual) visual.classList.remove("hidden");
@@ -2217,6 +2298,10 @@ window.loadConceptsHub = loadConceptsHub;
 window.filterConceptsList = filterConceptsList;
 window.filterConceptsByCategory = filterConceptsByCategory;
 window.solveRelatedQuestion = solveRelatedQuestion;
-
-
-
+window.toggleSidebar = toggleSidebar;
+window.goToPrevQuestion = goToPrevQuestion;
+window.goToNextQuestion = goToNextQuestion;
+window.requestCopilotPrompt = requestCopilotPrompt;
+window.switchIbTab = switchIbTab;
+window.sendCandidateCustomPrompt = sendCandidateCustomPrompt;
+window.handleCopilotActionChip = handleCopilotActionChip;
