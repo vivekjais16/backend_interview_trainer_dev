@@ -24,7 +24,7 @@ import uuid
 def test_user_registration_and_login(client):
     uid = uuid.uuid4().hex[:6]
     username = f"alex_{uid}"
-    email = f"alex_{uid}@faangprep.com"
+    email = f"alex_{uid}@prep.com"
 
     # 1. Register a new user
     reg_payload = {

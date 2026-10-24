@@ -1700,7 +1700,7 @@ function filterByTargetCompany(company, btnEl) {
             filterQuestionBank();
         }
     }
-    showToast(company === 'All' ? "Showing all product-company questions" : `Filtered for ${company} Interview Track`);
+    showToast(company === 'All' ? "Showing all preparation questions" : `Filtered for ${company} Interview Track`);
 }
 
 function filterQuestionBank() {
@@ -2091,7 +2091,7 @@ function syncAuthUI() {
 
         if (avatarEl) avatarEl.innerText = initials;
         if (nameEl) nameEl.innerText = currentUser.full_name || currentUser.username;
-        if (roleEl) roleEl.innerText = currentUser.target_role || 'Staff Track';
+        if (roleEl) roleEl.innerText = currentUser.target_role || 'Preparation Track';
 
         if (authContainer) {
             authContainer.innerHTML = `
@@ -2114,7 +2114,7 @@ function syncAuthUI() {
     } else {
         if (avatarEl) avatarEl.innerText = 'VJ';
         if (nameEl) nameEl.innerText = 'Guest Candidate';
-        if (roleEl) roleEl.innerText = 'Click to Sign In / Track';
+        if (roleEl) roleEl.innerText = 'Preparation Track (Guest)';
 
         if (authContainer) {
             authContainer.innerHTML = `
