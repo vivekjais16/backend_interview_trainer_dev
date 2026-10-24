@@ -8,10 +8,14 @@ from app.services.mindmap_service import MINDMAP_DATA
 logger = logging.getLogger(__name__)
 
 def ensure_schema_columns(db: Session):
-    """Safely adds phase and MCQ columns to interview_questions table if missing."""
+    """Safely adds phase and MCQ columns to interview_questions and candidate auth fields if missing."""
     from sqlalchemy import text
+    from app.core.database import Base, engine
     try:
-        # Check SQLite or MySQL columns
+        # Create any new tables (e.g. user_mcq_attempts)
+        Base.metadata.create_all(bind=engine)
+        
+        # Check SQLite or MySQL columns for interview_questions
         cols = [row[1] for row in db.execute(text("PRAGMA table_info(interview_questions);")).fetchall()]
         if cols:
             if "phase" not in cols:
@@ -24,7 +28,18 @@ def ensure_schema_columns(db: Session):
                 db.execute(text("ALTER TABLE interview_questions ADD COLUMN mcq_correct_index INTEGER DEFAULT 0;"))
             if "mcq_explanation" not in cols:
                 db.execute(text("ALTER TABLE interview_questions ADD COLUMN mcq_explanation TEXT;"))
-            db.commit()
+        
+        # Check candidates columns
+        cand_cols = [row[1] for row in db.execute(text("PRAGMA table_info(candidates);")).fetchall()]
+        if cand_cols:
+            if "hashed_password" not in cand_cols:
+                db.execute(text("ALTER TABLE candidates ADD COLUMN hashed_password VARCHAR(255);"))
+            if "full_name" not in cand_cols:
+                db.execute(text("ALTER TABLE candidates ADD COLUMN full_name VARCHAR(150);"))
+            if "key_skills" not in cand_cols:
+                db.execute(text("ALTER TABLE candidates ADD COLUMN key_skills JSON;"))
+        
+        db.commit()
     except Exception as e:
         logger.warning(f"Schema column check: {e}")
 

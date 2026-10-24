@@ -121,6 +121,14 @@ class InterviewSessionDomainService(InterviewSessionContract):
         all_scores = [t.score for t in previous_turns if t.score is not None] + [eval_result.get("score", 7.0)]
         session.overall_score = round(sum(all_scores) / len(all_scores), 1)
 
+        # Update candidate progress & history if session belongs to candidate
+        if session.candidate_id:
+            from app.models.user import Candidate
+            candidate = db.query(Candidate).filter(Candidate.id == session.candidate_id).first()
+            if candidate:
+                candidate.total_score = (candidate.total_score or 0) + int(eval_result.get("score", 7.0) * 10)
+                candidate.interviews_completed = (candidate.interviews_completed or 0) + 1
+
         db.commit()
         db.refresh(turn)
 

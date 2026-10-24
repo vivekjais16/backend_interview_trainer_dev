@@ -82,6 +82,199 @@
         </div>
     </div>
 
+    <!-- 1.1 AUTHENTICATION & ACCOUNT CREATION MODAL -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm hidden animate-in fade-in">
+        <div class="w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md">
+                        <i data-lucide="user-plus" class="h-4 w-4"></i>
+                    </div>
+                    <div>
+                        <h3 id="authModalTitle" class="text-sm font-bold text-white">Join CogniPrep PRO</h3>
+                        <p class="text-[11px] text-zinc-400">Track interview progress, save history, and receive tailored AI skill coaching</p>
+                    </div>
+                </div>
+                <button onclick="closeAuthModal()" class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <!-- Auth Mode Switcher -->
+            <div class="flex rounded-xl border border-zinc-800 bg-zinc-950 p-1 my-3 shrink-0">
+                <button id="authTabRegisterBtn" onclick="switchAuthMode('register')" class="w-1/2 rounded-lg py-1.5 text-xs font-semibold bg-indigo-600 text-white shadow-sm transition">
+                    Create Account
+                </button>
+                <button id="authTabLoginBtn" onclick="switchAuthMode('login')" class="w-1/2 rounded-lg py-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition">
+                    Sign In
+                </button>
+            </div>
+
+            <!-- Register Form -->
+            <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="overflow-y-auto pr-1 space-y-3.5 flex-1">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Username *</label>
+                        <input type="text" id="regUsername" required placeholder="e.g. alex_staff"
+                               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Full Name</label>
+                        <input type="text" id="regFullName" placeholder="e.g. Alex Mercer"
+                               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Email</label>
+                        <input type="email" id="regEmail" placeholder="alex@tech.com"
+                               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Password *</label>
+                        <input type="password" id="regPassword" required minlength="6" placeholder="Min 6 characters"
+                               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Target Role</label>
+                        <input type="text" id="regTargetRole" value="Staff Backend Architect (Distributed Systems)"
+                               class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Experience Level</label>
+                        <select id="regExperienceLevel" class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 focus:border-indigo-500 focus:outline-none">
+                            <option value="junior">Junior (0 - 2 yrs)</option>
+                            <option value="mid">Mid-Level (3 - 5 yrs)</option>
+                            <option value="senior" selected>Senior (6 - 9 yrs)</option>
+                            <option value="lead">Staff / Principal (10+ yrs)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Target Companies Selection -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5 flex items-center justify-between">
+                        <span>Target Companies (Select all that apply)</span>
+                        <span class="text-[10px] text-zinc-400 font-mono">Calibrates AI Bar Raiser</span>
+                    </label>
+                    <div id="regCompaniesList" class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Google" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Google</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Meta" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Meta</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Amazon" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Amazon</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Uber" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Uber</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Netflix" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Netflix</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Stripe" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Stripe</button>
+                    </div>
+                </div>
+
+                <!-- Key Skills Selection -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5 flex items-center justify-between">
+                        <span>Key Skills & Focus Requirements</span>
+                        <span class="text-[10px] text-indigo-400 font-mono">Drives Diagnostic Plan</span>
+                    </label>
+                    <div id="regSkillsList" class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Python" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Python & FastAPI</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Distributed Systems" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Distributed Systems & Raft</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="SQL" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">SQL & Indexing</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Redis" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Redis & Caching</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Docker" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Docker & Kubernetes</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Kafka" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Kafka & Event Streams</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Concurrency" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Asyncio & Concurrency</button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-violet-500 transition">
+                        Create Account & Start Tailored Prep
+                    </button>
+                </div>
+            </form>
+
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4 pt-2 hidden">
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Username or Email</label>
+                    <input type="text" id="loginIdentifier" required placeholder="Enter username or email"
+                           class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password"
+                           class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3.5 py-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-500 hover:to-violet-500 transition">
+                        Sign In & Load History
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1.2 EDIT REQUIREMENTS & KEY SKILLS MODAL -->
+    <div id="editProfileModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm hidden animate-in fade-in">
+        <div class="w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                        <i data-lucide="sliders" class="h-4 w-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Update Requirements & Key Skills</h3>
+                        <p class="text-[11px] text-zinc-400">Recalibrate your personalized AI study plan and target company benchmark</p>
+                    </div>
+                </div>
+                <button onclick="closeEditProfileModal()" class="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white transition">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleUpdateProfileSubmit(event)" class="overflow-y-auto pr-1 space-y-4 my-4 flex-1">
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1">Target Role</label>
+                    <input type="text" id="editTargetRole" class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 focus:border-indigo-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5">Target Companies</label>
+                    <div id="editCompaniesList" class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Google" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Google</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Meta" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Meta</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Amazon" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Amazon</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Uber" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Uber</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Netflix" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Netflix</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Stripe" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Stripe</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5">Key Skills</label>
+                    <div id="editSkillsList" class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Python" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Python</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Distributed Systems" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Distributed Systems</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="SQL" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">SQL</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Redis" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Redis</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Docker" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Docker</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Kafka" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Kafka</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Concurrency" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Concurrency</button>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t border-zinc-800">
+                    <button type="button" onclick="closeEditProfileModal()" class="rounded-xl bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-300 hover:bg-zinc-700 transition">Cancel</button>
+                    <button type="submit" class="rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-sm">Save & Recalibrate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- ROOT CONTAINER (FULL SCREEN FLEX) -->
     <div class="flex h-screen w-screen overflow-hidden">
 
@@ -175,6 +368,16 @@
                     </div>
                     <span class="text-xs font-semibold text-emerald-400">86%</span>
                 </button>
+
+                <button id="navTabProfile" onclick="switchAppTab('profile')" class="tab-nav-btn group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="user-check" class="h-4 w-4 text-purple-400"></i>
+                        <span>Candidate Hub & History</span>
+                    </div>
+                    <span id="navProfileBadge" class="rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] text-purple-400 border border-purple-500/20 font-mono">
+                        AI Plan
+                    </span>
+                </button>
             </nav>
 
             <!-- Readiness Meter Card in Sidebar -->
@@ -194,22 +397,22 @@
 
             <!-- Profile Card -->
             <div class="border-t border-zinc-800/80 p-3.5 shrink-0">
-                <div class="flex items-center justify-between rounded-xl bg-zinc-900/60 p-2.5 border border-zinc-800">
-                    <div class="flex items-center gap-2.5">
-                        <div class="relative">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow-md text-xs">
+                <div id="sidebarProfileCard" onclick="switchAppTab('profile')" class="flex items-center justify-between rounded-xl bg-zinc-900/60 p-2.5 border border-zinc-800 hover:border-zinc-700 cursor-pointer transition">
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <div class="relative shrink-0">
+                            <div id="sidebarAvatarText" class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 font-bold text-white shadow-md text-xs">
                                 VJ
                             </div>
                             <div class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-zinc-950 bg-emerald-500"></div>
                         </div>
-                        <div>
-                            <p class="text-xs font-semibold text-zinc-200 leading-tight">Vivek Jaiswal</p>
-                            <p class="text-[10px] text-zinc-400">Staff Backend Track</p>
+                        <div class="overflow-hidden">
+                            <p id="sidebarUserName" class="text-xs font-semibold text-zinc-200 leading-tight truncate">Vivek Jaiswal</p>
+                            <p id="sidebarUserRole" class="text-[10px] text-zinc-400 truncate">Staff Backend Track</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-1 text-amber-400 border border-amber-500/20">
-                        <i data-lucide="flame" class="h-3.5 w-3.5 fill-amber-500 text-amber-500 animate-bounce"></i>
-                        <span class="text-xs font-bold">14d</span>
+                    <div class="flex items-center gap-1 rounded-lg bg-indigo-500/10 px-2 py-1 text-indigo-400 border border-indigo-500/20 shrink-0">
+                        <i data-lucide="sparkles" class="h-3.5 w-3.5 text-indigo-400 animate-pulse"></i>
+                        <span id="sidebarReadinessScore" class="text-xs font-bold font-mono">82%</span>
                     </div>
                 </div>
             </div>
@@ -258,6 +461,14 @@
                             <span class="voice-bar w-1 bg-purple-400 rounded-full h-2 animate-pulse delay-150"></span>
                         </div>
                     </button>
+
+                    <!-- User Account / Auth Widget -->
+                    <div id="headerAuthContainer">
+                        <button onclick="openAuthModal('login')" class="flex items-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition-all shadow-sm">
+                            <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
+                            <span>Sign In / Create Account</span>
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -769,6 +980,178 @@
                         </div>
 
                     </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- TAB 6: CANDIDATE HUB, HISTORY & AI PLAN    -->
+                <!-- ========================================== -->
+                <div id="paneProfile" class="tab-pane hidden flex h-full w-full flex-col overflow-y-auto bg-zinc-950 p-6 space-y-6">
+                    
+                    <!-- Candidate Profile Header & Readiness Hero -->
+                    <div class="rounded-2xl border border-zinc-800 bg-gradient-to-r from-zinc-900/90 via-zinc-900/50 to-zinc-950 p-6 shadow-xl backdrop-blur-md">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            
+                            <!-- Left: User Identity & Target Track -->
+                            <div class="flex items-start gap-4">
+                                <div class="relative shrink-0">
+                                    <div id="profileHeroAvatar" class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 font-bold text-white shadow-xl text-xl">
+                                        VJ
+                                    </div>
+                                    <div class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-zinc-950 bg-emerald-500"></div>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <div class="flex items-center gap-3">
+                                        <h2 id="profileHeroName" class="text-xl font-bold tracking-tight text-white">Vivek Jaiswal</h2>
+                                        <span id="profileHeroBadge" class="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-semibold text-indigo-400 border border-indigo-500/30 font-mono">
+                                            Candidate Active
+                                        </span>
+                                    </div>
+                                    <p id="profileHeroRole" class="text-xs font-medium text-zinc-300">Staff Backend Architect (Distributed Systems)</p>
+                                    <div class="flex flex-wrap items-center gap-2 pt-1 text-xs text-zinc-400">
+                                        <span id="profileHeroEmail" class="flex items-center gap-1 font-mono text-[11px] text-zinc-400">
+                                            <i data-lucide="mail" class="h-3 w-3 text-zinc-500"></i> vivek@example.com
+                                        </span>
+                                        <span>•</span>
+                                        <span id="profileHeroExp" class="text-zinc-400">8 Years Experience</span>
+                                    </div>
+                                    
+                                    <!-- Target Companies & Key Skills Badges -->
+                                    <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                                        <span class="text-[10px] uppercase font-bold text-zinc-500 mr-1">Target Companies:</span>
+                                        <div id="profileTargetCompanies" class="flex flex-wrap gap-1">
+                                            <span class="rounded bg-indigo-950/60 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 border border-indigo-500/30">Google</span>
+                                            <span class="rounded bg-indigo-950/60 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 border border-indigo-500/30">Meta</span>
+                                            <span class="rounded bg-indigo-950/60 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 border border-indigo-500/30">Amazon</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Readiness Gauge & Profile Actions -->
+                            <div class="flex items-center gap-6 shrink-0">
+                                <div class="text-center rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-inner min-w-[130px]">
+                                    <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">FAANG Readiness</div>
+                                    <div id="profileReadinessScore" class="text-3xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                                        82%
+                                    </div>
+                                    <div class="text-[10px] text-emerald-400 font-medium mt-0.5">High Probability</div>
+                                </div>
+
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="openEditProfileModal()" class="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-500 transition shadow-md">
+                                        <i data-lucide="sliders" class="h-3.5 w-3.5"></i>
+                                        <span>Edit Requirements</span>
+                                    </button>
+                                    <button onclick="loadUserRecommendationsAndHistory()" class="flex items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition">
+                                        <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                                        <span>Recalibrate AI</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- AI Tailored Study Plan & Recommendations (Driven by Key Skills & Requirements) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Col 1 & 2: Strategic Action Plan & Skills Gap Matrix -->
+                        <div class="lg:col-span-2 space-y-6">
+                            
+                            <!-- Strategic Action Plan Card -->
+                            <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-sm space-y-3.5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="sparkles" class="h-4 w-4 text-indigo-400"></i>
+                                        <h3 class="text-sm font-bold text-white">AI Diagnostic & Tailored Strategic Action Plan</h3>
+                                    </div>
+                                    <span class="rounded-md bg-indigo-500/10 px-2 py-0.5 text-[10px] font-mono text-indigo-300 border border-indigo-500/30">
+                                        Active Calibration
+                                    </span>
+                                </div>
+                                <p class="text-xs text-zinc-400">
+                                    Synthesized in real-time from your target company benchmarks and tested key skills performance:
+                                </p>
+                                <div id="profileActionPlanList" class="space-y-2">
+                                    <!-- Loaded dynamically by app.js -->
+                                </div>
+                            </div>
+
+                            <!-- Key Skills Gap & Mastery Breakdown -->
+                            <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-sm space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="cpu" class="h-4 w-4 text-cyan-400"></i>
+                                        <h3 class="text-sm font-bold text-white">Key Skills Mastery & Gap Analysis</h3>
+                                    </div>
+                                    <span class="text-[11px] text-zinc-400">Based on MCQ & Mock Interview history</span>
+                                </div>
+                                
+                                <div id="profileSkillsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <!-- Populated dynamically by app.js -->
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Col 3: Recommended High-Yield Target Questions -->
+                        <div class="space-y-6">
+                            <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-sm space-y-4 flex flex-col h-full">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="target" class="h-4 w-4 text-emerald-400"></i>
+                                        <h3 class="text-sm font-bold text-white">Top Recommended Questions</h3>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-emerald-400">Priority Matched</span>
+                                </div>
+                                <p class="text-xs text-zinc-400">
+                                    Curated high-frequency questions matching your declared target companies and weakest key skills:
+                                </p>
+                                <div id="profileRecommendedQuestionsList" class="space-y-2.5 overflow-y-auto max-h-[460px] pr-1 flex-1">
+                                    <!-- Loaded dynamically by app.js -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- History Tracking Section (Mock Interviews & MCQ Drill Logs) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+                        
+                        <!-- Past Mock Interview Sessions -->
+                        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="history" class="h-4 w-4 text-violet-400"></i>
+                                    <h3 class="text-sm font-bold text-white">Mock Interview Sessions History</h3>
+                                </div>
+                                <span id="profileInterviewCountBadge" class="rounded bg-violet-950/60 px-2 py-0.5 text-[10px] font-mono text-violet-300 border border-violet-500/30">
+                                    0 Completed
+                                </span>
+                            </div>
+                            <div id="profileInterviewHistoryList" class="space-y-3 overflow-y-auto max-h-[350px] pr-1">
+                                <!-- Loaded dynamically by app.js -->
+                            </div>
+                        </div>
+
+                        <!-- MCQ Practice & Tests Log -->
+                        <div class="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="check-circle" class="h-4 w-4 text-indigo-400"></i>
+                                    <h3 class="text-sm font-bold text-white">MCQ Practice & Tests Log</h3>
+                                </div>
+                                <span id="profileMcqAccuracyBadge" class="rounded bg-indigo-950/60 px-2 py-0.5 text-[10px] font-mono text-indigo-300 border border-indigo-500/30">
+                                    0% Accuracy
+                                </span>
+                            </div>
+                            <div id="profileMcqHistoryList" class="space-y-2.5 overflow-y-auto max-h-[350px] pr-1">
+                                <!-- Loaded dynamically by app.js -->
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
 
             </main>

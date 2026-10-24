@@ -14,6 +14,9 @@ from app.schemas.question import (
     MCQQuizItem,
 )
 
+from app.core.security import get_optional_current_user
+from app.models.user import Candidate, UserMCQAttempt
+
 router = APIRouter(prefix="/questions", tags=["Interview Questions"])
 
 @router.get("/phases")
@@ -37,6 +40,7 @@ def get_mcq_quiz(
 @router.post("/verify-mcq", response_model=MCQVerifyResponse)
 def verify_mcq_answer(
     payload: MCQVerifyRequest,
+    current_user: Optional[Candidate] = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
     q_service: QuestionServiceContract = Depends(get_question_service)
 ):
@@ -44,6 +48,22 @@ def verify_mcq_answer(
     res = q_service.verify_mcq(question_id=payload.question_id, selected_index=payload.selected_index, db=db)
     if not res:
         raise HTTPException(status_code=404, detail="Question or MCQ not found")
+
+    if current_user:
+        try:
+            attempt = UserMCQAttempt(
+                candidate_id=current_user.id,
+                question_id=payload.question_id,
+                selected_index=payload.selected_index,
+                is_correct=res.is_correct
+            )
+            db.add(attempt)
+            if res.is_correct:
+                current_user.total_score = (current_user.total_score or 0) + 10
+            db.commit()
+        except Exception:
+            pass
+
     return res
 
 @router.get("/most-asked", response_model=List[QuestionSummary])

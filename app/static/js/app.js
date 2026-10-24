@@ -2,9 +2,16 @@
 // =========================================================================
 
 // --- STATE MANAGEMENT ---
-let activeAppTab = 'mcq'; // 'mcq', 'mindmap', 'interview', 'questions', 'analytics'
+let activeAppTab = 'mcq'; // 'mcq', 'mindmap', 'interview', 'questions', 'analytics', 'profile'
 let targetRole = 'Staff Backend Architect (Distributed Systems)';
 let streakDays = 14;
+
+// User Account & Tracking State
+let currentUser = null;
+let authToken = localStorage.getItem('cogniprep_auth_token') || null;
+let currentAuthMode = 'register';
+let userHistoryData = null;
+let userRecommendationsData = null;
 
 // Session Timer State
 let sessionSeconds = 740;
@@ -375,6 +382,9 @@ print("[TEST 3] Over-limit check (should be False):", limiter.allow_request(curr
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", async () => {
+    // 0. Verify and Sync User Authentication
+    await checkAuthStatus();
+
     // 1. Initialize Icons
     if (window.lucide) {
         lucide.createIcons();
@@ -439,7 +449,8 @@ function switchAppTab(tab) {
         'mindmap': 'paneMindmap',
         'interview': 'paneInterview',
         'questions': 'paneQuestions',
-        'analytics': 'paneAnalytics'
+        'analytics': 'paneAnalytics',
+        'profile': 'paneProfile'
     };
 
     Object.entries(paneMap).forEach(([k, id]) => {
@@ -456,7 +467,8 @@ function switchAppTab(tab) {
         'mindmap': 'navTabMindmap',
         'interview': 'navTabInterview',
         'questions': 'navTabQuestions',
-        'analytics': 'navTabAnalytics'
+        'analytics': 'navTabAnalytics',
+        'profile': 'navTabProfile'
     };
 
     const activeBtnClass = "tab-nav-btn group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all bg-gradient-to-r from-indigo-600/30 to-violet-600/20 text-indigo-300 border border-indigo-500/40 shadow-sm";
@@ -486,6 +498,8 @@ function switchAppTab(tab) {
         renderQuestionBankList();
     } else if (tab === 'analytics') {
         renderAnalyticsTab();
+    } else if (tab === 'profile') {
+        loadUserRecommendationsAndHistory();
     }
 
     if (window.lucide) {
@@ -551,13 +565,17 @@ function toggleVoiceSimulation() {
 // --- BACKEND API INTEGRATION ---
 async function initInterviewSession() {
     try {
+        const headers = { "Content-Type": "application/json" };
+        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
         const res = await fetch("/api/v1/interview/sessions", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: headers,
             body: JSON.stringify({
-                session_title: "MNC Staff Architectural Mock",
-                experience_level: "senior",
-                target_company: "Top Tech MNC"
+                candidate_id: currentUser ? currentUser.id : null,
+                session_title: `${targetRole} - Mock Interview`,
+                experience_level: currentUser ? (currentUser.experience_level || "senior") : "senior",
+                target_company: (currentUser && currentUser.target_companies && currentUser.target_companies[0]) ? currentUser.target_companies[0] : "Google"
             })
         });
         if (res.ok) {
@@ -985,6 +1003,33 @@ function handleSelectMcqOption(qId, optId) {
     selectedAnswers[qId] = optId;
     renderMcqs();
     updateSidebarMastery();
+
+    // Persist attempt to user progress tracking
+    const q = mcqQuestions.find(item => item.id === qId);
+    if (q) {
+        const optLetter = optId.toUpperCase();
+        const selectedIdx = ['A', 'B', 'C', 'D'].indexOf(optLetter);
+        const isCorrect = (q.correctOptionId === optId);
+
+        const payload = {
+            candidate_id: currentUser ? currentUser.id : null,
+            question_id: typeof q.id === 'number' ? q.id : null,
+            question_slug: q.slug || String(q.id),
+            domain: (q.tags && q.tags[0]) ? q.tags[0] : (q.category || 'General'),
+            selected_index: selectedIdx >= 0 ? selectedIdx : 0,
+            is_correct: isCorrect,
+            time_spent_seconds: 25
+        };
+
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+        fetch('/api/v1/user/mcq-attempt', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        }).catch(err => console.debug('MCQ attempt tracking:', err));
+    }
 }
 
 function toggleMcqAccordion(qId) {
@@ -1791,6 +1836,554 @@ function formatMarkdown(text) {
         .replace(/`([^`]+)`/g, '<code class="bg-zinc-800 px-1 py-0.5 rounded font-mono text-cyan-300 text-[11px]">$1</code>');
 }
 
+// =========================================================================
+// --- USER ACCOUNT, HISTORY TRACKING & PERSONALIZED RECOMMENDATIONS ENGINE ---
+// =========================================================================
+
+function openAuthModal(mode = 'register') {
+    switchAuthMode(mode);
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById('authModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function switchAuthMode(mode) {
+    currentAuthMode = mode;
+    const regBtn = document.getElementById('authTabRegisterBtn');
+    const loginBtn = document.getElementById('authTabLoginBtn');
+    const regForm = document.getElementById('registerForm');
+    const loginForm = document.getElementById('loginForm');
+    const title = document.getElementById('authModalTitle');
+
+    if (mode === 'register') {
+        if (regBtn) regBtn.className = "w-1/2 rounded-lg py-1.5 text-xs font-semibold bg-indigo-600 text-white shadow-sm transition";
+        if (loginBtn) loginBtn.className = "w-1/2 rounded-lg py-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition";
+        if (regForm) regForm.classList.remove('hidden');
+        if (loginForm) loginForm.classList.add('hidden');
+        if (title) title.innerText = "Join CogniPrep PRO";
+    } else {
+        if (loginBtn) loginBtn.className = "w-1/2 rounded-lg py-1.5 text-xs font-semibold bg-indigo-600 text-white shadow-sm transition";
+        if (regBtn) regBtn.className = "w-1/2 rounded-lg py-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition";
+        if (loginForm) loginForm.classList.remove('hidden');
+        if (regForm) regForm.classList.add('hidden');
+        if (title) title.innerText = "Sign In to CogniPrep PRO";
+    }
+}
+
+function toggleSelectionPill(btn) {
+    btn.classList.toggle('active');
+    if (btn.classList.contains('active')) {
+        btn.className = "auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300";
+    } else {
+        btn.className = "auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white";
+    }
+}
+
+function openEditProfileModal() {
+    const modal = document.getElementById('editProfileModal');
+    if (!modal) return;
+    
+    if (currentUser) {
+        const roleInput = document.getElementById('editTargetRole');
+        if (roleInput) roleInput.value = currentUser.target_role || '';
+        
+        const compList = currentUser.target_companies || [];
+        document.querySelectorAll('#editCompaniesList .auth-pill').forEach(btn => {
+            const val = btn.getAttribute('data-val');
+            if (compList.includes(val)) {
+                btn.classList.add('active');
+                btn.className = "auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300";
+            } else {
+                btn.classList.remove('active');
+                btn.className = "auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400";
+            }
+        });
+
+        const skillList = currentUser.key_skills || [];
+        document.querySelectorAll('#editSkillsList .auth-pill').forEach(btn => {
+            const val = btn.getAttribute('data-val');
+            if (skillList.includes(val)) {
+                btn.classList.add('active');
+                btn.className = "auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300";
+            } else {
+                btn.classList.remove('active');
+                btn.className = "auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400";
+            }
+        });
+    }
+
+    modal.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+}
+
+function closeEditProfileModal() {
+    const modal = document.getElementById('editProfileModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function handleRegisterSubmit(e) {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const targetRoleVal = document.getElementById('regTargetRole').value.trim();
+    const expLevel = document.getElementById('regExperienceLevel').value;
+
+    const companies = [];
+    document.querySelectorAll('#regCompaniesList .auth-pill.active').forEach(p => {
+        companies.push(p.getAttribute('data-val'));
+    });
+
+    const skills = [];
+    document.querySelectorAll('#regSkillsList .auth-pill.active').forEach(p => {
+        skills.push(p.getAttribute('data-val'));
+    });
+
+    try {
+        const res = await fetch('/api/v1/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: username,
+                full_name: fullName || username,
+                email: email || null,
+                password: password,
+                experience_level: expLevel,
+                target_role: targetRoleVal || 'Staff Backend Architect (Distributed Systems)',
+                target_companies: companies.length > 0 ? companies : ['Google', 'Meta'],
+                key_skills: skills.length > 0 ? skills : ['Python', 'SQL', 'Distributed Systems']
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.detail || 'Registration failed', 'error');
+            return;
+        }
+
+        authToken = data.access_token;
+        localStorage.setItem('cogniprep_auth_token', authToken);
+        currentUser = data.user;
+
+        syncAuthUI();
+        closeAuthModal();
+        showToast(`Account created! Welcome, ${currentUser.full_name || currentUser.username}.`);
+        switchAppTab('profile');
+    } catch (err) {
+        showToast('Registration error: ' + err.message, 'error');
+    }
+}
+
+async function handleLoginSubmit(e) {
+    e.preventDefault();
+    const identifier = document.getElementById('loginIdentifier').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const res = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username_or_email: identifier,
+                password: password
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.detail || 'Invalid username/email or password', 'error');
+            return;
+        }
+
+        authToken = data.access_token;
+        localStorage.setItem('cogniprep_auth_token', authToken);
+        currentUser = data.user;
+
+        syncAuthUI();
+        closeAuthModal();
+        showToast(`Welcome back, ${currentUser.full_name || currentUser.username}!`);
+        switchAppTab('profile');
+    } catch (err) {
+        showToast('Login error: ' + err.message, 'error');
+    }
+}
+
+async function handleUpdateProfileSubmit(e) {
+    e.preventDefault();
+    if (!authToken) {
+        showToast('Please sign in first', 'error');
+        return;
+    }
+
+    const targetRoleVal = document.getElementById('editTargetRole').value.trim();
+    const companies = [];
+    document.querySelectorAll('#editCompaniesList .auth-pill.active').forEach(p => {
+        companies.push(p.getAttribute('data-val'));
+    });
+
+    const skills = [];
+    document.querySelectorAll('#editSkillsList .auth-pill.active').forEach(p => {
+        skills.push(p.getAttribute('data-val'));
+    });
+
+    try {
+        const res = await fetch('/api/v1/auth/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                target_role: targetRoleVal,
+                target_companies: companies,
+                key_skills: skills
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(data.detail || 'Update failed', 'error');
+            return;
+        }
+
+        currentUser = data;
+        syncAuthUI();
+        closeEditProfileModal();
+        showToast('Profile & Key Skills updated successfully!');
+        loadUserRecommendationsAndHistory();
+    } catch (err) {
+        showToast('Update error: ' + err.message, 'error');
+    }
+}
+
+function logoutUser() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('cogniprep_auth_token');
+    syncAuthUI();
+    showToast('Signed out of CogniPrep PRO.');
+    switchAppTab('mcq');
+}
+
+function syncAuthUI() {
+    const authContainer = document.getElementById('headerAuthContainer');
+    const avatarEl = document.getElementById('sidebarAvatarText');
+    const nameEl = document.getElementById('sidebarUserName');
+    const roleEl = document.getElementById('sidebarUserRole');
+
+    if (currentUser) {
+        const initials = (currentUser.full_name || currentUser.username)
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2) || 'C';
+
+        if (avatarEl) avatarEl.innerText = initials;
+        if (nameEl) nameEl.innerText = currentUser.full_name || currentUser.username;
+        if (roleEl) roleEl.innerText = currentUser.target_role || 'Staff Track';
+
+        if (authContainer) {
+            authContainer.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div onclick="switchAppTab('profile')" class="flex items-center gap-2.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 cursor-pointer hover:border-zinc-700 transition shadow-sm">
+                        <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-violet-600 text-white font-bold text-[10px]">
+                            ${initials}
+                        </div>
+                        <span class="text-xs font-semibold text-zinc-200">${currentUser.username}</span>
+                        <span class="rounded bg-emerald-500/10 px-1.5 py-0.2 text-[10px] font-mono text-emerald-400 border border-emerald-500/20 font-bold">
+                            Active
+                        </span>
+                    </div>
+                    <button onclick="logoutUser()" title="Sign Out" class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/20 transition">
+                        <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
+                    </button>
+                </div>
+            `;
+        }
+    } else {
+        if (avatarEl) avatarEl.innerText = 'VJ';
+        if (nameEl) nameEl.innerText = 'Guest Candidate';
+        if (roleEl) roleEl.innerText = 'Click to Sign In / Track';
+
+        if (authContainer) {
+            authContainer.innerHTML = `
+                <button onclick="openAuthModal('register')" class="flex items-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-3.5 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition-all shadow-sm">
+                    <i data-lucide="user-plus" class="h-3.5 w-3.5"></i>
+                    <span>Create Account / Sign In</span>
+                </button>
+            `;
+        }
+    }
+
+    if (window.lucide) lucide.createIcons();
+}
+
+async function checkAuthStatus() {
+    if (!authToken) {
+        syncAuthUI();
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/v1/auth/me', {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+            currentUser = await res.json();
+            syncAuthUI();
+        } else {
+            authToken = null;
+            localStorage.removeItem('cogniprep_auth_token');
+            syncAuthUI();
+        }
+    } catch (err) {
+        console.warn('Could not verify auth token:', err);
+        syncAuthUI();
+    }
+}
+
+async function loadUserRecommendationsAndHistory() {
+    const headers = {};
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    try {
+        const [recsRes, histRes] = await Promise.all([
+            fetch('/api/v1/user/recommendations', { headers }),
+            fetch('/api/v1/user/history', { headers })
+        ]);
+
+        if (recsRes.ok) {
+            userRecommendationsData = await recsRes.json();
+        }
+        if (histRes.ok) {
+            userHistoryData = await histRes.json();
+        }
+
+        renderCandidateHubView();
+    } catch (err) {
+        console.error('Error loading recommendations & history:', err);
+    }
+}
+
+function renderCandidateHubView() {
+    const user = currentUser || (userHistoryData ? userHistoryData.user : null);
+    const recs = userRecommendationsData;
+    const hist = userHistoryData;
+
+    // 1. Hero Identity & Readiness
+    if (user) {
+        const initials = (user.full_name || user.username)
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2) || 'C';
+
+        const heroAvatar = document.getElementById('profileHeroAvatar');
+        const heroName = document.getElementById('profileHeroName');
+        const heroRole = document.getElementById('profileHeroRole');
+        const heroEmail = document.getElementById('profileHeroEmail');
+        const heroExp = document.getElementById('profileHeroExp');
+        const heroBadge = document.getElementById('profileHeroBadge');
+
+        if (heroAvatar) heroAvatar.innerText = initials;
+        if (heroName) heroName.innerText = user.full_name || user.username;
+        if (heroRole) heroRole.innerText = user.target_role || 'Staff Backend Architect';
+        if (heroEmail) heroEmail.innerHTML = `<i data-lucide="mail" class="h-3 w-3 text-zinc-500"></i> ${user.email || (user.username + '@candidate.cogniprep.pro')}`;
+        if (heroExp) heroExp.innerText = `${user.experience_years || 5}+ Years Experience (${(user.experience_level || 'senior').toUpperCase()})`;
+        if (heroBadge) heroBadge.innerText = currentUser ? 'Verified Candidate' : 'Guest Preview Mode';
+
+        // Companies
+        const compContainer = document.getElementById('profileTargetCompanies');
+        if (compContainer && user.target_companies) {
+            compContainer.innerHTML = user.target_companies.map(c => 
+                `<span class="rounded bg-indigo-950/60 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 border border-indigo-500/30">${escapeHtml(c)}</span>`
+            ).join('');
+        }
+    }
+
+    // Readiness Gauge
+    if (recs) {
+        const scoreEl = document.getElementById('profileReadinessScore');
+        if (scoreEl) scoreEl.innerText = `${recs.overall_readiness_score}%`;
+        const sidebarScore = document.getElementById('sidebarReadinessScore');
+        if (sidebarScore) sidebarScore.innerText = `${recs.overall_readiness_score}%`;
+
+        // 2. Action Plan
+        const planList = document.getElementById('profileActionPlanList');
+        if (planList && Array.isArray(recs.tailored_action_plan)) {
+            planList.innerHTML = recs.tailored_action_plan.map((item, idx) => `
+                <div class="flex items-start gap-2.5 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 shadow-inner">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-500/20 text-indigo-400 font-mono text-[10px] shrink-0 mt-0.5 font-bold border border-indigo-500/30">
+                        ${idx + 1}
+                    </div>
+                    <p class="text-xs text-zinc-200 leading-relaxed">${escapeHtml(item)}</p>
+                </div>
+            `).join('');
+        }
+
+        // 3. Skills Gap & Mastery Breakdown
+        const skillsGrid = document.getElementById('profileSkillsGrid');
+        if (skillsGrid && Array.isArray(recs.skills_breakdown)) {
+            skillsGrid.innerHTML = recs.skills_breakdown.map(sk => {
+                let badgeClass = "bg-zinc-800 text-zinc-400 border-zinc-700";
+                let barClass = "bg-zinc-600";
+                let statusLabel = "Untested";
+
+                if (sk.status === 'mastered') {
+                    badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+                    barClass = "bg-emerald-400";
+                    statusLabel = "Mastered";
+                } else if (sk.status === 'in_progress') {
+                    badgeClass = "bg-indigo-500/10 text-indigo-300 border-indigo-500/30";
+                    barClass = "bg-indigo-500";
+                    statusLabel = "In Progress";
+                } else if (sk.status === 'needs_practice') {
+                    badgeClass = "bg-rose-500/10 text-rose-400 border-rose-500/30";
+                    barClass = "bg-rose-500";
+                    statusLabel = "Needs Practice";
+                }
+
+                return `
+                    <div class="rounded-xl border border-zinc-800 bg-zinc-950/80 p-3.5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-zinc-200">${escapeHtml(sk.skill)}</span>
+                            <span class="rounded px-2 py-0.5 text-[10px] font-mono border font-semibold ${badgeClass}">
+                                ${statusLabel}
+                            </span>
+                        </div>
+                        <div class="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+                            <div class="h-full rounded-full ${barClass} transition-all duration-500" style="width: ${sk.mastery_pct}%;"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                            <span>${sk.questions_tested} Questions Evaluated</span>
+                            <span class="text-zinc-300 font-bold">${sk.mastery_pct}% Mastery</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 4. Recommended Questions
+        const recQList = document.getElementById('profileRecommendedQuestionsList');
+        if (recQList && Array.isArray(recs.recommended_questions)) {
+            if (recs.recommended_questions.length === 0) {
+                recQList.innerHTML = `<p class="text-xs text-zinc-500 p-3 text-center">All key skill questions completed!</p>`;
+            } else {
+                recQList.innerHTML = recs.recommended_questions.map(q => `
+                    <div class="rounded-xl border border-zinc-800 bg-zinc-950/80 p-3 space-y-2 hover:border-zinc-700 transition">
+                        <div class="flex items-start justify-between gap-2">
+                            <h4 class="text-xs font-bold text-zinc-200 line-clamp-1">${escapeHtml(q.title)}</h4>
+                            <span class="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-mono font-bold text-indigo-400 border border-indigo-500/30 shrink-0">
+                                Match ${q.priority_score}pt
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-zinc-400 line-clamp-2">${escapeHtml(q.invariant_principle || '')}</p>
+                        <div class="flex items-center justify-between pt-1">
+                            <div class="flex items-center gap-1">
+                                ${(q.company_tags || []).slice(0, 2).map(c => 
+                                    `<span class="rounded bg-zinc-800 px-1.5 py-0.2 text-[9px] text-zinc-300 font-mono">${escapeHtml(c)}</span>`
+                                ).join('')}
+                            </div>
+                            <button onclick="launchQuestionInMock('${q.slug || q.id}')" class="flex items-center gap-1 rounded-lg bg-indigo-600/20 px-2 py-1 text-[10px] font-semibold text-indigo-300 hover:bg-indigo-600/40 border border-indigo-500/30 transition">
+                                <span>Practice</span>
+                                <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+    }
+
+    // 5. Past History (Mock Interviews & MCQs)
+    if (hist) {
+        // Mock Interviews
+        const countBadge = document.getElementById('profileInterviewCountBadge');
+        if (countBadge) countBadge.innerText = `${hist.interview_sessions_count} Completed (Avg ${hist.average_interview_score}/10)`;
+
+        const intList = document.getElementById('profileInterviewHistoryList');
+        if (intList && Array.isArray(hist.recent_interview_sessions)) {
+            if (hist.recent_interview_sessions.length === 0) {
+                intList.innerHTML = `
+                    <div class="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-xs text-zinc-500">
+                        No mock interviews logged yet. Click "AI Mock Interview" to conduct your first calibrated session!
+                    </div>
+                `;
+            } else {
+                intList.innerHTML = hist.recent_interview_sessions.map(s => `
+                    <div class="rounded-xl border border-zinc-800 bg-zinc-950/80 p-3.5 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="rounded bg-violet-500/10 px-2 py-0.5 text-[10px] font-mono text-violet-300 border border-violet-500/30 font-bold">
+                                    ${escapeHtml(s.target_company || 'Tech MNC')}
+                                </span>
+                                <h4 class="text-xs font-bold text-zinc-200">${escapeHtml(s.session_title)}</h4>
+                            </div>
+                            <div class="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2 py-0.5 text-emerald-400 font-mono text-xs font-bold border border-emerald-500/20">
+                                Score: ${s.overall_score}/10
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-zinc-400">${s.turns_count} conversational turns evaluated by AI Bar Raiser</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // MCQ History
+        const mcqBadge = document.getElementById('profileMcqAccuracyBadge');
+        if (mcqBadge) mcqBadge.innerText = `${hist.mcq_accuracy_pct}% Accuracy (${hist.mcq_attempts_count} Drilled)`;
+
+        const mcqList = document.getElementById('profileMcqHistoryList');
+        if (mcqList && Array.isArray(hist.recent_mcq_attempts)) {
+            if (hist.recent_mcq_attempts.length === 0) {
+                mcqList.innerHTML = `
+                    <div class="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-xs text-zinc-500">
+                        No MCQ drills recorded yet. Test your understanding on the "MCQ Drills & Tests" tab!
+                    </div>
+                `;
+            } else {
+                mcqList.innerHTML = hist.recent_mcq_attempts.map(att => {
+                    const statusClass = att.is_correct ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : "bg-rose-500/10 text-rose-400 border-rose-500/30";
+                    const statusText = att.is_correct ? "CORRECT" : "MISSED";
+
+                    return `
+                        <div class="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/80 px-3.5 py-2.5">
+                            <div class="flex items-center gap-2.5 overflow-hidden">
+                                <span class="rounded px-2 py-0.5 text-[9px] font-mono font-bold border ${statusClass}">
+                                    ${statusText}
+                                </span>
+                                <span class="text-xs text-zinc-300 font-medium truncate">${escapeHtml(att.domain || 'Core Architectural Principle')}</span>
+                            </div>
+                            <span class="text-[10px] text-zinc-500 font-mono shrink-0">${att.time_spent_seconds || 30}s</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    }
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function launchQuestionInMock(slugOrId) {
+    const q = bankQuestions.find(item => item.slug === slugOrId || item.id == slugOrId);
+    if (q) {
+        launchBankQuestionInWorkspace(q.id);
+    } else {
+        switchAppTab('interview');
+    }
+}
+
 // --- WINDOW EXPORTS (100% OPERATIONAL BUTTON HANDLERS) ---
 window.switchAppTab = switchAppTab;
 window.toggleSessionTimer = toggleSessionTimer;
@@ -1825,4 +2418,16 @@ window.filterByTargetCompany = filterByTargetCompany;
 window.selectBankQuestion = selectBankQuestion;
 window.launchBankQuestionInWorkspace = launchBankQuestionInWorkspace;
 window.showToast = showToast;
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
+window.switchAuthMode = switchAuthMode;
+window.toggleSelectionPill = toggleSelectionPill;
+window.openEditProfileModal = openEditProfileModal;
+window.closeEditProfileModal = closeEditProfileModal;
+window.handleRegisterSubmit = handleRegisterSubmit;
+window.handleLoginSubmit = handleLoginSubmit;
+window.handleUpdateProfileSubmit = handleUpdateProfileSubmit;
+window.logoutUser = logoutUser;
+window.loadUserRecommendationsAndHistory = loadUserRecommendationsAndHistory;
+window.launchQuestionInMock = launchQuestionInMock;
 

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -5,18 +6,22 @@ from app.core.database import get_db
 from app.core.container import get_interview_service
 from app.contracts.interview import InterviewSessionContract
 from app.schemas.session import SessionCreate, SessionResponse, TurnCreate, TurnResponse, CopilotQueryRequest, CopilotQueryResponse
+from app.core.security import get_optional_current_user
+from app.models.user import Candidate
 
 router = APIRouter(prefix="/interview", tags=["AI Mock Interview"])
 
 @router.post("/sessions", response_model=SessionResponse)
 def create_interview_session(
     payload: SessionCreate,
+    current_user: Optional[Candidate] = Depends(get_optional_current_user),
     db: Session = Depends(get_db),
     interview_svc: InterviewSessionContract = Depends(get_interview_service)
 ):
     """Initializes a new mock interview session with candidate calibration."""
+    cand_id = payload.candidate_id or (current_user.id if current_user else None)
     return interview_svc.create_session(
-        candidate_id=payload.candidate_id,
+        candidate_id=cand_id,
         session_title=payload.session_title,
         experience_level=payload.experience_level,
         target_company=payload.target_company,
