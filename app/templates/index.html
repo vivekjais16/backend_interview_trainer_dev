@@ -178,13 +178,20 @@
                         <span class="text-[10px] text-indigo-400 font-mono">Drives Diagnostic Plan</span>
                     </label>
                     <div id="regSkillsList" class="flex flex-wrap gap-1.5">
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Python" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Python & FastAPI</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Distributed Systems" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Distributed Systems & Raft</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="SQL" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">SQL & Indexing</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Redis" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Redis & Caching</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Docker" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Docker & Kubernetes</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Kafka" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Kafka & Event Streams</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Concurrency" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Asyncio & Concurrency</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Gen AI" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Gen AI</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="RAG" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">RAG</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="LLM" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">LLM Systems</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Vector DB" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Vector Databases</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Machine Learning" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Machine Learning</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Data Science" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Data Science</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Python" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Python</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="SQL" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">SQL</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="NoSQL" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">NoSQL</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Distributed Systems" class="auth-pill active rounded-lg border border-indigo-500/40 bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-300">Distributed Systems</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Redis" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Redis</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Kafka" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Kafka</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Concurrency" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Concurrency</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Docker" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400 hover:text-white">Docker & K8s</button>
                     </div>
                 </div>
 
@@ -257,13 +264,20 @@
                 <div>
                     <label class="block text-[11px] font-semibold text-zinc-300 mb-1.5">Key Skills</label>
                     <div id="editSkillsList" class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Gen AI" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Gen AI</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="RAG" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">RAG</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="LLM" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">LLM Systems</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Vector DB" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Vector Databases</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Machine Learning" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Machine Learning</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Data Science" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Data Science</button>
                         <button type="button" onclick="toggleSelectionPill(this)" data-val="Python" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Python</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Distributed Systems" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Distributed Systems</button>
                         <button type="button" onclick="toggleSelectionPill(this)" data-val="SQL" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">SQL</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="NoSQL" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">NoSQL</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Distributed Systems" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Distributed Systems</button>
                         <button type="button" onclick="toggleSelectionPill(this)" data-val="Redis" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Redis</button>
-                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Docker" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Docker</button>
                         <button type="button" onclick="toggleSelectionPill(this)" data-val="Kafka" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Kafka</button>
                         <button type="button" onclick="toggleSelectionPill(this)" data-val="Concurrency" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Concurrency</button>
+                        <button type="button" onclick="toggleSelectionPill(this)" data-val="Docker" class="auth-pill rounded-lg border border-zinc-800 bg-zinc-950 px-2.5 py-1 text-xs text-zinc-400">Docker & K8s</button>
                     </div>
                 </div>
 
@@ -442,8 +456,26 @@
                             <option value="Staff Backend Architect (Distributed Systems)" class="bg-zinc-900 text-zinc-200">
                                 Staff Backend Architect (Distributed Systems)
                             </option>
-                            <option value="Senior AI / LLM Systems Infrastructure Engineer" class="bg-zinc-900 text-zinc-200">
-                                Senior AI / LLM Systems Infrastructure Engineer
+                            <option value="Generative AI & LLM Systems Engineer" class="bg-zinc-900 text-zinc-200">
+                                Generative AI & LLM Systems Engineer
+                            </option>
+                            <option value="RAG & Vector Search Systems Architect" class="bg-zinc-900 text-zinc-200">
+                                RAG & Vector Search Systems Architect
+                            </option>
+                            <option value="Machine Learning & MLOps Infrastructure Engineer" class="bg-zinc-900 text-zinc-200">
+                                Machine Learning & MLOps Infrastructure Engineer
+                            </option>
+                            <option value="Data Science & Feature Store Pipeline Engineer" class="bg-zinc-900 text-zinc-200">
+                                Data Science & Feature Store Pipeline Engineer
+                            </option>
+                            <option value="Python Core & Concurrency Architect" class="bg-zinc-900 text-zinc-200">
+                                Python Core & Concurrency Architect
+                            </option>
+                            <option value="SQL & Relational Database Performance Specialist" class="bg-zinc-900 text-zinc-200">
+                                SQL & Relational Database Performance Specialist
+                            </option>
+                            <option value="NoSQL & Distributed Data Store Engineer" class="bg-zinc-900 text-zinc-200">
+                                NoSQL & Distributed Data Store Engineer
                             </option>
                             <option value="L6 Principal Systems Designer" class="bg-zinc-900 text-zinc-200">
                                 L6 Principal Systems Designer
@@ -529,9 +561,15 @@
                                 <!-- Domain Filter Dropdown -->
                                 <select id="mcqDomainFilter" onchange="filterMcqs()" class="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 focus:outline-none cursor-pointer">
                                     <option value="All">All Domains</option>
+                                    <option value="Gen AI">Gen AI & LLM Systems</option>
+                                    <option value="RAG">RAG & Vector Search</option>
+                                    <option value="Machine Learning">Machine Learning & MLOps</option>
+                                    <option value="Data Science">Data Science & Pipelines</option>
+                                    <option value="Python">Python Core & Asyncio</option>
+                                    <option value="SQL">SQL & Database Internals</option>
+                                    <option value="NoSQL">NoSQL & Key-Value Stores</option>
                                     <option value="Distributed Systems">Distributed Systems</option>
                                     <option value="Caching & Performance">Caching & Performance</option>
-                                    <option value="Database & Sharding">Database & Sharding</option>
                                     <option value="Async Messaging & Streaming">Async Messaging & Streaming</option>
                                     <option value="Concurrency & Locks">Concurrency & Locks</option>
                                 </select>
@@ -867,6 +905,26 @@
                             <i data-lucide="search" class="absolute left-3 top-2.5 h-4 w-4 text-zinc-500"></i>
                             <input type="text" id="bankSearchInput" oninput="filterQuestionBank()" placeholder="Search coding prompts, system design..."
                                    class="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-2 pl-9 pr-4 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none">
+                        </div>
+
+                        <!-- Category Topic Filter -->
+                        <div class="shrink-0">
+                            <select id="bankCategoryFilter" onchange="filterQuestionBank()" class="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 focus:outline-none cursor-pointer">
+                                <option value="All">All Categories</option>
+                                <option value="gen_ai">Gen AI</option>
+                                <option value="rag_systems">RAG & Vector Retrieval</option>
+                                <option value="llm_inference">LLM Systems & Inference</option>
+                                <option value="vector_databases">Vector Databases</option>
+                                <option value="machine_learning">Machine Learning & MLOps</option>
+                                <option value="data_science">Data Science & Pipelines</option>
+                                <option value="python_internals">Python Internals</option>
+                                <option value="async_concurrency">Asyncio & Concurrency</option>
+                                <option value="postgres_mysql">SQL (PostgreSQL & MySQL)</option>
+                                <option value="mongodb_nosql">NoSQL (MongoDB & Document)</option>
+                                <option value="redis_caching">Redis & In-Memory Stores</option>
+                                <option value="kafka_messaging">Kafka & Streaming</option>
+                                <option value="system_design_mnc">Distributed Systems Design</option>
+                            </select>
                         </div>
 
                         <div id="bankQuestionList" class="flex-1 overflow-y-auto space-y-2.5 pr-1"></div>

@@ -2028,3 +2028,185 @@ try:
 except ImportError:
     pass
 
+# Integrate specialized topics: Gen AI, RAG, LLM, Vector Databases, Machine Learning, Data Science
+AI_ML_QUESTIONS = [
+    {
+        'title': 'Gen AI & LLM Systems: KV-Cache & PagedAttention Optimization (vLLM)',
+        'slug': 'genai-pagedattention-kvcache-vllm-serving',
+        'category': QuestionCategory.GEN_AI.value,
+        'difficulty': QuestionDifficulty.ADVANCED.value,
+        'phase': 'advanced',
+        'min_exp_years': 4,
+        'max_exp_years': 10,
+        'company_tags': ['OpenAI', 'Anthropic', 'Google', 'Meta'],
+        'frequency_score': 98,
+        'mindmap_topic': 'genai_branch',
+        'mindmap_node': 'genai_kvcache',
+        'scenario_text': 'Serving 70B parameter models at 1,000 requests/sec with dynamic prompt lengths caused up to 80% GPU memory fragmentation and Out-Of-Memory crashes. Design a high-throughput LLM serving engine with continuous batching and zero memory fragmentation.',
+        'theory_explanation': '### 💡 In Simple Words\nNaive LLM serving pre-allocates maximum context memory for every request even if the output is only 10 tokens. PagedAttention acts like OS virtual memory, dividing the Key-Value cache into small non-contiguous blocks and eliminating 96% of memory waste.\n\n### ⚙️ Under The Hood\nTokens are stored in physical GPU pages via a logical-to-physical page table. Multiple requests or parallel sample branches share read-only prefix pages using Copy-On-Write (COW).\n\n### 🚀 Production Fix\nDeploy vLLM or TensorRT-LLM with chunked prefill, PagedAttention block size 16, and continuous iteration-level scheduling.',
+        'cross_questions': [
+            'How does continuous iteration-level scheduling differ from traditional dynamic request batching?',
+            'What happens to prefix KV-cache blocks when multiple generation branches (e.g., beam search) share the same prompt prefix?'
+        ],
+        'common_traps': [
+            'Assuming LLM memory consumption is dominated by static model weights rather than dynamic KV-cache under large context windows.',
+            'Using contiguous memory buffers that trigger CUDA out-of-memory errors despite having 50% physical GPU RAM free.'
+        ],
+        'best_practices': [
+            'Implement PagedAttention block tables to divide KV-cache into discrete non-contiguous blocks.',
+            'Use chunked prefill to prevent long prompts from starving short generation requests.'
+        ],
+        'mcq_question': 'How does PagedAttention eliminate memory fragmentation in LLM inference serving?',
+        'mcq_options': [
+            'A) By pre-allocating contiguous memory for 32k tokens per sequence.',
+            'B) By partitioning the KV-cache into discrete physical pages mapped dynamically via block tables.',
+            'C) By converting all float16 weights into 1-bit integers.',
+            'D) By running inference on CPUs.'
+        ],
+        'mcq_correct_index': 1,
+        'mcq_explanation': 'PagedAttention partitions the KV cache into fixed-size physical blocks (e.g. 16 tokens), mapping logical blocks via block tables without requiring contiguous memory.',
+        'has_python_sandbox': True,
+        'has_sql_sandbox': False,
+        'has_redis_sandbox': False,
+        'has_nosql_sandbox': False,
+        'starter_code': 'class PagedAttentionBlockTable:\n    def __init__(self, block_size: int = 16):\n        self.block_size = block_size\n        self.table = {}\n',
+        'solution_code': 'class PagedAttentionBlockTable:\n    def __init__(self, block_size: int = 16):\n        self.block_size = block_size\n        self.table = {}\n',
+        'test_cases_json': []
+    },
+    {
+        'title': 'RAG & Vector Retrieval: HNSW vs IVFFlat High-Dimensional Vector Search',
+        'slug': 'rag-hnsw-vs-ivfflat-vector-search-embeddings',
+        'category': QuestionCategory.RAG_SYSTEMS.value,
+        'difficulty': QuestionDifficulty.ADVANCED.value,
+        'phase': 'advanced',
+        'min_exp_years': 3,
+        'max_exp_years': 9,
+        'company_tags': ['Pinecone', 'Databricks', 'Uber', 'Microsoft'],
+        'frequency_score': 95,
+        'mindmap_topic': 'genai_branch',
+        'mindmap_node': 'rag_hnsw',
+        'scenario_text': 'An enterprise search platform over 20M documents suffered from slow vector retrieval (>250ms) and recall drops below 80% under IVFFlat indexing. Architect an sub-15ms vector retrieval pipeline with hybrid keyword + dense semantic search and re-ranking.',
+        'theory_explanation': '### 💡 In Simple Words\nIVFFlat divides vector space into Voronoi cells which suffer when vector drift occurs. HNSW builds a multi-layer proximity graph where upper layers let search jump quickly across clusters, providing >98% recall in logarithmic time O(log N).\n\n### ⚙️ Production Architecture\n1. Dense retrieval using HNSW index in Milvus/Qdrant.\n2. Sparse lexical retrieval using BM25 in Elasticsearch.\n3. Reciprocal Rank Fusion (RRF) to combine results.\n4. Cross-encoder re-ranker on the top 50 candidates.',
+        'cross_questions': [
+            'How does M (max number of bidirectional links per node) and efConstruction affect HNSW index build time versus query recall?',
+            'When should you use Scalar Quantization (SQ8) or Product Quantization (PQ) alongside HNSW graphs?'
+        ],
+        'common_traps': [
+            'Relying purely on dense vector similarity for exact entity names or SKU numbers without sparse lexical retrieval (BM25).',
+            'Failing to normalize vector embeddings prior to cosine similarity comparisons.'
+        ],
+        'best_practices': [
+            'Build hybrid retrieval pipelines combining BM25 sparse keyword indices with HNSW dense vector graphs via Reciprocal Rank Fusion.',
+            'Run a cross-encoder re-ranker stage on candidate pools to maximize semantic precision.'
+        ],
+        'mcq_question': 'Why is HNSW preferred over IVFFlat for high-scale enterprise RAG vector retrieval?',
+        'mcq_options': [
+            'A) HNSW operates without storing vectors in RAM.',
+            'B) HNSW uses multi-layer proximity graphs providing O(log N) search complexity with high recall (>98%) without clustering retraining.',
+            'C) IVFFlat only works on 2D vectors.',
+            'D) HNSW eliminates embedding computation.'
+        ],
+        'mcq_correct_index': 1,
+        'mcq_explanation': 'HNSW constructs hierarchical proximity graphs yielding logarithmic search complexity with superior recall without the retraining overhead of IVFFlat.',
+        'has_python_sandbox': True,
+        'has_sql_sandbox': False,
+        'has_redis_sandbox': False,
+        'has_nosql_sandbox': False,
+        'starter_code': 'def reciprocal_rank_fusion(dense_ranks, sparse_ranks, k=60):\n    return []\n',
+        'solution_code': 'def reciprocal_rank_fusion(dense_ranks, sparse_ranks, k=60):\n    scores = {}\n    for doc_id, rank in dense_ranks.items():\n        scores[doc_id] = scores.get(doc_id, 0.0) + 1.0 / (k + rank)\n    for doc_id, rank in sparse_ranks.items():\n        scores[doc_id] = scores.get(doc_id, 0.0) + 1.0 / (k + rank)\n    return sorted(scores.items(), key=lambda x: x[1], reverse=True)\n',
+        'test_cases_json': []
+    },
+    {
+        'title': 'Machine Learning & MLOps: Low-Rank Adaptation (LoRA) & Parameter-Efficient Fine-Tuning',
+        'slug': 'mlops-lora-peft-parameter-efficient-fine-tuning',
+        'category': QuestionCategory.MACHINE_LEARNING.value,
+        'difficulty': QuestionDifficulty.ADVANCED.value,
+        'phase': 'advanced',
+        'min_exp_years': 4,
+        'max_exp_years': 10,
+        'company_tags': ['Meta', 'Google', 'Amazon', 'NVIDIA'],
+        'frequency_score': 94,
+        'mindmap_topic': 'ml_ds_branch',
+        'mindmap_node': 'ml_lora',
+        'scenario_text': 'Engineering teams needed to fine-tune 70B parameter models across 50 tenant domains. Full fine-tuning required $100k GPU clusters per tenant and suffered from catastrophic forgetting. Design a parameter-efficient fine-tuning (PEFT) MLOps architecture.',
+        'theory_explanation': '### 💡 In Simple Words\nFull fine-tuning updates all 70 billion parameters. LoRA freezes the original model and only trains two small low-rank matrices (A and B). This reduces trainable parameters by 99.9%, allows serving 50 tenant adapters on a single base model, and eliminates catastrophic forgetting.',
+        'cross_questions': [
+            'What is the difference between QLoRA (4-bit NormalFloat quantization) and standard FP16 LoRA in terms of training throughput and VRAM footprint?',
+            'Why is initialization matrix A sampled from a Gaussian distribution while matrix B is initialized to zero?'
+        ],
+        'common_traps': [
+            'Fine-tuning all transformer layers on domain datasets without freezing base weights, leading to catastrophic forgetting of general reasoning.',
+            'Merging LoRA weights back into the base model before testing adapter inference latency in production.'
+        ],
+        'best_practices': [
+            'Initialize adapter B to zeros so the initial adapter contribution ΔW is zero, ensuring smooth optimization warm-up.',
+            'Deploy dynamic multi-tenant LoRA servers where a single base model weights GPU instance swaps adapter matrices per request.'
+        ],
+        'mcq_question': 'What is the core mathematical formulation of LoRA adapter weight updates?',
+        'mcq_options': [
+            'A) ΔW = W0 * (1 - learning_rate)',
+            'B) ΔW = B * A, where B is (d x r) and A is (r x k) with r << min(d, k)',
+            'C) W_new = Softmax(W0)',
+            'D) W_new = W0 / 2'
+        ],
+        'mcq_correct_index': 1,
+        'mcq_explanation': 'LoRA decomposes weight updates into ΔW = B * A with low rank r (e.g. r=8 or 16), reducing trainable parameters and optimizer states by over 99%.',
+        'has_python_sandbox': True,
+        'has_sql_sandbox': False,
+        'has_redis_sandbox': False,
+        'has_nosql_sandbox': False,
+        'starter_code': 'class LoRALayer:\n    def __init__(self, in_dim: int, out_dim: int, rank: int = 8):\n        self.rank = rank\n',
+        'solution_code': 'class LoRALayer:\n    def __init__(self, in_dim: int, out_dim: int, rank: int = 8):\n        self.rank = rank\n',
+        'test_cases_json': []
+    },
+    {
+        'title': 'Data Science & Feature Stores: Point-in-Time Correctness & Preventing Target Leakage',
+        'slug': 'datascience-feature-stores-point-in-time-leakage',
+        'category': QuestionCategory.DATA_SCIENCE.value,
+        'difficulty': QuestionDifficulty.ADVANCED.value,
+        'phase': 'advanced',
+        'min_exp_years': 3,
+        'max_exp_years': 8,
+        'company_tags': ['Stripe', 'DoorDash', 'Uber', 'Netflix'],
+        'frequency_score': 92,
+        'mindmap_topic': 'ml_ds_branch',
+        'mindmap_node': 'ds_feature_store',
+        'scenario_text': 'A credit card fraud detection model achieved 99.5% accuracy during offline training but plummeted to 45% in production. The root cause was target leakage during feature joins. Design a feature store architecture with point-in-time correctness.',
+        'theory_explanation': '### 💡 In Simple Words\nIf you train a model to predict fraud at 12:00 using user transaction counts computed at 16:00, the model cheats by seeing the future fraud charges. Point-in-time joins guarantee that every feature reflects the exact state at the transaction timestamp.',
+        'cross_questions': [
+            'How does an ASOF join differ from an INNER JOIN or LEFT JOIN when aligning time-series features with label events?',
+            'What is the dual-storage architecture of a production feature store (online Redis/DynamoDB vs offline Snowflake/BigQuery)?'
+        ],
+        'common_traps': [
+            'Using the latest current feature value for historical training examples, causing massive target leakage and over-optimistic validation metrics.',
+            'Computing rolling window aggregates dynamically at inference time instead of using pre-materialized online feature tables.'
+        ],
+        'best_practices': [
+            'Always enforce point-in-time correctness for offline historical dataset generation using event timestamp cutoffs.',
+            'Utilize centralized feature definitions with automated synchronization between online low-latency stores and offline analytical data lakes.'
+        ],
+        'mcq_question': 'How does Point-in-Time Correctness in Feature Stores prevent Training-Serving Skew?',
+        'mcq_options': [
+            'A) By converting Parquet files into CSV.',
+            'B) By executing ASOF temporal joins ensuring features only contain data timestamped prior to the observation event.',
+            'C) By deleting historical training data older than 7 days.',
+            'D) By running predictions only once per day.'
+        ],
+        'mcq_correct_index': 1,
+        'mcq_explanation': 'ASOF temporal joins match observation event timestamps with feature value timestamps prior to the event, preventing future data leakage into offline training datasets.',
+        'has_python_sandbox': True,
+        'has_sql_sandbox': False,
+        'has_redis_sandbox': False,
+        'has_nosql_sandbox': False,
+        'starter_code': 'def point_in_time_join(events, features):\n    return []\n',
+        'solution_code': 'def point_in_time_join(events, features):\n    return []\n',
+        'test_cases_json': []
+    }
+]
+
+for _aq in AI_ML_QUESTIONS:
+    if _aq["slug"] not in _seen_slugs:
+        _seen_slugs.add(_aq["slug"])
+        SEED_QUESTIONS.append(_aq)
+
+

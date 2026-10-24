@@ -218,6 +218,136 @@ const INITIAL_MINDMAP_DATA = {
                     questions: ['Describe Debezium architecture for tailing Postgres WAL log into Kafka.']
                 }
             ]
+        },
+        {
+            id: 'genai_branch',
+            label: 'Gen AI & LLM Architecture',
+            level: 1,
+            category: 'genai',
+            status: 'mastered',
+            readiness: 89,
+            summary: 'LLM inference serving, memory optimization, prompt orchestrations, and autonomous agents.',
+            questions: [
+                'How does PagedAttention eliminate memory fragmentation in KV-Cache?',
+                'Continuous batching vs dynamic batching in LLM inference servers.'
+            ],
+            children: [
+                {
+                    id: 'genai_kvcache',
+                    label: 'LLM Inference & KV-Cache',
+                    level: 2,
+                    category: 'genai',
+                    status: 'mastered',
+                    readiness: 92,
+                    summary: 'PagedAttention, token generation latency, flash attention, and vLLM architecture.',
+                    questions: ['How do vLLM block tables map logical tokens to physical GPU pages?']
+                },
+                {
+                    id: 'rag_hnsw',
+                    label: 'RAG & Vector Databases (HNSW)',
+                    level: 2,
+                    category: 'genai',
+                    status: 'mastered',
+                    readiness: 91,
+                    summary: 'Hierarchical Navigable Small World graphs, dense retrieval, and hybrid re-ranking.',
+                    questions: ['Why does HNSW provide O(log N) search complexity compared to IVFFlat?']
+                }
+            ]
+        },
+        {
+            id: 'ml_ds_branch',
+            label: 'Machine Learning & Data Science',
+            level: 1,
+            category: 'ml',
+            status: 'reviewing',
+            readiness: 82,
+            summary: 'Model adaptation, feature engineering, offline/online feature stores, and MLOps deployment.',
+            questions: [
+                'How does point-in-time correctness prevent target leakage in feature stores?',
+                'LoRA low-rank adaptation decomposition mechanics.'
+            ],
+            children: [
+                {
+                    id: 'ml_lora',
+                    label: 'Machine Learning & LoRA Fine-Tuning',
+                    level: 2,
+                    category: 'ml',
+                    status: 'mastered',
+                    readiness: 88,
+                    summary: 'Parameter-efficient fine-tuning via rank decomposition matrices without optimizer bloat.',
+                    questions: ['Why does LoRA freeze base weights W0 and train only A and B?']
+                },
+                {
+                    id: 'ds_feature_store',
+                    label: 'Data Science & Feature Stores',
+                    level: 2,
+                    category: 'ml',
+                    status: 'reviewing',
+                    readiness: 84,
+                    summary: 'Time-travel ASOF joins, online low-latency key-value stores, and pipeline drift monitoring.',
+                    questions: ['Explain training-serving skew and how feature stores prevent it.']
+                }
+            ]
+        },
+        {
+            id: 'databases_branch',
+            label: 'SQL & NoSQL Architectures',
+            level: 1,
+            category: 'database',
+            status: 'mastered',
+            readiness: 93,
+            summary: 'Relational query engines, MVCC internals, tunable consistency NoSQL, and write-heavy LSM trees.',
+            questions: [
+                'How does PostgreSQL MVCC Heap-Only Tuple (HOT) update operate?',
+                'Cassandra tunable consistency equation (R + W > N).'
+            ],
+            children: [
+                {
+                    id: 'sql_mvcc',
+                    label: 'PostgreSQL MVCC & HOT Updates',
+                    level: 2,
+                    category: 'database',
+                    status: 'mastered',
+                    readiness: 95,
+                    summary: 'Visibility maps, index-only scans, tuple headers, and vacuum bloat mechanics.',
+                    questions: ['Why does modifying an indexed column break HOT updates in Postgres?']
+                },
+                {
+                    id: 'nosql_quorum',
+                    label: 'Cassandra Tunable Consistency & Quorums',
+                    level: 2,
+                    category: 'database',
+                    status: 'mastered',
+                    readiness: 90,
+                    summary: 'Replication factors, gossip protocols, hint handoffs, and local vs global quorums.',
+                    questions: ['Why is LOCAL_QUORUM preferred over global QUORUM across WAN links?']
+                }
+            ]
+        },
+        {
+            id: 'python_runtime_branch',
+            label: 'Python Runtime & Concurrency',
+            level: 1,
+            category: 'core',
+            status: 'mastered',
+            readiness: 94,
+            summary: 'Asyncio single-threaded cooperative loop, GIL synchronization, and process pools.',
+            questions: [
+                'Why does CPU-bound synchronous code block an asyncio event loop?',
+                'How to safely offload heavy computational workloads in FastAPI.'
+            ],
+            children: [
+                {
+                    id: 'python_gil',
+                    label: 'Python Internals & Event Loop Starvation',
+                    level: 2,
+                    category: 'core',
+                    status: 'mastered',
+                    readiness: 92,
+                    summary: 'Event loop socket polling, cooperative task scheduling, and ProcessPoolExecutor integration.',
+                    questions: ['How does loop.run_in_executor prevent socket starvation under heavy CPU load?']
+                }
+            ]
         }
     ]
 };
@@ -347,6 +477,181 @@ const INITIAL_MCQ_DATABASE = [
                 { option: 'D', reason: 'Impossible in managed runtimes like JVM, Go, or Node.js.' }
             ],
             codeSnippet: `-- Downstream Storage atomic check:\nUPDATE accounts \nSET balance = balance + 100, last_token = 35 \nWHERE account_id = 'A12' AND last_token < 35;`
+        }
+    },
+    {
+        id: 'mcq-6',
+        topic: 'Gen AI & LLM Systems',
+        mindmapNodeId: 'genai_kvcache',
+        mindmapLabel: 'LLM Inference & KV-Cache',
+        difficulty: 'Staff',
+        keywords: ['gen ai', 'llm', 'kv-cache', 'pagedattention', 'vllm', 'inference', 'tokens'],
+        question: 'In high-throughput LLM serving systems (such as vLLM or TensorRT-LLM), why does naive contiguous memory allocation for KV-Cache cause up to 60-80% GPU VRAM waste?',
+        options: [
+            { id: 'A', text: 'Floating point rounding errors in softmax normalization.' },
+            { id: 'B', text: 'Internal and external memory fragmentation caused by unknown output sequence lengths forcing pre-allocation of maximum context window limits.' },
+            { id: 'C', text: 'CUDA kernels failing to execute matrix multiplication on dynamic sequence shapes.' },
+            { id: 'D', text: 'Attention heads requiring asynchronous host-to-device PCIe page swaps for every token generated.' }
+        ],
+        correctOptionId: 'B',
+        explanation: {
+            corePrinciple: 'Because output lengths cannot be known ahead of time, naive engines pre-allocate contiguous slots for the full max_tokens context (internal fragmentation) and fail to reuse non-contiguous memory segments (external fragmentation). PagedAttention solves this via virtual memory page tables mapping physical blocks non-contiguously.',
+            distractorBreakdown: [
+                { option: 'A', reason: 'Softmax precision affects perplexity/accuracy, not GPU memory layout fragmentation.' },
+                { option: 'C', reason: 'Tensor cores effortlessly multiply dynamic shapes via GEMM kernels.' },
+                { option: 'D', reason: 'PCIe host-to-device transfers would cause catastrophic 100x latency degradation; KV-cache resides in GPU HBM.' }
+            ],
+            codeSnippet: `# PagedAttention Block Table Mapping:\n# Logical Token Blocks: [0, 1, 2] -> Physical GPU Pages: [page_42, page_19, page_88]\n# Memory waste drops from ~70% to < 4%.`
+        }
+    },
+    {
+        id: 'mcq-7',
+        topic: 'RAG & Vector Search',
+        mindmapNodeId: 'rag_hnsw',
+        mindmapLabel: 'RAG & Vector Databases (HNSW)',
+        difficulty: 'Staff',
+        keywords: ['rag', 'vector database', 'hnsw', 'ivfflat', 'cosine similarity', 'embeddings', 'milvus', 'pinecone'],
+        question: 'When architecting an enterprise RAG retrieval pipeline querying 50 million 1536-dimensional embeddings with <15ms p99 latency, why is HNSW (Hierarchical Navigable Small World) preferred over IVFFlat?',
+        options: [
+            { id: 'A', text: 'HNSW requires zero RAM and executes completely from cold disk storage.' },
+            { id: 'B', text: 'HNSW builds multi-layer skip-list graph structures offering logarithmic O(log N) search complexity with high recall (>98%) without clustering retraining.' },
+            { id: 'C', text: 'IVFFlat is mathematically limited to only 2-dimensional embeddings.' },
+            { id: 'D', text: 'HNSW eliminates the need for vector embedding generation.' }
+        ],
+        correctOptionId: 'B',
+        explanation: {
+            corePrinciple: 'HNSW constructs hierarchical proximity graphs where upper layers act like express lane skip-lists for fast traversals and lower layers offer dense local clustering. IVFFlat partitions space using k-means Voronoi cells, which degrades under high dimensions and requires complete index retraining as vectors shift.',
+            distractorBreakdown: [
+                { option: 'A', reason: 'HNSW is RAM-heavy because the entire graph index and neighbor link lists reside in memory.' },
+                { option: 'C', reason: 'IVFFlat works in high dimensions; its issue is recall drop and slow centroid lookups.' },
+                { option: 'D', reason: 'HNSW is an indexing algorithm; an embedding model (e.g. text-embedding-3-large) is still strictly required.' }
+            ],
+            codeSnippet: `// HNSW Query Complexity: O(log N) graph traversal\n// Layer 2 (Sparse skip links) -> Layer 1 -> Layer 0 (Dense nearest neighbors)`
+        }
+    },
+    {
+        id: 'mcq-8',
+        topic: 'Machine Learning & MLOps',
+        mindmapNodeId: 'ml_lora',
+        mindmapLabel: 'Machine Learning & LoRA Fine-Tuning',
+        difficulty: 'Advanced',
+        keywords: ['machine learning', 'mlops', 'lora', 'peft', 'fine-tuning', 'catastrophic forgetting', 'pytorch'],
+        question: 'How does Low-Rank Adaptation (LoRA) enable parameter-efficient fine-tuning of 70B parameter LLMs on consumer GPUs while preventing catastrophic forgetting?',
+        options: [
+            { id: 'A', text: 'By quantizing all activations into 1-bit integers and dropping attention weights.' },
+            { id: 'B', text: 'By freezing base model weights W0 and injecting trainable rank decomposition matrices: ΔW = B * A, where r << min(d, k).' },
+            { id: 'C', text: 'By retraining only the tokenizer vocabulary while leaving transformer blocks untouched.' },
+            { id: 'D', text: 'By replacing all transformer attention heads with linear regression layers.' }
+        ],
+        correctOptionId: 'B',
+        explanation: {
+            corePrinciple: 'LoRA hypothesizes that the weight updates during task adaptation have a low intrinsic rank r. By decomposing ΔW of size (d x k) into B (d x r) and A (r x k) with r=8 or 16, trainable parameters drop by 99.9%, optimizer memory vanishes, and the base model weights remain intact.',
+            distractorBreakdown: [
+                { option: 'A', reason: '1-bit quantization (BitNet) is an architectural quantization method, not LoRA adapter decomposition.' },
+                { option: 'C', reason: 'Retraining vocabulary does not fine-tune reasoning or domain knowledge.' },
+                { option: 'D', reason: 'Linear regression cannot model complex semantic dependencies.' }
+            ],
+            codeSnippet: `# PyTorch Forward Pass with LoRA adapter:\n# output = W0 * x + (alpha / r) * (B * (A * x))\n# W0 is frozen (no optimizer state gradients required)`
+        }
+    },
+    {
+        id: 'mcq-9',
+        topic: 'Data Science & Pipelines',
+        mindmapNodeId: 'ds_feature_store',
+        mindmapLabel: 'Data Science & Feature Stores',
+        difficulty: 'Staff',
+        keywords: ['data science', 'feature store', 'feast', 'point-in-time', 'data leakage', 'training-serving skew'],
+        question: 'In production machine learning systems, what critical data science problem does "Point-in-Time Correctness" (Time-Travel Join) in Feature Stores solve?',
+        options: [
+            { id: 'A', text: 'It speeds up Pandas dataframe serialization into JSON.' },
+            { id: 'B', text: 'It prevents Data Leakage (Target Leakage) by ensuring offline training features match the exact state that existed at the historical event timestamp.' },
+            { id: 'C', text: 'It converts all categorical strings into numeric float64 representations.' },
+            { id: 'D', text: 'It automatically removes outliers using z-score normalization.' }
+        ],
+        correctOptionId: 'B',
+        explanation: {
+            corePrinciple: 'If a training sample represents a fraud event at 14:00, joining with user transaction features computed at 18:00 leaks future fraud indicators into training, yielding an over-optimistic model that catastrophically fails in real-time inference (Training-Serving Skew).',
+            distractorBreakdown: [
+                { option: 'A', reason: 'Serialization speed is an I/O optimization, unrelated to temporal join semantics.' },
+                { option: 'C', reason: 'One-hot or target encoding handles categorical conversions.' },
+                { option: 'D', reason: 'Outlier detection is preprocessing, not time-travel joins.' }
+            ],
+            codeSnippet: `-- Feature Store Point-in-Time ASOF Join:\nSELECT o.order_id, o.order_time, f.user_30d_spend\nFROM orders o ASOF JOIN user_features f \nON o.user_id = f.user_id AND o.order_time >= f.feature_timestamp;`
+        }
+    },
+    {
+        id: 'mcq-10',
+        topic: 'Python Core & Asyncio',
+        mindmapNodeId: 'python_gil',
+        mindmapLabel: 'Python Internals & Event Loop Starvation',
+        difficulty: 'Advanced',
+        keywords: ['python', 'asyncio', 'event loop', 'gil', 'cpu bound', 'processpoolexecutor', 'threading'],
+        question: 'Why does executing a synchronous CPU-bound computation (e.g., PBKDF2 hash or JSON parsing 100MB payload) inside an async def FastAPI endpoint stall ALL concurrent network requests?',
+        options: [
+            { id: 'A', text: 'Asyncio creates a new operating system process for each coroutine.' },
+            { id: 'B', text: 'Python asyncio operates on a single-threaded cooperative event loop; a long-running CPU task never yields control via await, starving the OS socket selectors.' },
+            { id: 'C', text: 'The Linux kernel automatically suspends HTTP TCP connections when CPU exceeds 50%.' },
+            { id: 'D', text: 'Asyncio coroutines only accept integer arguments.' }
+        ],
+        correctOptionId: 'B',
+        explanation: {
+            corePrinciple: 'Asyncio achieves high concurrency via non-blocking I/O event demultiplexing (epoll/kqueue) on a single thread. It is cooperative multitasking: if a function does not await (which yields control back to loop.poll()), the entire loop stalls until computation completes. Fix: offload to loop.run_in_executor(ProcessPoolExecutor, func).',
+            distractorBreakdown: [
+                { option: 'A', reason: 'Asyncio is single-threaded by default and does not spawn OS processes.' },
+                { option: 'C', reason: 'Linux TCP sockets buffer in kernel memory; the application loop fails to read them.' },
+                { option: 'D', reason: 'Nonsense assertion.' }
+            ],
+            codeSnippet: `# Production Fix:\nimport asyncio\nfrom concurrent.futures import ProcessPoolExecutor\n\nexecutor = ProcessPoolExecutor(max_workers=4)\nresult = await asyncio.get_running_loop().run_in_executor(executor, heavy_cpu_task, payload)`
+        }
+    },
+    {
+        id: 'mcq-11',
+        topic: 'SQL & Database Internals',
+        mindmapNodeId: 'sql_mvcc',
+        mindmapLabel: 'PostgreSQL MVCC & HOT Updates',
+        difficulty: 'Staff',
+        keywords: ['sql', 'postgres', 'mvcc', 'hot update', 'vacuum', 'b-tree index', 'bloat'],
+        question: 'In PostgreSQL, why does an UPDATE statement on a column with a B-Tree index cause significantly more disk I/O and table bloat than an update on an unindexed column?',
+        options: [
+            { id: 'A', text: 'PostgreSQL locks the entire database table during indexed updates.' },
+            { id: 'B', text: 'Because indexed column updates prevent HOT (Heap-Only Tuples) optimization, forcing Postgres to insert a new entry into every single index on the table.' },
+            { id: 'C', text: 'B-Tree indexes require synchronous fsync to the write-ahead log twice per column.' },
+            { id: 'D', text: 'PostgreSQL converts B-Tree indexes into Hash indexes upon modification.' }
+        ],
+        correctOptionId: 'B',
+        explanation: {
+            corePrinciple: 'Under PostgreSQL MVCC, UPDATE writes a new tuple version. If NO indexed columns are modified and the page has room, Heap-Only Tuples (HOT) creates a heap chain pointing from old to new tuple without touching any index. Modifying an indexed column breaks HOT, requiring new entries in every index and generating heavy index bloat.',
+            distractorBreakdown: [
+                { option: 'A', reason: 'Row-level locking (RowExclusiveLock) is used, not table-level exclusive locks.' },
+                { option: 'C', reason: 'Fsync is batched by WAL writer according to synchronous_commit settings.' },
+                { option: 'D', reason: 'PostgreSQL never alters underlying index types on updates.' }
+            ],
+            codeSnippet: `-- Verify HOT Update Ratio:\nSELECT relname, n_tup_upd, n_tup_hot_upd,\n       round(100.0 * n_tup_hot_upd / nullif(n_tup_upd, 0), 2) AS hot_ratio\nFROM pg_stat_user_tables;`
+        }
+    },
+    {
+        id: 'mcq-12',
+        topic: 'NoSQL & Key-Value Stores',
+        mindmapNodeId: 'nosql_quorum',
+        mindmapLabel: 'Cassandra Tunable Consistency & Quorums',
+        difficulty: 'Staff',
+        keywords: ['nosql', 'cassandra', 'quorum', 'tunable consistency', 'cap theorem', 'dynamo'],
+        question: 'In Apache Cassandra with a replication factor of N=5 across two datacenters, which read and write consistency levels guarantee Strong Consistency (linearizability) while insulating client operations against cross-region WAN network partitions?',
+        options: [
+            { id: 'A', text: 'Write: ANY, Read: ONE' },
+            { id: 'B', text: 'Write: ALL, Read: ALL' },
+            { id: 'C', text: 'Write: LOCAL_QUORUM, Read: LOCAL_QUORUM (where R_local + W_local > N_local in the local datacenter)' },
+            { id: 'D', text: 'Write: QUORUM, Read: ANY' }
+        ],
+        correctOptionId: 'C',
+        explanation: {
+            corePrinciple: 'The Quorum condition requires R + W > N. However, using global QUORUM routes RPCs across the WAN, which stalls if the cross-datacenter link fails. LOCAL_QUORUM restricts quorum validation to nodes within the client local datacenter (e.g. 2 of 3 local nodes for N_local=3), guaranteeing local strong consistency with low latency.',
+            distractorBreakdown: [
+                { option: 'A', reason: 'R + W = 1 + 0 < 5. Yields dirty reads and data loss.' },
+                { option: 'B', reason: 'If even a single node in the entire world is down, all writes fail, destroying availability.' },
+                { option: 'D', reason: 'Read: ANY is not a valid Cassandra read level; ANY only applies to writes via hinted handoffs.' }
+            ],
+            codeSnippet: `// Cassandra Driver Execution Profile:\nSimpleStatement statement = SimpleStatement.newInstance("SELECT * FROM user_balances WHERE user_id = ?")\n    .setConsistencyLevel(DefaultConsistencyLevel.LOCAL_QUORUM);`
         }
     }
 ];
@@ -784,7 +1089,11 @@ function renderMcqs() {
             (q.options || []).some(o => o.text.toLowerCase().includes(kw)) ||
             (q.explanation?.corePrinciple || "").toLowerCase().includes(kw);
 
-        const matchDomain = (domainFilter === "All") || (q.topic.toLowerCase().includes(domainFilter.toLowerCase()));
+        const df = domainFilter.toLowerCase();
+        const matchDomain = (domainFilter === "All") ||
+            (q.topic && q.topic.toLowerCase().includes(df)) ||
+            (q.mindmapLabel && q.mindmapLabel.toLowerCase().includes(df)) ||
+            (q.keywords || []).some(k => k.toLowerCase().includes(df));
         
         const qDiff = (q.difficulty || '').toLowerCase();
         let matchDiff = (diffFilter === "all");
@@ -1712,11 +2021,19 @@ function renderQuestionBankList() {
     if (!container) return;
 
     const query = (document.getElementById("bankSearchInput")?.value || "").toLowerCase().trim();
+    const catFilter = document.getElementById("bankCategoryFilter")?.value || "All";
+
     const filtered = bankQuestions.filter(q => {
-        return !query ||
+        const matchCat = (catFilter === "All") || 
+            (q.category.toLowerCase() === catFilter.toLowerCase()) ||
+            (q.category.toLowerCase().includes(catFilter.toLowerCase()));
+
+        const matchQuery = !query ||
             q.title.toLowerCase().includes(query) ||
             q.category.toLowerCase().includes(query) ||
             (q.company_tags || []).some(t => t.toLowerCase().includes(query));
+
+        return matchCat && matchQuery;
     });
 
     if (filtered.length === 0) {

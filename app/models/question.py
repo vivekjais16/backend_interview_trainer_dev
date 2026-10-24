@@ -21,6 +21,14 @@ class QuestionCategory(str, enum.Enum):
     CICD_PIPELINES = "cicd_pipelines"
     SYSTEM_DESIGN_MNC = "system_design_mnc"
     PRODUCTION_TROUBLESHOOTING = "production_troubleshooting"
+    GEN_AI = "gen_ai"
+    RAG_SYSTEMS = "rag_systems"
+    LLM_INFERENCE = "llm_inference"
+    VECTOR_DATABASES = "vector_databases"
+    MACHINE_LEARNING = "machine_learning"
+    DATA_SCIENCE = "data_science"
+    SQL_OPTIMIZATION = "sql_optimization"
+    NOSQL_DISTRIBUTED = "nosql_distributed"
 
 class QuestionDifficulty(str, enum.Enum):
     BASIC = "basic"
