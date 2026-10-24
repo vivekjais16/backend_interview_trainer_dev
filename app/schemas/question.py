@@ -91,4 +91,10 @@ class MCQQuizItem(BaseModel):
     company_tags: List[str] = []
     mcq_question: str
     mcq_options: List[str]
+    mcq_correct_index: Optional[int] = None
+    mcq_explanation: Optional[str] = None
+    mindmap_topic: Optional[str] = None
+    mindmap_node: Optional[str] = None
+    solution_code: Optional[str] = None
+
 

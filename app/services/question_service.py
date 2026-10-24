@@ -252,7 +252,12 @@ class QuestionDomainService(QuestionServiceContract):
                         phase=q.phase or "basic",
                         company_tags=q.company_tags or [],
                         mcq_question=q.mcq_question,
-                        mcq_options=q.mcq_options
+                        mcq_options=q.mcq_options,
+                        mcq_correct_index=q.mcq_correct_index,
+                        mcq_explanation=q.mcq_explanation,
+                        mindmap_topic=q.mindmap_topic,
+                        mindmap_node=q.mindmap_node,
+                        solution_code=q.solution_code
                     )
                 )
         return quiz_items
