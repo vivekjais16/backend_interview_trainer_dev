@@ -72,8 +72,15 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+from fastapi.responses import HTMLResponse, Response
+
 # Mount API Router
 app.include_router(api_v1_router)
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    svg_icon = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#6366f1"/><text x="50%" y="55%" font-size="55" font-family="sans-serif" font-weight="900" fill="#ffffff" dominant-baseline="central" text-anchor="middle">⚡</text></svg>"""
+    return Response(content=svg_icon, media_type="image/svg+xml")
 
 @app.get("/", response_class=HTMLResponse, tags=["Web UI"])
 async def serve_home(request: Request):
@@ -86,3 +93,4 @@ async def serve_home(request: Request):
             "ai_provider": settings.AI_PROVIDER
         }
     )
+

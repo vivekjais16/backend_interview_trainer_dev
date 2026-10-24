@@ -23,6 +23,11 @@ def test_home_page(client):
     assert res.status_code == 200
     assert "AI Python Backend" in res.text
 
+def test_favicon(client):
+    res = client.get("/favicon.ico")
+    assert res.status_code == 200
+    assert "image/svg+xml" in res.headers.get("content-type", "")
+
 def test_api_analytics_stats(client):
     res = client.get("/api/v1/analytics/stats")
     assert res.status_code == 200
