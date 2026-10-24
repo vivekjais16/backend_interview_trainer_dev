@@ -3313,8 +3313,13 @@ function renderLlmChatStream() {
                         Staff AI Engineering Copilot
                     </h1>
                     <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto leading-relaxed">
-                        Powered by Google Gemini 1.5 & OpenAI GPT-4o. Paste any interview question, broken production code, distributed architecture challenge, or ask for a bar-raiser technical grill.
+                        Multi-Model Technical Architecture Copilot. Paste any interview problem, broken production code, distributed systems challenge, or request a bar-raiser technical grill.
                     </p>
+                    <div class="flex items-center justify-center gap-2 pt-1 text-[11px] text-zinc-500 font-mono">
+                        <span class="inline-flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Free Tier & BYOK Compatible</span>
+                        <span>•</span>
+                        <span>Zero Vendor Lock-in</span>
+                    </div>
                 </div>
 
                 <!-- 4 Quick-Starter Cards -->
@@ -3384,7 +3389,7 @@ function renderLlmChatStream() {
                                 <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2.5">
                                     <div class="flex items-center gap-2">
                                         <span class="rounded bg-cyan-500/10 px-2 py-0.5 text-[10px] font-mono font-bold text-cyan-400 border border-cyan-500/30">
-                                            ${escapeHtml(msg.model || 'Gemini 1.5 Pro')}
+                                            ${escapeHtml(msg.model || 'Staff AI Engine')}
                                         </span>
                                         <span class="text-[11px] text-zinc-400 font-mono">
                                             Mode: ${escapeHtml(msg.mode || 'comprehensive')}
