@@ -931,9 +931,11 @@
                         <form onsubmit="handleInterviewChatSubmit(event)" class="border-t border-zinc-800/80 p-3.5 bg-zinc-950/80 shrink-0">
                             <div class="relative flex items-center">
                                 <input type="text" id="interviewChatInput" placeholder="Explain design trade-offs, lock striping, or ask AI for a hint..."
-                                       class="w-full rounded-xl border border-zinc-800 bg-zinc-900/90 py-2.5 pl-4 pr-16 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none">
-                                <button type="submit" class="absolute right-2 flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-40 transition-colors">
-                                    <i data-lucide="send" class="h-3.5 w-3.5"></i>
+                                       class="w-full rounded-xl border border-zinc-800 bg-zinc-900/90 py-2.5 pl-4 pr-32 text-xs text-zinc-200 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none">
+                                <button type="submit" id="interviewChatSubmitBtn" title="Submit message (Press Enter)" class="absolute right-1.5 flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:from-indigo-500 hover:to-violet-500 disabled:opacity-40 transition-all shadow-sm">
+                                    <span id="interviewChatSubmitText">Submit</span>
+                                    <kbd class="inline-block rounded bg-black/30 px-1 py-0.5 text-[9px] font-mono text-indigo-200 border border-white/10">↵ Enter</kbd>
+                                    <i data-lucide="send" class="h-3 w-3"></i>
                                 </button>
                             </div>
                         </form>
@@ -1483,9 +1485,11 @@
                                     </div>
 
                                     <div class="flex items-center gap-2">
-                                        <span class="text-[10px] text-zinc-500 hidden sm:inline">Press Enter to send, Shift+Enter for newline</span>
-                                        <button onclick="sendLlmMessage()" id="llmSendBtn" class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-white shadow-md hover:from-cyan-400 hover:to-indigo-500 transition disabled:opacity-50">
-                                            <i data-lucide="arrow-up" class="h-4 w-4"></i>
+                                        <span class="text-[10px] text-zinc-500 hidden md:inline">Shift+Enter for newline</span>
+                                        <button onclick="sendLlmMessage()" id="llmSendBtn" title="Submit question (Press Enter)" class="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-violet-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md hover:from-cyan-400 hover:to-indigo-500 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                            <span id="llmSendBtnLabel">Submit</span>
+                                            <kbd class="inline-flex items-center rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono text-cyan-200 border border-white/10">↵ Enter</kbd>
+                                            <i data-lucide="send" class="h-3.5 w-3.5" id="llmSendBtnIcon"></i>
                                         </button>
                                     </div>
                                 </div>

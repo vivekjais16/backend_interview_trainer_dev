@@ -736,6 +736,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     updateSidebarMastery();
     initTargetRoleListener();
     loadCentralizedConcepts();
+    initLlmChatView();
 
     // 8. Refresh Lucide Icons after dynamic renders
     if (window.lucide) {
@@ -743,7 +744,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-// --- HELPER: TAB INDENTATION IN TEXTAREAS ---
+// --- HELPER: TAB INDENTATION & SHORTCUTS IN TEXTAREAS ---
 function setupTabIndentation(textareaId) {
     const el = document.getElementById(textareaId);
     if (!el) return;
@@ -754,6 +755,9 @@ function setupTabIndentation(textareaId) {
             const end = this.selectionEnd;
             this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
             this.selectionStart = this.selectionEnd = start + 4;
+        } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+            e.preventDefault();
+            handleExecuteCode();
         }
     });
 }
@@ -1816,10 +1820,18 @@ function renderChatStream() {
 async function handleInterviewChatSubmit(e) {
     e.preventDefault();
     const input = document.getElementById("interviewChatInput");
+    const submitBtn = document.getElementById("interviewChatSubmitBtn");
     const text = (input?.value || "").trim();
     if (!text) return;
 
     input.value = "";
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <div class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <span>Submitting...</span>
+        `;
+    }
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     chatMessages.push({
@@ -1867,9 +1879,21 @@ async function handleInterviewChatSubmit(e) {
             text: `Solid trade-off analysis. What would be your mitigation strategy if Redis replication lag exceeds 200ms?`,
             timestamp: "Just now"
         });
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `
+                <span id="interviewChatSubmitText">Submit</span>
+                <kbd class="inline-block rounded bg-black/30 px-1 py-0.5 text-[9px] font-mono text-indigo-200 border border-white/10">↵ Enter</kbd>
+                <i data-lucide="send" class="h-3 w-3"></i>
+            `;
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
+        renderChatStream();
+        if (input) input.focus();
     }
-
-    renderChatStream();
 }
 
 async function requestCopilotPrompt(type) {
@@ -3155,15 +3179,29 @@ function initLlmChatView() {
 
 function setupLlmInputKeybindings() {
     const input = document.getElementById("llmPromptInput");
-    if (!input || input.dataset.bound) return;
-    input.dataset.bound = "true";
+    if (input && !input.dataset.bound) {
+        input.dataset.bound = "true";
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendLlmMessage();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                sendLlmMessage();
+            }
+        });
+    }
 
-    input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendLlmMessage();
-        }
-    });
+    const codeInput = document.getElementById("llmCodeContextInput");
+    if (codeInput && !codeInput.dataset.bound) {
+        codeInput.dataset.bound = "true";
+        codeInput.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                sendLlmMessage();
+            }
+        });
+    }
 }
 
 function setLlmMode(mode, btn) {
@@ -3496,12 +3534,18 @@ async function sendLlmMessage(customPrompt = null) {
 
     renderLlmChatStream();
 
-    // Show typing loader
+    // Show typing loader and set button to submitting state
     isLlmSending = true;
     const loader = document.getElementById("llmTypingLoader");
     const sendBtn = document.getElementById("llmSendBtn");
     if (loader) loader.classList.remove("hidden");
-    if (sendBtn) sendBtn.disabled = true;
+    if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = `
+            <div class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <span>Submitting...</span>
+        `;
+    }
 
     const headers = { "Content-Type": "application/json" };
     if (authToken) {
@@ -3571,7 +3615,17 @@ async function sendLlmMessage(customPrompt = null) {
     } finally {
         isLlmSending = false;
         if (loader) loader.classList.add("hidden");
-        if (sendBtn) sendBtn.disabled = false;
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = `
+                <span id="llmSendBtnLabel">Submit</span>
+                <kbd class="inline-flex items-center rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-mono text-cyan-200 border border-white/10">↵ Enter</kbd>
+                <i data-lucide="send" class="h-3.5 w-3.5" id="llmSendBtnIcon"></i>
+            `;
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        }
         renderLlmChatStream();
         if (input) input.focus();
     }
