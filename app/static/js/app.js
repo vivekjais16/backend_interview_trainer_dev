@@ -1626,6 +1626,34 @@ function renderRubricScores() {
 }
 
 // --- QUESTION BANK ENGINE ---
+let selectedTargetCompany = 'All';
+
+function filterByTargetCompany(company, btnEl) {
+    selectedTargetCompany = company;
+
+    document.querySelectorAll(".company-target-btn").forEach(b => {
+        b.className = "company-target-btn px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 text-[11px] font-medium transition text-center";
+    });
+    if (btnEl) {
+        btnEl.className = "company-target-btn active px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-[11px] transition text-center shadow-2xs";
+    }
+
+    if (activeAppTab === 'mcq') {
+        const searchInput = document.getElementById("mcqSearchInput");
+        if (searchInput) {
+            searchInput.value = (company === 'All') ? '' : company;
+            filterMcqs();
+        }
+    } else if (activeAppTab === 'questions') {
+        const bankInput = document.getElementById("bankSearchInput");
+        if (bankInput) {
+            bankInput.value = (company === 'All') ? '' : company;
+            filterQuestionBank();
+        }
+    }
+    showToast(company === 'All' ? "Showing all product-company questions" : `Filtered for ${company} Interview Track`);
+}
+
 function filterQuestionBank() {
     renderQuestionBankList();
 }
@@ -1653,13 +1681,19 @@ function renderQuestionBankList() {
 
     container.innerHTML = filtered.map(q => {
         const isSelected = (activeBankQuestion?.id === q.id);
+        const companies = (q.company_tags || []).slice(0, 3);
         return `
             <div onclick="selectBankQuestion(${q.id})" class="cursor-pointer rounded-2xl border p-4 transition-all ${isSelected ? 'border-indigo-500/80 bg-indigo-950/20' : 'border-zinc-800 bg-zinc-900/40 hover:border-zinc-700'}">
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-semibold text-zinc-200 line-clamp-1">${escapeHtml(q.title)}</span>
                     <span class="text-[10px] text-indigo-400 font-mono ml-2 shrink-0">${q.difficulty.toUpperCase()}</span>
                 </div>
-                <p class="mt-1 text-xs text-zinc-400 line-clamp-2">${escapeHtml(q.scenario_text || q.title)}</p>
+                <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                    <span class="rounded bg-indigo-500/10 px-1.5 py-0.2 text-[9px] font-mono text-indigo-300 border border-indigo-500/20">${formatCategory(q.category)}</span>
+                    ${companies.map(c => `<span class="rounded bg-zinc-800/80 px-1.5 py-0.2 text-[9px] text-zinc-400 font-mono border border-zinc-700/50">${c}</span>`).join('')}
+                    ${q.frequency_score ? `<span class="text-[9px] text-amber-400 font-mono">🔥 ${q.frequency_score}% Frequency</span>` : ''}
+                </div>
+                <p class="mt-1.5 text-xs text-zinc-400 line-clamp-2">${escapeHtml(q.scenario_text || q.title)}</p>
             </div>
         `;
     }).join('');
@@ -1787,6 +1821,8 @@ window.handleIdeLanguageChange = handleIdeLanguageChange;
 window.handleExecuteCode = handleExecuteCode;
 window.handleSubmitSolutionForReview = handleSubmitSolutionForReview;
 window.filterQuestionBank = filterQuestionBank;
+window.filterByTargetCompany = filterByTargetCompany;
 window.selectBankQuestion = selectBankQuestion;
 window.launchBankQuestionInWorkspace = launchBankQuestionInWorkspace;
 window.showToast = showToast;
+
