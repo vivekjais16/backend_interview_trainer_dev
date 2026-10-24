@@ -722,6 +722,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderChatStream();
     renderRubricScores();
     updateSidebarMastery();
+    initTargetRoleListener();
+    loadCentralizedConcepts();
 
     // 8. Refresh Lucide Icons after dynamic renders
     if (window.lucide) {
@@ -751,6 +753,7 @@ function switchAppTab(tab) {
     // Panes
     const paneMap = {
         'mcq': 'paneMcq',
+        'concepts': 'paneConcepts',
         'mindmap': 'paneMindmap',
         'interview': 'paneInterview',
         'questions': 'paneQuestions',
@@ -770,6 +773,7 @@ function switchAppTab(tab) {
     // Nav Buttons
     const btnMap = {
         'mcq': 'navTabMcq',
+        'concepts': 'navTabConcepts',
         'mindmap': 'navTabMindmap',
         'interview': 'navTabInterview',
         'questions': 'navTabQuestions',
@@ -798,7 +802,13 @@ function switchAppTab(tab) {
         }
     });
 
-    if (tab === 'mindmap') {
+    if (tab === 'concepts') {
+        if (!allConceptsData || allConceptsData.length === 0) {
+            loadCentralizedConcepts();
+        } else {
+            renderConceptsCards();
+        }
+    } else if (tab === 'mindmap') {
         renderMindmapSvg();
         renderMindmapDrawer();
     } else if (tab === 'questions') {
@@ -2116,6 +2126,366 @@ function renderAnalyticsTab() {
     updateSidebarMastery();
 }
 
+// =========================================================================
+// --- CENTRALIZED TECHNICAL SKILLS & CONCEPTS HUB ENGINE ---
+// =========================================================================
+let allConceptsData = [];
+let activeConceptFilter = 'All';
+
+async function loadCentralizedConcepts() {
+    try {
+        const res = await fetch('/api/v1/questions/concepts');
+        if (res.ok) {
+            allConceptsData = await res.json();
+            renderConceptsCards();
+        } else {
+            console.error("Failed to fetch concepts:", res.status);
+        }
+    } catch (e) {
+        console.error("Error loading centralized concepts:", e);
+    }
+}
+
+function setConceptDomainFilter(cat, btn) {
+    activeConceptFilter = cat;
+    document.querySelectorAll(".concept-filter-chip").forEach(b => {
+        b.className = "concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0";
+    });
+    if (btn) {
+        btn.className = "concept-filter-chip active rounded-lg bg-amber-500 text-zinc-950 font-bold px-3 py-1 text-xs transition shrink-0 shadow-sm";
+    }
+    renderConceptsCards();
+}
+
+function filterCentralizedConcepts() {
+    renderConceptsCards();
+}
+
+function renderConceptsCards() {
+    const grid = document.getElementById("conceptsCardsGrid");
+    if (!grid) return;
+
+    const searchInput = document.getElementById("conceptsSearchInput");
+    const query = (searchInput?.value || "").toLowerCase().trim();
+
+    let filtered = (allConceptsData || []).filter(item => {
+        const matchCategory = (activeConceptFilter === 'All') || (item.category === activeConceptFilter);
+        if (!matchCategory) return false;
+
+        if (!query) return true;
+        const inTitle = (item.title || "").toLowerCase().includes(query);
+        const inSummary = (item.summary || "").toLowerCase().includes(query);
+        const inPunchline = (item.interview_punchline || "").toLowerCase().includes(query);
+        const inMechanisms = (item.key_mechanisms || []).some(m => m.toLowerCase().includes(query));
+        const inCatName = (item.category_name || "").toLowerCase().includes(query);
+        return inTitle || inSummary || inPunchline || inMechanisms || inCatName;
+    });
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full py-16 text-center text-zinc-500 space-y-3">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-900 mx-auto text-zinc-600 border border-zinc-800">
+                    <i data-lucide="layers" class="h-6 w-6"></i>
+                </div>
+                <p class="text-sm font-semibold text-zinc-300">No matching technical concepts found</p>
+                <p class="text-xs text-zinc-500 max-w-sm mx-auto">Try clearing your search query or selecting a different technical domain filter chip above.</p>
+                <button onclick="setConceptDomainFilter('All'); document.getElementById('conceptsSearchInput').value='';" class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-amber-400 hover:text-amber-300">
+                    <i data-lucide="refresh-cw" class="h-3 w-3"></i>
+                    Reset Filter to All Skills
+                </button>
+            </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    const categoryBadgeColors = {
+        'gen_ai': 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+        'rag_systems': 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+        'vector_databases': 'bg-teal-500/10 text-teal-400 border-teal-500/30',
+        'machine_learning': 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+        'data_science': 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+        'python': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        'sql': 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+        'nosql_distributed': 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        'redis': 'bg-red-500/10 text-red-400 border-red-500/30',
+        'devops': 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+        'system_design': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+    };
+
+    grid.innerHTML = filtered.map(c => {
+        const badgeColor = categoryBadgeColors[c.category] || 'bg-zinc-800 text-zinc-300 border-zinc-700';
+        const codeId = `concept-code-${c.id}`;
+
+        const mechanismsHtml = (c.key_mechanisms || []).map(m => `
+            <li class="flex items-start gap-2 text-xs text-zinc-300">
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-400/80 mt-1.5 shrink-0"></span>
+                <span class="leading-relaxed">${escapeHtml(m)}</span>
+            </li>
+        `).join('');
+
+        return `
+            <div class="group flex flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-5 shadow-lg backdrop-blur-md transition-all hover:border-amber-500/40 hover:bg-zinc-900/90">
+                <div class="space-y-4">
+                    <!-- Badges Header -->
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="rounded-full px-2.5 py-0.5 text-[10px] font-mono font-semibold border ${badgeColor}">
+                            ${escapeHtml(c.category_name || c.category)}
+                        </span>
+                        <div class="flex items-center gap-1.5">
+                            ${c.difficulty ? `
+                                <span class="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-300 border border-zinc-700/50">
+                                    ${escapeHtml(c.difficulty)}
+                                </span>
+                            ` : ''}
+                            ${c.badge ? `
+                                <span class="rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-mono text-amber-400 border border-amber-500/20">
+                                    ${escapeHtml(c.badge)}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Title & Summary -->
+                    <div>
+                        <h3 class="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
+                            ${escapeHtml(c.title)}
+                        </h3>
+                        <p class="mt-1.5 text-xs text-zinc-400 leading-relaxed">
+                            ${escapeHtml(c.summary)}
+                        </p>
+                    </div>
+
+                    <!-- Key Mechanisms Invariants -->
+                    <div class="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 space-y-2">
+                        <div class="flex items-center justify-between text-[11px] font-bold text-zinc-300">
+                            <span class="flex items-center gap-1.5 text-amber-400">
+                                <i data-lucide="cpu" class="h-3.5 w-3.5"></i>
+                                Core Invariants & Mechanics
+                            </span>
+                            <span class="text-[10px] font-mono text-zinc-500">${(c.key_mechanisms || []).length} Points</span>
+                        </div>
+                        <ul class="space-y-1.5">
+                            ${mechanismsHtml}
+                        </ul>
+                    </div>
+
+                    <!-- Interview Punchline Callout -->
+                    ${c.interview_punchline ? `
+                        <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs">
+                            <div class="flex items-center gap-1.5 font-bold text-amber-400 text-[11px] mb-1">
+                                <i data-lucide="zap" class="h-3.5 w-3.5"></i>
+                                <span>Interview Punchline / Invariant</span>
+                            </div>
+                            <p class="text-amber-200/90 text-xs leading-relaxed font-medium">
+                                "${escapeHtml(c.interview_punchline)}"
+                            </p>
+                        </div>
+                    ` : ''}
+
+                    <!-- Code / Query Snippet -->
+                    ${c.code_snippet ? `
+                        <div class="rounded-xl border border-zinc-800 bg-zinc-950 overflow-hidden">
+                            <div class="flex items-center justify-between border-b border-zinc-800 px-3 py-1.5 bg-zinc-900/70 text-[10px] text-zinc-400">
+                                <span class="font-mono">Reference Pattern / Query</span>
+                                <button onclick="copyCodeFromBlock('${codeId}')" class="flex items-center gap-1 text-zinc-400 hover:text-white transition">
+                                    <i data-lucide="copy" class="h-3 w-3"></i> Copy
+                                </button>
+                            </div>
+                            <pre class="p-3 text-[11px] font-mono text-cyan-300 overflow-x-auto"><code id="${codeId}">${escapeHtml(c.code_snippet)}</code></pre>
+                        </div>
+                    ` : ''}
+
+                    <!-- Complexity Note -->
+                    ${c.complexity ? `
+                        <div class="text-[11px] text-zinc-500 font-mono">
+                            <span class="text-zinc-400 font-semibold">Complexity:</span> ${escapeHtml(c.complexity)}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Action Footer -->
+                <div class="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-1.5 text-xs">
+                    <button onclick="jumpToSkillMcq('${c.category}')" title="Practice MCQs for this skill" class="flex-1 flex items-center justify-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 py-1.5 text-[11px] font-semibold text-zinc-300 hover:text-white hover:border-zinc-700 transition">
+                        <i data-lucide="list-checks" class="h-3 w-3 text-indigo-400"></i>
+                        <span>MCQs</span>
+                    </button>
+                    <button onclick="jumpToSkillQuestions('${c.category}')" title="Explore real MNC interview questions" class="flex-1 flex items-center justify-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 py-1.5 text-[11px] font-semibold text-zinc-300 hover:text-white hover:border-zinc-700 transition">
+                        <i data-lucide="book-open" class="h-3 w-3 text-emerald-400"></i>
+                        <span>Q Bank</span>
+                    </button>
+                    <button onclick="askAiAboutSkill('${escapeHtml(c.title)}')" title="Ask Staff AI Copilot about this concept" class="flex-1 flex items-center justify-center gap-1 rounded-lg border border-cyan-500/30 bg-cyan-950/20 py-1.5 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-900/30 transition">
+                        <i data-lucide="sparkles" class="h-3 w-3 text-cyan-400"></i>
+                        <span>Ask AI</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+function jumpToSkillMcq(cat) {
+    switchAppTab('mcq');
+    const filter = document.getElementById("mcqDomainFilter");
+    if (filter) {
+        const catLower = (cat || "").toLowerCase();
+        for (let opt of filter.options) {
+            const valLower = opt.value.toLowerCase();
+            if (valLower.includes(catLower) ||
+                (catLower.includes('gen_ai') && valLower.includes('gen ai')) ||
+                (catLower.includes('rag') && valLower.includes('rag')) ||
+                (catLower.includes('ml') && valLower.includes('machine learning')) ||
+                (catLower.includes('data_science') && valLower.includes('data science')) ||
+                (catLower.includes('python') && valLower.includes('python')) ||
+                (catLower.includes('sql') && valLower.includes('sql')) ||
+                (catLower.includes('nosql') && valLower.includes('nosql')) ||
+                (catLower.includes('vector') && valLower.includes('rag'))) {
+                filter.value = opt.value;
+                break;
+            }
+        }
+        filterMcqs();
+        showToast("Filtered MCQs for " + cat.replace(/_/g, ' '));
+    }
+}
+
+function jumpToSkillQuestions(cat) {
+    switchAppTab('questions');
+    const filter = document.getElementById("bankCategoryFilter");
+    if (filter) {
+        for (let opt of filter.options) {
+            if (opt.value.toLowerCase() === cat.toLowerCase() || opt.value.toLowerCase().includes(cat.toLowerCase())) {
+                filter.value = opt.value;
+                break;
+            }
+        }
+        filterQuestionBank();
+        showToast("Filtered Question Bank for " + cat.replace(/_/g, ' '));
+    }
+}
+
+function askAiAboutSkill(topicTitle) {
+    switchAppTab('llm');
+    const prompt = `Explain the deep engineering trade-offs, edge cases, failure modes, and top MNC interview questions around: ${topicTitle}`;
+    sendLlmMessage(prompt);
+}
+
+// --- DYNAMIC WORKSPACE ROLE CALIBRATION ENGINE ---
+function initTargetRoleListener() {
+    const roleSelect = document.getElementById("targetRoleSelect");
+    if (!roleSelect || roleSelect.dataset.bound) return;
+    roleSelect.dataset.bound = "true";
+
+    roleSelect.addEventListener("change", (e) => {
+        calibrateWorkspaceToRole(e.target.value);
+    });
+}
+
+function calibrateWorkspaceToRole(roleName) {
+    if (!roleName) return;
+
+    let domainForMcq = "All";
+    let categoryForBank = "All";
+    let conceptCategory = "All";
+    let mindmapBranchId = "distributed_branch";
+
+    if (roleName.includes("Generative AI") || roleName.includes("LLM")) {
+        domainForMcq = "Gen AI & LLM Systems";
+        categoryForBank = "gen_ai";
+        conceptCategory = "gen_ai";
+        mindmapBranchId = "genai_branch";
+    } else if (roleName.includes("RAG") || roleName.includes("Vector")) {
+        domainForMcq = "RAG & Vector Search";
+        categoryForBank = "rag_systems";
+        conceptCategory = "rag_systems";
+        mindmapBranchId = "genai_branch";
+    } else if (roleName.includes("Machine Learning") || roleName.includes("MLOps")) {
+        domainForMcq = "Machine Learning & MLOps";
+        categoryForBank = "machine_learning";
+        conceptCategory = "machine_learning";
+        mindmapBranchId = "ml_ds_branch";
+    } else if (roleName.includes("Data Science") || roleName.includes("Feature Store")) {
+        domainForMcq = "Data Science & Pipelines";
+        categoryForBank = "data_science";
+        conceptCategory = "data_science";
+        mindmapBranchId = "ml_ds_branch";
+    } else if (roleName.includes("Python Core") || roleName.includes("Concurrency")) {
+        domainForMcq = "Python Core & Asyncio";
+        categoryForBank = "python_internals";
+        conceptCategory = "python";
+        mindmapBranchId = "python_runtime_branch";
+    } else if (roleName.includes("SQL") || roleName.includes("Relational")) {
+        domainForMcq = "SQL & Database Internals";
+        categoryForBank = "sql_optimization";
+        conceptCategory = "sql";
+        mindmapBranchId = "databases_branch";
+    } else if (roleName.includes("NoSQL") || roleName.includes("Distributed Data")) {
+        domainForMcq = "NoSQL & Key-Value Stores";
+        categoryForBank = "nosql_distributed";
+        conceptCategory = "nosql_distributed";
+        mindmapBranchId = "databases_branch";
+    } else if (roleName.includes("Distributed Systems") || roleName.includes("Backend Architect")) {
+        domainForMcq = "Distributed Systems & Consensus";
+        categoryForBank = "system_design_mnc";
+        conceptCategory = "system_design";
+        mindmapBranchId = "distributed_branch";
+    }
+
+    // 1. Recalibrate MCQ Filter
+    const mcqFilter = document.getElementById("mcqDomainFilter");
+    if (mcqFilter) {
+        mcqFilter.value = domainForMcq;
+        filterMcqs();
+    }
+
+    // 2. Recalibrate Question Bank Category
+    const bankFilter = document.getElementById("bankCategoryFilter");
+    if (bankFilter) {
+        bankFilter.value = categoryForBank;
+        filterQuestionBank();
+    }
+
+    // 3. Recalibrate Concepts Hub
+    if (conceptCategory !== "All") {
+        activeConceptFilter = conceptCategory;
+        document.querySelectorAll(".concept-filter-chip").forEach(btn => {
+            const onclickVal = btn.getAttribute("onclick") || "";
+            if (onclickVal.includes(`'${conceptCategory}'`)) {
+                btn.className = "concept-filter-chip active rounded-lg bg-amber-500 text-zinc-950 font-bold px-3 py-1 text-xs transition shrink-0 shadow-sm";
+            } else {
+                btn.className = "concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0";
+            }
+        });
+        renderConceptsCards();
+    }
+
+    // 4. Recalibrate Mindmap branch
+    if (mindmapTree && mindmapBranchId) {
+        const found = mindmapTree.children?.find(b => b.id === mindmapBranchId);
+        if (found) {
+            selectedMindmapNode = found.children ? found.children[0] : found;
+            renderMindmapSvg();
+            renderMindmapDrawer();
+        }
+    }
+
+    // 5. Update local profile state
+    if (currentUser) {
+        currentUser.target_role = roleName;
+        fetch('/api/v1/auth/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target_role: roleName })
+        }).catch(() => {});
+    }
+
+    showToast(`Workspace calibrated to: ${roleName}`);
+}
+
 // --- TOAST NOTIFICATIONS ---
 function showToast(message) {
     const container = document.getElementById("toastContainer");
@@ -3205,5 +3575,13 @@ window.loadLlmPreset = loadLlmPreset;
 window.sendLlmMessage = sendLlmMessage;
 window.copyCodeFromBlock = copyCodeFromBlock;
 window.sendLlmCodeToIde = sendLlmCodeToIde;
+window.loadCentralizedConcepts = loadCentralizedConcepts;
+window.setConceptDomainFilter = setConceptDomainFilter;
+window.filterCentralizedConcepts = filterCentralizedConcepts;
+window.renderConceptsCards = renderConceptsCards;
+window.jumpToSkillMcq = jumpToSkillMcq;
+window.jumpToSkillQuestions = jumpToSkillQuestions;
+window.askAiAboutSkill = askAiAboutSkill;
+window.calibrateWorkspaceToRole = calibrateWorkspaceToRole;
 
 

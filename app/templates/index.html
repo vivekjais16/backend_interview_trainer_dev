@@ -349,6 +349,17 @@
                     </span>
                 </button>
 
+                <!-- Centralized Skill & Architecture Concepts Hub -->
+                <button id="navTabConcepts" onclick="switchAppTab('concepts')" class="tab-nav-btn group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="layers" class="h-4 w-4 text-amber-400"></i>
+                        <span>Centralized Skill Hub</span>
+                    </div>
+                    <span class="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400 border border-amber-500/20 font-mono">
+                        Concepts
+                    </span>
+                </button>
+
                 <button id="navTabMindmap" onclick="switchAppTab('mindmap')" class="tab-nav-btn group flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200">
                     <div class="flex items-center gap-3">
                         <i data-lucide="network" class="h-4 w-4 text-zinc-400"></i>
@@ -629,6 +640,102 @@
 
                         <!-- Questions Container rendered via JS -->
                         <div id="mcqCardsContainer" class="space-y-6"></div>
+                    </div>
+                </div>
+
+                <!-- ========================================== -->
+                <!-- TAB: CENTRALIZED SKILL HUB & CONCEPTS      -->
+                <!-- ========================================== -->
+                <div id="paneConcepts" class="tab-pane flex h-full w-full flex-col overflow-hidden bg-zinc-950 hidden">
+                    <!-- Concepts Top Toolbar -->
+                    <div class="border-b border-zinc-800/80 bg-zinc-950/90 px-6 py-4 shrink-0 backdrop-blur-md">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-400 border border-amber-500/20">
+                                        <i data-lucide="layers" class="h-3 w-3"></i>
+                                        Centralized Technical Hub
+                                    </span>
+                                    <span class="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[11px] font-mono text-indigo-400 border border-indigo-500/20">
+                                        All Core Engineering Domains
+                                    </span>
+                                    <span class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-400 border border-emerald-500/20">
+                                        Dynamic Calibration
+                                    </span>
+                                </div>
+                                <h1 class="text-xl font-bold tracking-tight text-white mt-1">
+                                    Technical Skills & System Architecture Concepts
+                                </h1>
+                                <p class="text-xs text-zinc-400 mt-0.5">
+                                    First-principles invariants, memory mechanics, algorithmic trade-offs, and MNC interview punchlines.
+                                </p>
+                            </div>
+
+                            <!-- Search Input & Quick Actions -->
+                            <div class="flex items-center gap-2.5">
+                                <div class="relative w-64 md:w-80">
+                                    <i data-lucide="search" class="absolute left-3 top-2.5 h-4 w-4 text-zinc-500"></i>
+                                    <input type="text" id="conceptsSearchInput" oninput="filterCentralizedConcepts()" placeholder="Search concepts, algorithms, invariants..."
+                                           class="w-full rounded-xl border border-zinc-800 bg-zinc-900/90 pl-9 pr-3.5 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:border-amber-500 focus:outline-none">
+                                </div>
+                                <button onclick="loadCentralizedConcepts()" title="Refresh Concepts" class="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition">
+                                    <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                                    <span>Sync</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Domain Filter Chips -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto pt-3 pb-1 no-scrollbar text-xs">
+                            <button onclick="setConceptDomainFilter('All', this)" class="concept-filter-chip active rounded-lg bg-amber-500 text-zinc-950 font-bold px-3 py-1 text-xs transition shrink-0 shadow-sm">
+                                All Domains
+                            </button>
+                            <button onclick="setConceptDomainFilter('gen_ai', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Gen AI & LLMs
+                            </button>
+                            <button onclick="setConceptDomainFilter('rag_systems', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                RAG & Search
+                            </button>
+                            <button onclick="setConceptDomainFilter('vector_databases', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Vector DBs & HNSW
+                            </button>
+                            <button onclick="setConceptDomainFilter('machine_learning', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                ML & MLOps
+                            </button>
+                            <button onclick="setConceptDomainFilter('data_science', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Data Science
+                            </button>
+                            <button onclick="setConceptDomainFilter('python', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Python Core
+                            </button>
+                            <button onclick="setConceptDomainFilter('sql', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                SQL & DBs
+                            </button>
+                            <button onclick="setConceptDomainFilter('nosql_distributed', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                NoSQL & Key-Value
+                            </button>
+                            <button onclick="setConceptDomainFilter('redis', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Redis & Caching
+                            </button>
+                            <button onclick="setConceptDomainFilter('devops', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Docker & K8s
+                            </button>
+                            <button onclick="setConceptDomainFilter('system_design', this)" class="concept-filter-chip rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white px-3 py-1 text-xs transition shrink-0">
+                                Distributed Consensus
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Cards Grid Area -->
+                    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                        <div id="conceptsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                            <div class="col-span-full py-16 text-center text-zinc-500">
+                                <div class="inline-block animate-spin mb-3">
+                                    <i data-lucide="loader" class="h-6 w-6 text-amber-400"></i>
+                                </div>
+                                <p class="text-xs font-mono">Loading Centralized Engineering Concepts...</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

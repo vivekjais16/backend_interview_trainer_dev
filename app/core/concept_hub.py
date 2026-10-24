@@ -206,6 +206,132 @@ CENTRALIZED_CONCEPTS: List[Dict[str, Any]] = [
         "interview_punchline": "Use Sliding Window Counter with Redis atomic Lua scripts to achieve accurate distributed rate limiting without boundary burst hazards.",
         "code_snippet": "# Redis Sliding Window Lua script\n# Removes timestamps older than (now - window)\nZREMRANGEBYSCORE key 0 (now - window)\nlocal count = ZCARD key\nif count < limit then\n    ZADD key now now\n    return 1\nelse\n    return 0\nend",
         "related_slugs": ["redis-cache-stampede-rate-limiter"]
+    },
+
+    # ------------------ GEN AI & LLM INFERENCE ------------------
+    {
+        "id": "genai-paged-attention",
+        "category": "gen_ai",
+        "category_name": "Gen AI & LLM Inference",
+        "title": "KV-Cache Management & PagedAttention Architecture",
+        "badge": "Staff Must Know",
+        "difficulty": "Advanced",
+        "summary": "In generative transformer serving, the autoregressive generation loop requires caching previous token Key and Value tensors. Naive contiguous allocation causes 60-80% VRAM waste. PagedAttention solves this via virtual memory block tables.",
+        "key_mechanisms": [
+            "Autoregressive generation: Each generated token attends to all previous tokens; caching K and V avoids quadratic recomputations.",
+            "Memory waste hazard: Dynamic output lengths force naive servers to pre-allocate maximum context size, fragmenting GPU high-bandwidth memory (HBM).",
+            "PagedAttention Virtual Pages: Partitions the KV cache into fixed-size physical blocks (e.g., 16 tokens), indexed via logical-to-physical block tables.",
+            "Copy-on-Write (COW): Enables parallel sampling and beam search to share common prompt prefix blocks without memory duplication."
+        ],
+        "complexity": "KV Cache size per token: 2 * 2 * n_layers * n_heads * d_head bytes. Memory waste drops from ~70% to < 4%.",
+        "interview_punchline": "PagedAttention eliminates GPU memory fragmentation by dividing the transformer KV-cache into discrete non-contiguous physical blocks mapped via virtual block tables.",
+        "code_snippet": "# vLLM / PagedAttention concept:\n# logical_blocks = [0, 1, 2]\n# physical_gpu_pages = [page_102, page_45, page_88]\n# Tokens are fetched non-contiguously by custom CUDA attention kernels.",
+        "related_slugs": ["genai-pagedattention-kvcache-vllm-serving"]
+    },
+
+    # ------------------ RAG & VECTOR SEARCH ------------------
+    {
+        "id": "rag-hybrid-retrieval",
+        "category": "rag_systems",
+        "category_name": "RAG & Vector Retrieval",
+        "title": "Enterprise RAG: Dense HNSW Search + Sparse BM25 + Reciprocal Rank Fusion",
+        "badge": "MNC Favorite",
+        "difficulty": "Advanced",
+        "summary": "Pure vector search struggles on exact keywords, codes, or domain terms. Enterprise RAG combines dense semantic embeddings with sparse lexical indexing (BM25), merged via Reciprocal Rank Fusion and cross-encoder re-ranking.",
+        "key_mechanisms": [
+            "Dense Semantic Search: Generates embeddings via models (e.g. text-embedding-3-large); queries using HNSW graph index for semantic understanding.",
+            "Sparse Keyword Search: Inverted indexes with BM25 scoring for exact identifiers, product SKUs, and proper nouns.",
+            "Reciprocal Rank Fusion (RRF): Formula RRF(d) = sum(1 / (k + rank_i(d))) combines heterogeneous score distributions without manual score calibration.",
+            "Re-Ranking: Top 50 candidates are evaluated with a cross-encoder transformer model for deep contextual relevance before passing to LLM context."
+        ],
+        "complexity": "Dense HNSW search: O(log N); Sparse BM25: O(1) posting list lookup; Re-ranker: O(M * L^2) where M is top-K candidate count.",
+        "interview_punchline": "Enterprise RAG achieves high recall and precision by fusing dense HNSW vector search with sparse BM25 inverted indexes using Reciprocal Rank Fusion.",
+        "code_snippet": "def reciprocal_rank_fusion(dense_ranks, sparse_ranks, k=60):\n    scores = {}\n    for doc, r in dense_ranks.items(): scores[doc] = scores.get(doc, 0.0) + 1.0 / (k + r)\n    for doc, r in sparse_ranks.items(): scores[doc] = scores.get(doc, 0.0) + 1.0 / (k + r)\n    return sorted(scores.items(), key=lambda x: x[1], reverse=True)",
+        "related_slugs": ["rag-hnsw-vs-ivfflat-vector-search-embeddings"]
+    },
+
+    # ------------------ VECTOR DATABASES ------------------
+    {
+        "id": "vector-hnsw-indexing",
+        "category": "vector_databases",
+        "category_name": "Vector Databases & Indexing",
+        "title": "HNSW (Hierarchical Navigable Small World) Graph Architecture",
+        "badge": "Top MNC Question",
+        "difficulty": "Staff",
+        "summary": "HNSW is the gold-standard algorithm powering vector databases (Milvus, Pinecone, Qdrant). It solves the high-dimensional Approximate Nearest Neighbor (ANN) problem by building multi-layer proximity graphs.",
+        "key_mechanisms": [
+            "Skip-List Hierarchy: Top layers have long-range links for fast macroscopic navigation; bottom layer 0 contains dense local neighbor links.",
+            "Greedy Traversal: Search starts at top layer entry point, moving to the neighbor closest to query vector until a local minimum is reached, then drops to the next layer.",
+            "Bounded Degree M: Controls memory and connectivity; heuristics prune redundant edges while preserving cluster connectedness.",
+            "Distance Metrics: Cosine similarity (1 - (u·v)/(||u||*||v||)), Dot Product (for normalized vectors), and Euclidean (L2) distance."
+        ],
+        "complexity": "Query time: O(log N) average; Build time: O(N log N); Storage: Higher RAM footprint due to bi-directional link graphs.",
+        "interview_punchline": "HNSW achieves sub-10ms Approximate Nearest Neighbor search on millions of vectors by traversing multi-layer proximity skip-graphs in O(log N) time.",
+        "code_snippet": "# HNSW layer traversal:\n# Layer 2: [Start Node] -------------> [Cluster Center]\n# Layer 1: [Cluster Center] ----> [Sub-Cluster]\n# Layer 0: [Sub-Cluster] -> [Exact Nearest Neighbors (k=10)]",
+        "related_slugs": ["rag-hnsw-vs-ivfflat-vector-search-embeddings"]
+    },
+
+    # ------------------ MACHINE LEARNING & MLOPS ------------------
+    {
+        "id": "ml-lora-peft",
+        "category": "machine_learning",
+        "category_name": "Machine Learning & MLOps",
+        "title": "Parameter-Efficient Fine-Tuning (PEFT) & LoRA Decomposition",
+        "badge": "Staff Must Know",
+        "difficulty": "Advanced",
+        "summary": "Fine-tuning multi-billion parameter foundation models requires massive compute and risks catastrophic forgetting. Low-Rank Adaptation (LoRA) freezes the base model and trains low-rank decomposition matrices.",
+        "key_mechanisms": [
+            "Intrinsic Rank Hypothesis: Weight updates ΔW during domain adaptation live in a much lower dimensional subspace than original weight matrix W0.",
+            "Decomposition: Represents update as ΔW = B * A, where B is (d x r) and A is (r x k) with rank r << min(d, k) (typically r=8 or 16).",
+            "Zero Initialization: A is initialized with Gaussian noise and B is initialized to zeros, ensuring ΔW = 0 at the start of training.",
+            "Multi-Tenant Serving: A single GPU serves multiple tenant adapters by dynamically swapping only small A and B matrices during inference."
+        ],
+        "complexity": "Trainable parameters: Reduced by >99.9%; Optimizer state memory: Vanishes, enabling 70B parameter tuning on consumer GPUs.",
+        "interview_punchline": "LoRA freezes foundation model weights and decomposes updates into low-rank matrices ΔW = B * A, slashing training memory by 99% while enabling multi-tenant adapter hot-swapping.",
+        "code_snippet": "# LoRA forward pass:\n# output = W0(x) + (alpha / r) * (B(A(x)))\n# W0 is frozen; only B and A accumulate gradients.",
+        "related_slugs": ["mlops-lora-peft-parameter-efficient-fine-tuning"]
+    },
+
+    # ------------------ DATA SCIENCE & FEATURE PIPELINES ------------------
+    {
+        "id": "ds-feature-stores",
+        "category": "data_science",
+        "category_name": "Data Science & Feature Engineering",
+        "title": "Feature Stores: Point-in-Time Correctness & Training-Serving Skew",
+        "badge": "MNC Favorite",
+        "difficulty": "Advanced",
+        "summary": "Production ML systems suffer when offline training features leak future event data or differ from real-time production features. Feature Stores (Feast, Hopsworks) guarantee point-in-time correctness.",
+        "key_mechanisms": [
+            "Training-Serving Skew: Discrepancy between feature engineering logic in offline batch pipelines (Spark/SQL) versus real-time online inference (Python/Go).",
+            "Target / Data Leakage: Joining training examples with future feature state (e.g. including fraud signals timestamped after the transaction occurred).",
+            "ASOF Point-in-Time Join: Automatically projects backward in time, joining each observation with the most recent feature value that existed prior to event timestamp.",
+            "Dual-Storage Architecture: Low-latency online store (Redis/DynamoDB) for sub-10ms lookup + analytical offline store (Snowflake/BigQuery) for training."
+        ],
+        "complexity": "Online read: O(1) Redis key lookup; Offline join: O(N log N) distributed temporal sort/merge join.",
+        "interview_punchline": "Feature Stores eliminate training-serving skew and data leakage by unifying feature definitions and executing point-in-time ASOF joins on historical datasets.",
+        "code_snippet": "-- ASOF Temporal Join:\nSELECT event.user_id, event.timestamp, f.user_rolling_fraud_score\nFROM transaction_events event\nASOF JOIN user_features f\nON event.user_id = f.user_id AND event.timestamp >= f.feature_timestamp",
+        "related_slugs": ["datascience-feature-stores-point-in-time-leakage"]
+    },
+
+    # ------------------ NOSQL & DISTRIBUTED DATA STORES ------------------
+    {
+        "id": "nosql-tunable-consistency",
+        "category": "nosql_distributed",
+        "category_name": "NoSQL & Distributed Stores",
+        "title": "NoSQL Tunable Consistency & Cassandra Ring Architecture",
+        "badge": "Staff Must Know",
+        "difficulty": "Staff",
+        "summary": "Distributed leaderless NoSQL systems (Apache Cassandra, Amazon DynamoDB) distribute data using consistent hashing and allow tuning trade-offs between consistency, availability, and latency on every read/write operation.",
+        "key_mechanisms": [
+            "Quorum Equation: Strong consistency is guaranteed when R + W > N (Read nodes + Write nodes exceed Replication Factor N).",
+            "Local Quorum: Restricts quorum validation to nodes inside the local datacenter ((N_local / 2) + 1), avoiding high-latency cross-region WAN roundtrips.",
+            "LSM-Tree Storage: Writes append to CommitLog (WAL) and Memtable in RAM; flushed sequentially to immutable SSTables on disk, avoiding random I/O.",
+            "Read Repair & Anti-Entropy: Mismatched read responses trigger background read repairs; periodic anti-entropy repairs use Merkle trees to reconcile cold data."
+        ],
+        "complexity": "Write: O(1) append-only sequential disk write; Read: O(log N) SSTable Bloom filter + B-Tree index lookup.",
+        "interview_punchline": "Leaderless NoSQL databases achieve high write throughput via append-only LSM-trees and allow fine-grained CAP trade-offs via tunable read/write quorums.",
+        "code_snippet": "// Strong consistency without WAN latency:\nstatement.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);",
+        "related_slugs": ["sys-idempotency-tracing-15-idempotency-keys,-exactly-once"]
     }
 ]
 
