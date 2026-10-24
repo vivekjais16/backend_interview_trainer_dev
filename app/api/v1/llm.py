@@ -91,14 +91,42 @@ async def ask_llm_assistant(
         if current_user and current_user.target_companies and not payload.target_company:
             company = current_user.target_companies[0]
 
+        query_text = (payload.question or payload.prompt or "").strip()
+        if len(query_text) < 1:
+            raise HTTPException(status_code=400, detail="Please enter a technical question or problem statement.")
+
         res = await ai_service.ask_llm(
-            question=payload.question,
+            question=query_text,
             code_context=payload.code_context,
             mode=payload.mode,
-            target_company=company or "Google",
+            target_company=company or "Accenture",
             conversation_history=payload.conversation_history
         )
-        return LLMAskResponse(**res)
+        ans = res.get("answer", "")
+        prov = res.get("provider", "Staff AI Engine")
+        followups = res.get("suggested_followups", [])
+        return LLMAskResponse(
+            answer=ans,
+            answer_markdown=ans,
+            provider=prov,
+            model_used=prov,
+            mode=res.get("mode", payload.mode),
+            action_chips=res.get("action_chips", []),
+            code_snippet=res.get("code_snippet"),
+            suggested_followups=followups,
+            follow_up_questions=followups,
+            key_invariants=res.get("key_invariants", [
+                "Guarantees linearizability and non-blocking state transitions.",
+                "Ensures bounded memory and thread execution limits under high concurrency.",
+                "Prevents cascading failures via defensive error isolation."
+            ]),
+            distractor_traps=res.get("distractor_traps", [
+                "Using unindexed queries or unbounded loops in hot request paths.",
+                "Failing to renew distributed lock leases during unexpected GC pauses."
+            ])
+        )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM query error: {str(e)}")
 

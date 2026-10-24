@@ -3513,9 +3513,11 @@ async function sendLlmMessage(customPrompt = null) {
             method: "POST",
             headers: headers,
             body: JSON.stringify({
+                question: promptText,
                 prompt: promptText,
                 code_context: codeContext || null,
-                mode: activeLlmMode
+                mode: activeLlmMode,
+                target_company: (typeof selectedTargetCompany !== 'undefined' && selectedTargetCompany && selectedTargetCompany !== 'All') ? selectedTargetCompany : "Accenture"
             })
         });
 
@@ -3524,12 +3526,12 @@ async function sendLlmMessage(customPrompt = null) {
             llmChatMessages.push({
                 id: Date.now() + 1,
                 role: 'assistant',
-                model: data.model_used,
-                mode: data.mode,
-                content: data.answer_markdown,
+                model: data.model_used || data.provider || "Staff AI Engine",
+                mode: data.mode || activeLlmMode,
+                content: data.answer_markdown || data.answer || "No response generated.",
                 keyInvariants: data.key_invariants || [],
                 distractorTraps: data.distractor_traps || [],
-                followUpQuestions: data.follow_up_questions || [],
+                followUpQuestions: data.follow_up_questions || data.suggested_followups || [],
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
             // Clear code input drawer if it was sent
@@ -3540,12 +3542,20 @@ async function sendLlmMessage(customPrompt = null) {
             }
         } else {
             const err = await res.json().catch(() => ({}));
+            let errMsg = "Unable to reach LLM inference endpoint. Please try again or switch query mode.";
+            if (typeof err.detail === 'string') {
+                errMsg = err.detail;
+            } else if (Array.isArray(err.detail)) {
+                errMsg = err.detail.map(d => (d.msg ? `${d.loc ? d.loc.join('.') + ': ' : ''}${d.msg}` : JSON.stringify(d))).join("; ");
+            } else if (err.detail && typeof err.detail === 'object') {
+                errMsg = err.detail.message || JSON.stringify(err.detail);
+            }
             llmChatMessages.push({
                 id: Date.now() + 1,
                 role: 'assistant',
                 model: 'Diagnostic Engine',
                 mode: activeLlmMode,
-                content: `### ⚠️ Notice\n\n${err.detail || "Unable to reach LLM inference endpoint. Please try again or switch query mode."}`,
+                content: `### ⚠️ Notice\n\n${errMsg}`,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
         }

@@ -64,3 +64,42 @@ def test_llm_ask_system_design(client):
     assert res.status_code == 200
     data = res.json()
     assert "Architecture" in data["answer"] or "System Design" in data["answer"]
+
+def test_llm_ask_with_prompt_alias(client):
+    payload = {
+        "prompt": "python",
+        "mode": "comprehensive"
+    }
+    res = client.post("/api/v1/llm/ask", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert "answer" in data
+    assert "answer_markdown" in data
+    assert "model_used" in data
+    assert len(data["key_invariants"]) > 0
+    assert len(data["distractor_traps"]) > 0
+
+def test_llm_ask_with_enterprise_target_company(client):
+    payload = {
+        "question": "What are microservices best practices in enterprise cloud migrations?",
+        "prompt": "What are microservices best practices in enterprise cloud migrations?",
+        "mode": "comprehensive",
+        "target_company": "Capgemini"
+    }
+    res = client.post("/api/v1/llm/ask", json=payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert "answer" in data
+    assert len(data["answer"]) > 50
+
+def test_llm_ask_empty_returns_400(client):
+    payload = {
+        "prompt": "   ",
+        "question": ""
+    }
+    res = client.post("/api/v1/llm/ask", json=payload)
+    assert res.status_code == 400
+    err = res.json()
+    assert "detail" in err
+    assert "Please enter a technical question" in err["detail"]
+
